@@ -11,7 +11,7 @@ const app = express();
 // swaggerRouter configuration
 var options = {
     routing: {
-        controllers: path.join(__dirname, './controllers')
+        controllers: path.join(__dirname, './controller_owner')
     },
 };
 

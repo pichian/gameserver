@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: Swagger Petstore
+  title: API Player
   description: "This is a sample server Petstore server.  You can find out more about\
     \     Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net,\
     \ #swagger](http://swagger.io/irc/).      For this sample, you can use the api\
@@ -16,100 +16,165 @@ externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
-- url: https://petstore.swagger.io/v2
-- url: http://petstore.swagger.io/v2
+- url: http://localhost:8080/v2
+  description: สำหรับ Production server (ไว้ Generate)
+- url: http://128.199.216.219:61/V2/
+  description: สำหรับ Test play server
+- url: http://128.199.216.219:62/V2/
+  description: สำหรับ Test agent server
+- url: http://128.199.216.219:63/V2/
+  description: สำหรับ Test owner server
 tags:
-- name: user
-  description: Operations about user
-  externalDocs:
-    description: Find out more about our store
-    url: http://swagger.io
+- name: player
+- name: agent
+- name: owner
 paths:
-  /user:
+  /player/login:
     post:
       tags:
-      - user
-      summary: Create user
-      description: This can only be done by the logged in user.
-      operationId: createUser
+      - player
+      summary: Logs user into the system
+      operationId: loginPlayer
       requestBody:
-        description: Created user object
+        description: ไว้ Login
         content:
-          '*/*':
+          application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/PlayerLoginInput'
         required: true
+      responses:
+        "200":
+          description: Login ได้
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              style: simple
+              explode: false
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Invalid username/password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-swagger-router-controller: Player
+  /player/logout:
+    post:
+      tags:
+      - player
+      summary: Logs out current logged in user session
+      operationId: logoutPlayer
       responses:
         default:
           description: successful operation
           content: {}
-      x-codegen-request-body-name: body
-      x-swagger-router-controller: User
-  /user/createWithArray:
-    post:
+      security:
+      - api_key: []
+      x-swagger-router-controller: Player
+  /player:
+    put:
       tags:
-      - user
-      summary: Creates list of users with given input array
-      operationId: createUsersWithArrayInput
+      - player
+      summary: Update player detail
+      operationId: updatePlayerDetail
       requestBody:
-        description: List of user object
+        description: update Player Detail
         content:
-          '*/*':
+          application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/PlayerPutInput'
         required: true
       responses:
-        default:
-          description: successful operation
-          content: {}
-      x-codegen-request-body-name: body
-      x-swagger-router-controller: User
-  /user/createWithList:
+        "400":
+          description: Invalid Role api
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "404":
+          description: Invalid player not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "405":
+          description: Validation exception
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+      - api_key: []
+      x-swagger-router-controller: Player
     post:
       tags:
-      - user
-      summary: Creates list of users with given input array
-      operationId: createUsersWithListInput
+      - player
+      - agent
+      summary: register Player
+      operationId: registerPlayer
       requestBody:
-        description: List of user object
+        description: register new player witch agent refcode
         content:
-          '*/*':
+          application/json:
             schema:
-              type: array
-              items:
-                $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/PlayerModel'
         required: true
       responses:
-        default:
-          description: successful operation
+        "405":
+          description: Invalid input
           content: {}
-      x-codegen-request-body-name: body
-      x-swagger-router-controller: User
-  /user/login:
+      x-swagger-router-controller: Player
+  /player/wallet:
     get:
       tags:
-      - user
+      - player
+      - agent
+      - owner
+      summary: Finds wallet player by token key
+      description: Finds wallet player detail by token key.
+      operationId: findById
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WalletModel'
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Player
+  /agent/login:
+    post:
+      tags:
+      - agent
       summary: Logs user into the system
-      operationId: loginUser
-      parameters:
-      - name: username
-        in: query
-        description: The user name for login
+      operationId: loginagent
+      requestBody:
+        description: ไว้ Login
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerLoginInput'
         required: true
-        style: form
-        explode: true
-        schema:
-          type: string
-      - name: password
-        in: query
-        description: The password for login in clear text
-        required: true
-        style: form
-        explode: true
-        schema:
-          type: string
       responses:
         "200":
           description: successful operation
@@ -129,154 +194,485 @@ paths:
                 type: string
                 format: date-time
           content:
-            application/xml:
-              schema:
-                type: string
-                x-content-type: application/xml
             application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/inline_response_200'
         "400":
-          description: Invalid username/password supplied
-          content: {}
-      x-swagger-router-controller: User
-  /user/logout:
-    get:
+          description: Invalid username/password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-swagger-router-controller: Agent
+  /agent/logout:
+    post:
       tags:
-      - user
+      - agent
       summary: Logs out current logged in user session
-      operationId: logoutUser
+      operationId: logoutagent
       responses:
         default:
           description: successful operation
           content: {}
-      x-swagger-router-controller: User
-  /user/{username}:
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+  /employee:
+    put:
+      tags:
+      - agent
+      summary: Update player empoyee
+      operationId: updateempoyeeDetail
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerModel'
+        required: true
+      responses:
+        "400":
+          description: Invalid ID supplied
+          content: {}
+        "404":
+          description: Pet not found
+          content: {}
+        "405":
+          description: Validation exception
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+    post:
+      tags:
+      - agent
+      summary: register empoyee
+      operationId: registerempoyee
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerModel'
+        required: true
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+  /employee/login:
+    post:
+      tags:
+      - agent
+      summary: Logs employee into the system
+      operationId: loginemployee
+      requestBody:
+        description: ไว้ Login
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerLoginInput'
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              style: simple
+              explode: false
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Invalid username/password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-swagger-router-controller: Agent
+  /employee/logout:
+    post:
+      tags:
+      - agent
+      summary: Logs out current logged in user session
+      operationId: logoutemployee
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+  /agent/payment:
     get:
       tags:
-      - user
-      summary: Get user by user name
-      operationId: getUserByName
+      - agent
+      - owner
+      summary: List agent payment request
+      operationId: listagentPaymentRequest
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+    put:
+      tags:
+      - agent
+      - owner
+      summary: update empoyee
+      operationId: agentmpoyee
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerModel'
+        required: true
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+    post:
+      tags:
+      - agent
+      - owner
+      summary: agent payment request
+      operationId: agentPaymentRequest
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentModel'
+        required: true
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+  /agent/payment/{paymentId}:
+    post:
+      tags:
+      - agent
+      - owner
+      summary: payment detail
+      description: Returns a single pet
+      operationId: getagentById
       parameters:
-      - name: username
+      - name: paymentId
         in: path
-        description: 'The name that needs to be fetched. Use user1 for testing. '
+        description: ID of pet to return
         required: true
         style: simple
         explode: false
         schema:
-          type: string
+          type: integer
+          format: int64
       responses:
         "200":
           description: successful operation
           content:
-            application/xml:
-              schema:
-                $ref: '#/components/schemas/User'
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/PlayerModel'
         "400":
-          description: Invalid username supplied
+          description: Invalid ID supplied
           content: {}
         "404":
-          description: User not found
+          description: Pet not found
           content: {}
-      x-swagger-router-controller: User
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+  /agent/player/payment:
+    get:
+      tags:
+      - agent
+      summary: List agent payment request
+      operationId: listplayerPaymentRequestagent
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
     put:
       tags:
-      - user
-      summary: Updated user
-      description: This can only be done by the logged in user.
-      operationId: updateUser
-      parameters:
-      - name: username
-        in: path
-        description: name that need to be updated
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
+      - agent
+      summary: update empoyee
+      operationId: playerAgentRequestupdate
       requestBody:
-        description: Updated user object
+        description: Pet object that needs to be added to the store
         content:
-          '*/*':
+          application/json:
             schema:
-              $ref: '#/components/schemas/User'
+              $ref: '#/components/schemas/PaymentModel'
         required: true
       responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+    post:
+      tags:
+      - agent
+      summary: agent payment request
+      operationId: playerAgentRequest
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentModel'
+        required: true
+      responses:
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Agent
+  /player/payment:
+    get:
+      tags:
+      - player
+      - agent
+      - owner
+      summary: List agent payment request
+      operationId: listplayerPaymentRequest
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentModel'
         "400":
-          description: Invalid user supplied
+          description: Invalid ID supplied
           content: {}
         "404":
-          description: User not found
+          description: Pet not found
           content: {}
-      x-codegen-request-body-name: body
-      x-swagger-router-controller: User
-    delete:
+      x-swagger-router-controller: Player
+    post:
       tags:
-      - user
-      summary: Delete user
-      description: This can only be done by the logged in user.
-      operationId: deleteUser
+      - player
+      summary: agent payment request
+      operationId: playerPaymentRequest
+      requestBody:
+        description: Pet object that needs to be added to the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentModel'
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: Player
+  /player/payment/{paymentId}:
+    post:
+      tags:
+      - agent
+      - player
+      - owner
+      summary: payment player detail
+      description: Returns a single pet
+      operationId: getplayerById
       parameters:
-      - name: username
+      - name: paymentId
         in: path
-        description: The name that needs to be deleted
+        description: ID of pet to return
         required: true
         style: simple
         explode: false
         schema:
-          type: string
+          type: integer
+          format: int64
       responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentModel'
         "400":
-          description: Invalid username supplied
+          description: Invalid ID supplied
           content: {}
         "404":
-          description: User not found
+          description: Pet not found
           content: {}
-      x-swagger-router-controller: User
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+  /agent/approveplayerpayment/{playerPaymentId}:
+    post:
+      tags:
+      - agent
+      summary: payment player detail
+      description: Returns a single pet
+      operationId: approveplayerpayment
+      parameters:
+      - name: playerPaymentId
+        in: path
+        description: ID of pet to return
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerModel'
+        "400":
+          description: Invalid ID supplied
+          content: {}
+        "404":
+          description: Pet not found
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Agent
+  /owner/login:
+    post:
+      tags:
+      - owner
+      summary: Logs user into the system
+      operationId: loginowner
+      requestBody:
+        description: ไว้ Login
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerLoginInput'
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              style: simple
+              explode: false
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200'
+        "400":
+          description: Invalid username/password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      x-swagger-router-controller: Owner
+  /owner/logout:
+    post:
+      tags:
+      - owner
+      summary: Logs out current logged in user session
+      operationId: logoutowner
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Owner
+  /owner/approveagentpayment/{AgentPaymentId}:
+    post:
+      tags:
+      - owner
+      summary: payment agent detail
+      description: Returns a single pet
+      operationId: approveagentpayment
+      parameters:
+      - name: AgentPaymentId
+        in: path
+        description: ID of pet to return
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+          format: int64
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerModel'
+        "400":
+          description: Invalid ID supplied
+          content: {}
+        "404":
+          description: Pet not found
+          content: {}
+      security:
+      - api_key: []
+      x-swagger-router-controller: Owner
 components:
   schemas:
-    Order:
+    ErrorResponse:
       type: object
       properties:
-        id:
+        error:
+          $ref: '#/components/schemas/ErrorResponse_error'
+    PlayerLoginInput:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    PlayerPutInput:
+      type: object
+      properties:
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        userStatus:
           type: integer
-          format: int64
-        petId:
-          type: integer
-          format: int64
-        quantity:
-          type: integer
+          description: User Status
           format: int32
-        shipDate:
-          type: string
-          format: date-time
-        status:
-          type: string
-          description: Order Status
-          enum:
-          - placed
-          - approved
-          - delivered
-        complete:
-          type: boolean
-          default: false
-      xml:
-        name: Order
-    Category:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-      xml:
-        name: Category
-    User:
+    PlayerModel:
       type: object
       properties:
         id:
@@ -295,67 +691,162 @@ components:
         phone:
           type: string
         userStatus:
-          type: integer
-          description: User Status
-          format: int32
+          type: array
+          description: status and history
+          items:
+            type: object
+            additionalProperties: {}
+        refCodeAgent:
+          type: string
+          description: JWT form Agent Detail
       example:
         firstName: firstName
         lastName: lastName
         password: password
-        userStatus: 6
+        userStatus:
+        - key: ""
+        - key: ""
+        refCodeAgent: refCodeAgent
         phone: phone
         id: 0
         email: email
         username: username
-      xml:
-        name: User
-    Tag:
+    AgentModel:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        name:
+        username:
           type: string
-      xml:
-        name: Tag
-    Pet:
-      required:
-      - name
-      - photoUrls
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+        refCodeAgent:
+          type: string
+        type:
+          type: integer
+          description: Agent type
+          format: int32
+    EmployeeModel:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        category:
-          $ref: '#/components/schemas/Category'
-        name:
+        username:
           type: string
-          example: doggie
-        photoUrls:
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+        refCodeAgent:
+          type: string
+        type:
+          type: integer
+          description: Employee type
+          format: int32
+    OwnerModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+        type:
+          type: integer
+          description: Owner type
+          format: int32
+    ManagerModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        password:
+          type: string
+        type:
+          type: integer
+          description: Manager type
+          format: int32
+    WalletModel:
+      type: object
+      properties:
+        userid:
+          type: integer
+          format: int64
+        coinList:
           type: array
-          xml:
-            name: photoUrl
-            wrapped: true
+          description: เหรียญรอง (JSON)
           items:
-            type: string
-        tags:
-          type: array
-          xml:
-            name: tag
-            wrapped: true
-          items:
-            $ref: '#/components/schemas/Tag'
+            type: object
+            additionalProperties: {}
+        amountCoin:
+          type: number
+          description: เหรียญหลัก
+      description: จาก Mongo
+      example:
+        amountCoin: 6.02745618307040320615897144307382404804229736328125
+        coinList:
+        - key: ""
+        - key: ""
+        userid: 0
+    PaymentModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        agentId:
+          type: integer
+          format: int64
+        Amount:
+          type: number
+        Status:
+          type: string
+      example:
+        Status: Status
+        agentId: 6
+        Amount: 1.46581298050294517310021547018550336360931396484375
+        id: 0
+    TransferModel:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        userId:
+          type: integer
+          format: int64
+        from:
+          type: integer
+          format: int64
+        to:
+          type: integer
+          format: int64
+        amount:
+          type: number
         status:
-          type: string
-          description: pet status in the store
-          enum:
-          - available
-          - pending
-          - sold
-      xml:
-        name: Pet
+          type: integer
+          format: int64
     ApiResponse:
       type: object
       properties:
@@ -366,16 +857,26 @@ components:
           type: string
         message:
           type: string
+    inline_response_200:
+      type: object
+      properties:
+        token:
+          type: string
+      example:
+        token: token
+    ErrorResponse_error:
+      type: object
+      properties:
+        message:
+          type: string
+        type:
+          type: number
   securitySchemes:
-    petstore_auth:
-      type: oauth2
-      flows:
-        implicit:
-          authorizationUrl: http://petstore.swagger.io/oauth/dialog
-          scopes:
-            write:pets: modify pets in your account
-            read:pets: read your pets
     api_key:
       type: apiKey
       name: api_key
       in: header
+    authorization:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
