@@ -73,6 +73,16 @@ module.exports.listagentPaymentRequest = function listagentPaymentRequest (req, 
     });
 };
 
+module.exports.listPlayer = function listPlayer (req, res, next) {
+  Agent.listPlayer()
+    .then(function (response) {
+      utils.writeJson(res, response);
+    })
+    .catch(function (response) {
+      utils.writeJson(res, response);
+    });
+};
+
 module.exports.listplayerPaymentRequest = function listplayerPaymentRequest (req, res, next) {
   Owner.listplayerPaymentRequest()
     .then(function (response) {
@@ -95,6 +105,16 @@ module.exports.loginowner = function loginowner (req, res, next, body) {
 
 module.exports.logoutowner = function logoutowner (req, res, next) {
   Owner.logoutowner()
+    .then(function (response) {
+      utils.writeJson(res, response);
+    })
+    .catch(function (response) {
+      utils.writeJson(res, response);
+    });
+};
+
+module.exports.createagent = function createagent (req, res, next) {
+  Owner.createagent()
     .then(function (response) {
       utils.writeJson(res, response);
     })

@@ -3,8 +3,10 @@
 var utils = require('../utils/writer.js');
 var Player = require('../service/PlayerService');
 
-module.exports.findById = function findById (req, res, next) {
-  Player.findById()
+//const { authtoken } = require('../middleware/auth.js');
+
+module.exports.findById = function findById(req, res, next) {
+  Player.findById(req)
     .then(function (response) {
       utils.writeJson(res, response);
     })
@@ -13,7 +15,7 @@ module.exports.findById = function findById (req, res, next) {
     });
 };
 
-module.exports.getplayerById = function getplayerById (req, res, next, paymentId) {
+module.exports.getplayerById = function getplayerById(req, res, next, paymentId) {
   Player.getplayerById(paymentId)
     .then(function (response) {
       utils.writeJson(res, response);
@@ -23,17 +25,22 @@ module.exports.getplayerById = function getplayerById (req, res, next, paymentId
     });
 };
 
-module.exports.listplayerPaymentRequest = function listplayerPaymentRequest (req, res, next) {
-  Player.listplayerPaymentRequest()
+module.exports.listplayerPaymentRequest = function listplayerPaymentRequest(req, res, next) {
+  //authtoken(req, res, next).then(function () {
+
+    Player.listplayerPaymentRequest(req)
     .then(function (response) {
       utils.writeJson(res, response);
     })
     .catch(function (response) {
       utils.writeJson(res, response);
     });
+
+ // })
+
 };
 
-module.exports.loginPlayer = function loginPlayer (req, res, next, body) {
+module.exports.loginPlayer = function loginPlayer(req, res, next, body) {
   Player.loginPlayer(body)
     .then(function (response) {
       utils.writeJson(res, response);
@@ -43,17 +50,24 @@ module.exports.loginPlayer = function loginPlayer (req, res, next, body) {
     });
 };
 
-module.exports.logoutPlayer = function logoutPlayer (req, res, next) {
-  Player.logoutPlayer()
-    .then(function (response) {
-      utils.writeJson(res, response);
-    })
-    .catch(function (response) {
-      utils.writeJson(res, response);
-    });
+module.exports.logoutPlayer = function logoutPlayer(req, res, next) {
+
+
+  authtoken(req, res, next).then(function () {
+    Player.logoutPlayer(req)
+      .then(function (response) {
+        utils.writeJson(res, response);
+      })
+      .catch(function (response) {
+        utils.writeJson(res, response);
+      });
+  })
+
+
 };
 
-module.exports.playerPaymentRequest = function playerPaymentRequest (req, res, next, body) {
+
+module.exports.playerPaymentRequest = function playerPaymentRequest(req, res, next, body) {
   Player.playerPaymentRequest(body)
     .then(function (response) {
       utils.writeJson(res, response);
@@ -63,7 +77,7 @@ module.exports.playerPaymentRequest = function playerPaymentRequest (req, res, n
     });
 };
 
-module.exports.registerPlayer = function registerPlayer (req, res, next, body) {
+module.exports.registerPlayer = function registerPlayer(req, res, next, body) {
   Player.registerPlayer(body)
     .then(function (response) {
       utils.writeJson(res, response);
@@ -73,12 +87,32 @@ module.exports.registerPlayer = function registerPlayer (req, res, next, body) {
     });
 };
 
-module.exports.updatePlayerDetail = function updatePlayerDetail (req, res, next, body) {
-  Player.updatePlayerDetail(body)
-    .then(function (response) {
-      utils.writeJson(res, response);
-    })
-    .catch(function (response) {
-      utils.writeJson(res, response);
-    });
+module.exports.updatePlayerDetail = function updatePlayerDetail(req, res, next, body) {
+
+  // authtoken(req, res, next).then(async function () {
+  //   await Player.updatePlayerDetail(req, body);
+  //   await new Promise(() => utils.writeJson(res, response));
+  // })
+
+  authtoken(req, res, next).then(function () {
+    Player.updatePlayerDetail(req, body)
+      .then(function (response) {
+        utils.writeJson(res, response);
+      })
+      .catch(function (response) {
+        utils.writeJson(res, response);
+      });
+  })
+
+
+  // Player.updatePlayerDetail(req, body)
+  // .then(function (response) {
+  //   utils.writeJson(res, response);
+  // })
+  // .catch(function (response) {
+  //   utils.writeJson(res, response);
+  // });
+
+
+
 };

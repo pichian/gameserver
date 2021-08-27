@@ -4,8 +4,8 @@
   "description": "This is a sample server Petstore server.  You can find out more about     Swagger at [http://swagger.io](http://swagger.io) or on [irc.freenode.net, #swagger](http://swagger.io/irc/).      For this sample, you can use the api key `special-key` to test the authorization     filters.",
   "main": "index.js",
   "scripts": {
-	"prestart": "npm install",
-	"start": "node index.js"
+    "prestart": "npm install",
+    "start": "node index.js"
   },
   "keywords": [
     "swagger"
@@ -13,8 +13,15 @@
   "license": "Unlicense",
   "private": true,
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "connect": "^3.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
     "js-yaml": "^3.3.0",
-    "oas3-tools": "^2.2.3"
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^4.1.0",
+    "mysql2": "^2.3.0",
+    "oas3-tools": "^2.2.3",
+    "sequelize": "^6.6.5"
   }
 }

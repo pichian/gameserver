@@ -4,7 +4,7 @@ var path = require('path');
 var http = require('http');
 const express = require('express')
 var oas3Tools = require('oas3-tools');
-var serverPort = 63;
+var serverPort = 61;
 var cors = require("cors");
 const app = express();
 

@@ -4,6 +4,7 @@ var utils = require('../utils/writer.js');
 var Agent = require('../service/AgentService');
 
 module.exports.agentPaymentRequest = function agentPaymentRequest (req, res, next, body) {
+  console.log(req,body);
   Agent.agentPaymentRequest(body)
     .then(function (response) {
       utils.writeJson(res, response);
@@ -73,6 +74,16 @@ module.exports.listagentPaymentRequest = function listagentPaymentRequest (req, 
     });
 };
 
+module.exports.listPlayer = function listPlayer (req, res, next) {
+  Agent.listPlayer()
+    .then(function (response) {
+      utils.writeJson(res, response);
+    })
+    .catch(function (response) {
+      utils.writeJson(res, response);
+    });
+};
+
 module.exports.listplayerPaymentRequest = function listplayerPaymentRequest (req, res, next) {
   Agent.listplayerPaymentRequest()
     .then(function (response) {
@@ -113,7 +124,8 @@ module.exports.loginemployee = function loginemployee (req, res, next, body) {
     });
 };
 
-module.exports.logoutagent = function logoutagent (req, res, next) {
+module.exports.logoutagent = function logoutagent (req, res, next, headers) {
+  console.log(headers);
   Agent.logoutagent()
     .then(function (response) {
       utils.writeJson(res, response);
