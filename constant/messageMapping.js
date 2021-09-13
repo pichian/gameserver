@@ -1,40 +1,40 @@
 
 module.exports.core = {
-	success:{code:"LTR-200",message:"Success"},
-	login_failed:{code:"LTR-1001",message:"Username or password is incorrect."},
-	session_timeout:{code:"LTR-1002",message:"Session timeout."},
-	token_expire:{code:"LTR-1003",message:"Token expire."},
-	validate_error:{code:"LTR-1004",message:"Invalid input."},
-	no_data_found:{code:"LTR-1005",message:"No data found."}
+	success:{responseCode:"LTR-200",responseMessage:"Success"},
+	login_failed:{responseCode:"LTR-1001",responseMessage:"Username or password is incorrect."},
+	session_timeout:{responseCode:"LTR-1002",responseMessage:"Session timeout."},
+	token_expire:{responseCode:"LTR-1003",responseMessage:"Token expire."},
+	validate_error:{responseCode:"LTR-1004",responseMessage:"Invalid input."},
+	no_data_found:{responseCode:"LTR-1005",responseMessage:"No data found."}
 }
 
 module.exports.agent = {
-	duplicate_user: {code:"LTR-2101",message:"Username หรือ Email ของ Agent มีอยู่แล้วในระบบ"},
-	not_found_user: {code:"LTR-2102",message:"ไม่พบข้อมูล Agent"},
-	credit_not_enough: {code:"LTR-2103",message:"ไม่สามาทำรายการได้ เนื่องจากเครดิตไม่เพียงพอ"}
+	duplicate_user: {responseCode:"LTR-2101",responseMessage:"Username หรือ Email ของ Agent มีอยู่แล้วในระบบ"},
+	not_found_user: {responseCode:"LTR-2102",responseMessage:"ไม่พบข้อมูล Agent"},
+	credit_not_enough: {responseCode:"LTR-2103",responseMessage:"ไม่สามาทำรายการได้ เนื่องจากเครดิตไม่เพียงพอ"}
 };
 
 module.exports.owner = {
-	duplicate_user: {code:"LTR-2201",message:"Username หรือ Email ของ Agnt มีอยู่แล้วในระบบ"},
-	// msg1: {code:"LTR-2201",message:"example message1"},
-	msg2: {code:"LTR-2202",message:"example message2"},
-	msg3: {code:"LTR-2203",message:"example message3"}
+	duplicate_user: {responseCode:"LTR-2201",responseMessage:"Username หรือ Email ของ Agnt มีอยู่แล้วในระบบ"},
+	// msg1: {responseCode:"LTR-2201",responseMessage:"example message1"},
+	msg2: {responseCode:"LTR-2202",responseMessage:"example message2"},
+	msg3: {responseCode:"LTR-2203",responseMessage:"example message3"}
 };
 
 module.exports.player = {
-	duplicate_player: {code:"LTR-2301",message:"Player Name หรือ Username มีอยู่แล้วในระบบ"},
-	msg2: {code:"LTR-2302",message:"example message2"},
-	msg3: {code:"LTR-2303",message:"example message3"}
+	duplicate_player: {responseCode:"LTR-2301",responseMessage:"Player Name หรือ Username มีอยู่แล้วในระบบ"},
+	msg2: {responseCode:"LTR-2302",responseMessage:"example message2"},
+	msg3: {responseCode:"LTR-2303",responseMessage:"example message3"}
 };
 
 module.exports.employee = {
-	msg1: {code:"LTR-3101",message:"example message1"},
-	msg2: {code:"LTR-3102",message:"example message2"},
-	msg3: {code:"LTR-3103",message:"example message3"}
+	msg1: {responseCode:"LTR-3101",responseMessage:"example message1"},
+	msg2: {responseCode:"LTR-3102",responseMessage:"example message2"},
+	msg3: {responseCode:"LTR-3103",responseMessage:"example message3"}
 };
 
 module.exports.pomotion = {
-	msg1: {code:"LTR-3201",message:"example message1"},
-	msg2: {code:"LTR-3202",message:"example message2"},
-	msg3: {code:"LTR-3203",message:"example message3"}
+	msg1: {responseCode:"LTR-3201",responseMessage:"example message1"},
+	msg2: {responseCode:"LTR-3202",responseMessage:"example message2"},
+	msg3: {responseCode:"LTR-3203",responseMessage:"example message3"}
 };

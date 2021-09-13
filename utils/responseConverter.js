@@ -10,8 +10,8 @@ exports.successWithData = function (data) {
     
     return {
         data: data,
-        code: successMessage.code,
-        message: successMessage.message
+        responseCode: successMessage.code,
+        responseMessage: successMessage.message
     }
 }
 
@@ -25,14 +25,14 @@ exports.businessError = function (messageObj) {
     const respMessage = messageObj.message
 
     return {
-        code: respCode,
-        message: respMessage
+        responseCode: respCode,
+        responseMessage: respMessage
     }
 }
 
 exports.systemError = function (errorMessage) {
     return {
-        code: "LTR-500",
-        message: errorMessage
+        responseCode: "LTR-500",
+        responseMessage: errorMessage
     }
 }
