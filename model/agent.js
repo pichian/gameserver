@@ -1,56 +1,62 @@
 module.exports = (sequelize, Sequelize) => {
-    const AgentModel = sequelize.define("AgentModel", {
+    return sequelize.define("AgentModel", {
         id: {
-            field: 'Agent_ID',
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
+        name: {
+            type: Sequelize.STRING,
+            field: 'name'
+        },
         username: {
             type: Sequelize.STRING,
-            field: 'Agent_UserName'
-        },
-        firstname: {
-            type: Sequelize.STRING,
-            field: 'Agent_FirstName'
-        },
-        lastname: {
-            type: Sequelize.STRING,
-            field: 'Agent_LastName'
+            field: 'username'
         },
         email: {
             type: Sequelize.STRING,
-            field: 'Agent_Email'
+            field: 'email'
         },
         password: {
             type: Sequelize.STRING,
-            field: 'Agent_Password'
+            field: 'password'
         },
-        phone: {
+        description: {
             type: Sequelize.STRING,
-            field: 'Agent_Phone'
+            field: 'description'
         },
-        userStatus: {
-            type: Sequelize.BOOLEAN,
-            field: 'Agent_UserStatus'
+        status: {
+            type: Sequelize.INTEGER,
+            field: 'status'
         },
-        refCodeAgent: {
-            type: Sequelize.STRING,
-            field: 'Agent_RefCodeAgent'
+        refCode: {
+            type: Sequelize.INTEGER,
+            field: 'ref_code'
         },
-
+        createBy: {
+            type: Sequelize.INTEGER,
+            field: 'create_by'
+        },
+        createDateTime: {
+            field: 'create_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false,
+        },
+        updateBy: {
+            type: Sequelize.INTEGER,
+            field: 'update_by'
+        },
+        updateDateTime: {
+            field: 'update_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false
+        }
     },
         {
-            tableName: 'Agent',
+            tableName: 'agent',
             timestamps: false,
-
         }
     );
-
-    return AgentModel;
-
-
-    
 };
-
-

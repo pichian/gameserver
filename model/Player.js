@@ -1,47 +1,74 @@
 module.exports = (sequelize, Sequelize) => {
     const PlayerModel = sequelize.define("PlayerModel", {
         id: {
-            field: 'Player_ID',
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
+        playerRefCode: {
+            type: Sequelize.STRING,
+            field: 'player_ref_code'
+        },
+        playerName: {
+            type: Sequelize.STRING,
+            field: 'player_name'
+        },
         username: {
             type: Sequelize.STRING,
-            field: 'Player_UserName'
-        },
-        firstname: {
-            type: Sequelize.STRING,
-            field: 'Player_FirstName'
-        },
-        lastname: {
-            type: Sequelize.STRING,
-            field: 'Player_LastName'
-        },
-        email: {
-            type: Sequelize.STRING,
-            field: 'Player_Email'
+            field: 'username'
         },
         password: {
             type: Sequelize.STRING,
-            field: 'Player_Password'
+            field: 'password'
         },
-        phone: {
+        phoneNumber: {
             type: Sequelize.STRING,
-            field: 'Player_Phone'
+            field: 'phone'
         },
-        userStatus: {
-            type: Sequelize.BOOLEAN,
-            field: 'Player_UserStatus'
-        },
-        refCodeAgent: {
+        description: {
             type: Sequelize.STRING,
-            field: 'Player_RefCodeAgent'
+            field: 'description'
         },
-
+        ranking: {
+            type: Sequelize.INTEGER,
+            field: 'ranking'
+        },
+        walletId: {
+            type: Sequelize.STRING,
+            field: 'wallet_id'
+        },
+        agentRefCode: {
+            type: Sequelize.STRING,
+            field: 'agent_ref_code'
+        },
+        status: {
+            type: Sequelize.STRING,
+            field: 'status'
+        },
+        createBy: {
+            type: Sequelize.INTEGER,
+            field: 'create_by'
+        },
+        createDateTime: {
+            field: 'create_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false,
+        },
+        updateBy: {
+            type: Sequelize.INTEGER,
+            field: 'update_by'
+        },
+        updateDateTime: {
+            field: 'update_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false
+        }
     },
         {
-            tableName: 'player',
+            tableName: 'tbm_player_info',
             timestamps: false,
 
         }
@@ -49,5 +76,3 @@ module.exports = (sequelize, Sequelize) => {
 
     return PlayerModel;
 };
-
-

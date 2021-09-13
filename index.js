@@ -15,7 +15,7 @@ var options = {
     },
 };
 
-var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api/openapi.yaml'), options);
+var expressAppConfig = oas3Tools.expressAppConfig(path.join(__dirname, 'api/openapi_player.yaml'), options);
 
 const openApiApp = expressAppConfig.getApp();
 

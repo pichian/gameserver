@@ -24,7 +24,7 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-db.Player = require("./Player.js")(sequelize, Sequelize);
+db.Player = require("./player.js")(sequelize, Sequelize);
 db.SessionPlayer = require("./SessionPlayer.js")(sequelize, Sequelize);
 db.Payment = require("./payment.js")(sequelize, Sequelize);
 module.exports = db;

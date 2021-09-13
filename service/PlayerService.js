@@ -2,9 +2,9 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const db = require("../model/indexPlayer.js");
-
-
+const respConvert = require("../utils/responseConverter");
+const msgConstant = require("../constant/messageMapping");
+const dbConnector = require("../repositories/dbConnector")
 
 const { MongoClient } = require("mongodb");
 
@@ -363,107 +363,71 @@ exports.playerPaymentRequest = function (body) {
 exports.registerPlayer = function (body) {
   return new Promise(function (resolve, reject) {
 
-
-    console.log(body);
-
-
-
-
-
-    if (body.firstName !== undefined
-      && body.lastName !== undefined
-      && body.username !== undefined
-      && body.password !== undefined
-      && body.email !== undefined
-      && body.phone !== undefined
-      && body.refCodeAgent !== undefined
+    if (
+      body.playerName !== undefined &&
+      body.username !== undefined &&
+      body.password !== undefined &&
+      body.phoneNumber !== undefined &&
+      body.refCode !== undefined
     ) {
-
-
-      const Player = db.Player;
-
 
       (async () => {
 
+        const playerTable = dbConnector.Player
 
-
-        const oldUser = await Player.findOne({
+        //Check duplicate player name and username
+        const duplicatedPlayer = await playerTable.findOne({
           where: {
-
             [Op.or]: [
               {
-                email: body.email,
+                player_name: body.playerName,
               },
               {
                 username: body.username
               }
             ]
-
           }
         });
 
-        if (oldUser) {
-
-          //console.log('ssssdasdasd');
-
-          reject({
-            code: 500,
-            message: 'Username หรือ email ซ้ำ'
-          });
+        //if not duplicate this will be 'null' value
+        if (duplicatedPlayer) {
+          reject(respConvert.businessError(msgConstant.player.duplicate_player))
         }
 
-        //console.log('aaaaaa');
+        console.log(body)
+        console.log(duplicatedPlayer)
+        resolve(respConvert.success());
 
+        // //console.log('aaaaaa');
+        // //Encrypt user password
+        // const encryptedPassword = await bcrypt.hash(body.password, 10);
+        // const PlayerCreate = await Player.create({
+        //   firstname: body.firstName,
+        //   lastname: body.lastName,
+        //   username: body.username,
+        //   password: encryptedPassword,
+        //   email: body.email,
+        //   refCodeAgent: body.refCodeAgent,
+        //   userStatus: true,
+        // });
+        // console.log(PlayerCreate.toJSON());
+        // const PlayerCreateJSON = PlayerCreate.toJSON();
+        // delete PlayerCreateJSON.password
+        // // Create token
+        // // const token = jwt.sign(
+        // //   PlayerCreateJSON,
+        // //   'shhhhh'
+        // // );
+        // resolve(PlayerCreateJSON);
 
-        //Encrypt user password
-        const encryptedPassword = await bcrypt.hash(body.password, 10);
-
-        const PlayerCreate = await Player.create({
-          firstname: body.firstName,
-          lastname: body.lastName,
-          username: body.username,
-          password: encryptedPassword,
-          email: body.email,
-          refCodeAgent: body.refCodeAgent,
-          userStatus: true,
-        });
-
-        console.log(PlayerCreate.toJSON());
-
-        const PlayerCreateJSON = PlayerCreate.toJSON();
-
-        delete PlayerCreateJSON.password
-
-        // Create token
-        // const token = jwt.sign(
-        //   PlayerCreateJSON,
-        //   'shhhhh'
-        // );
-
-        resolve(PlayerCreateJSON);
-
-
-
-      })();
-
+      })().catch(function (err) {
+        reject(new Error(err.message));
+      })
 
     } else {
-
-      reject({
-        code: 500,
-        message: 'ข้อมูลไม่ครบ'
-      });
-
-
+      reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
-
-
-
-
-
-
-    //resolve();
   });
 }
 
