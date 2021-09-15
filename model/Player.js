@@ -8,7 +8,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         playerRefCode: {
             type: Sequelize.STRING,
-            field: 'player_ref_code'
+            field: 'player_ref_code',
+            allowNull: true,
+            defaultValue: null
         },
         playerName: {
             type: Sequelize.STRING,
@@ -28,19 +30,25 @@ module.exports = (sequelize, Sequelize) => {
         },
         description: {
             type: Sequelize.STRING,
-            field: 'description'
+            field: 'description',
+            defaultValue: ""
         },
         ranking: {
             type: Sequelize.INTEGER,
-            field: 'ranking'
+            field: 'ranking',
+            defaultValue: 0
         },
         walletId: {
             type: Sequelize.STRING,
-            field: 'wallet_id'
+            field: 'wallet_id',
+            allowNull: true,
+            defaultValue: null
         },
         agentRefCode: {
             type: Sequelize.STRING,
-            field: 'agent_ref_code'
+            field: 'agent_ref_code',
+            allowNull: true,
+            defaultValue: null
         },
         status: {
             type: Sequelize.STRING,
@@ -48,7 +56,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         createBy: {
             type: Sequelize.INTEGER,
-            field: 'create_by'
+            field: 'create_by',
+            allowNull: true,
+            defaultValue: null
         },
         createDateTime: {
             field: 'create_datetime',
@@ -58,7 +68,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         updateBy: {
             type: Sequelize.INTEGER,
-            field: 'update_by'
+            field: 'update_by',
+            allowNull: true,
+            defaultValue: null
         },
         updateDateTime: {
             field: 'update_datetime',

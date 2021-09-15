@@ -2,10 +2,7 @@
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const dbAgentConnector = require("../repositories/connectorAgent");
-const dbPlayerConnector = require("../repositories/connectorPlayer");
-const dbEmployeeConnector = require("../repositories/connectorEmployee")
-const dbPromotionConnector = require("../repositories/connectorPromotion")
+const dbConnector = require("../connector/mysqlConnector")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 

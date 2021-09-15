@@ -16,5 +16,6 @@ const sequelizeConnector = new Sequelize(config.SQL_DB_NAME, config.SQL_DB_USERN
 const db = {};
 
 db.Player = require("../model/player")(sequelizeConnector, Sequelize);
+db.sessionPlayer = require("../model/sessionPlayer")(sequelizeConnector, Sequelize);
 
 module.exports = db;

@@ -5,13 +5,10 @@ exports.success = function () {
 }
 
 exports.successWithData = function (data) {
-
-    const successMessage = msgConstant.core.success
-    
     return {
         data: data,
-        responseCode: successMessage.code,
-        responseMessage: successMessage.message
+        responseCode: msgConstant.core.success.responseCode,
+        responseMessage: msgConstant.core.success.responseCode
     }
 }
 
@@ -20,9 +17,8 @@ exports.validateError = function () {
 }
 
 exports.businessError = function (messageObj) {
-
-    const respCode = messageObj.code
-    const respMessage = messageObj.message
+    const respCode = messageObj.responseCode
+    const respMessage = messageObj.responseMessage
 
     return {
         responseCode: respCode,
@@ -34,5 +30,13 @@ exports.systemError = function (errorMessage) {
     return {
         responseCode: "LTR-500",
         responseMessage: errorMessage
+    }
+}
+
+exports.successLogin = function (token) {
+    return {
+        token: token,
+        responseCode: msgConstant.core.success.responseCode,
+        responseMessage: msgConstant.core.success.responseCode
     }
 }

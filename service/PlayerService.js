@@ -4,17 +4,8 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
-const dbConnector = require("../repositories/dbConnector")
-
-const { MongoClient } = require("mongodb");
-
-const uri =
-  "mongodb://root:example1234@157.245.205.111:27017/";
-
-
-const client = new MongoClient(uri);
-
-
+const mysqlConnector = require("../connector/mysqlConnector")
+const mongoConnector = require("../connector/mongodb")
 
 /**
  * Finds wallet player by token key
@@ -151,109 +142,65 @@ exports.listplayerPaymentRequest = function (req) {
 
 
 /**
- * Logs user into the system
- *
- * body PlayerLoginInput ไว้ Login
- * returns inline_response_200
+ * Logs Player into the system
  **/
 exports.loginPlayer = function (body) {
   return new Promise(function (resolve, reject) {
 
-    console.log(body.username);
+    const { username, password } = body
 
-    if (body.username !== undefined && body.password !== undefined) {
-
-      const Player = db.Player;
-      const SessionPlayer = db.SessionPlayer;
+    if (username && password) {
 
       (async () => {
 
+        const playerTable = mysqlConnector.Player
+        const sessionPlayerTable = mysqlConnector.sessionPlayer
 
-        const PlayerFindusername = await Player.findOne({
+        const resPlayer = await playerTable.findOne({
           where: {
-            username: body.username,
-            //password: body.password,
-          }
+            username: username,
+          },
+          raw: true
         });
 
-        console.log(PlayerFindusername);
+        if (!resPlayer) return reject(respConvert.businessError(msgConstant.core.login_failed))
 
-        //if(PlayerFindusername)
-        if (PlayerFindusername && await bcrypt.compare(body.password, PlayerFindusername.toJSON().password)) {
+        if (resPlayer && await bcrypt.compare(password, resPlayer.password)) {
 
-          const PlayerFindusernameJSON = PlayerFindusername.toJSON();
-
-          const SessionPlayerFindid = await SessionPlayer.findOne({
+          const findSessionPlayer = await sessionPlayerTable.findOne({
             where: {
-              playerId: PlayerFindusernameJSON.id,
+              playerId: resPlayer.id,
             }
           });
 
-          if (SessionPlayerFindid !== null) {
+          if (findSessionPlayer) return reject(respConvert.businessError(msgConstant.core.already_login))
 
-            reject({
-              code: 500,
-              message: 'Username นี้ ยังlogin อยู่'
-            });
+          const token = jwt.sign(
+            {
+              playerName: resPlayer.playerName,
+              username: resPlayer.username
+            },
+            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3'
+          );
 
-          }
-
-          if (SessionPlayerFindid === null) {
-
-            delete PlayerFindusernameJSON.password
-            const token = jwt.sign(
-              PlayerFindusernameJSON,
-              'shhhhh'
-            );
-            // add token
-            const addtoken = await SessionPlayer.create({
-              playerId: PlayerFindusernameJSON.id,
-              token: token,
-            });
-
-            resolve({
-              token: addtoken.toJSON().token,
-            });
-
-          }
-
-
-        } else {
-
-          reject({
-            code: 500,
-            message: 'Username ไม่ถูกต้อง'
+          const addTokenToSession = await sessionPlayerTable.create({
+            playerId: resPlayer.id,
+            token: token,
           });
 
+          resolve(respConvert.successLogin(token));
+
+        } else {
+          return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
 
-
-      })();
-
-
-      // var examples = {};
-      // examples['application/json'] = {
-      //   "token": "token"
-      // };
-      // if (Object.keys(examples).length > 0) {
-      //   resolve(examples[Object.keys(examples)[0]]);
-      // } else {
-      //   resolve();
-      // }
-
-
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
     } else {
-
-      reject({
-        code: 500,
-        message: 'Username ไม่ถูกต้อง'
-      });
-
-      //throw new Error('username and password not found')
-
+      reject(respConvert.validateError(msgConstant.core.validate_error));
     }
-
-
 
   });
 }
@@ -264,36 +211,32 @@ exports.loginPlayer = function (body) {
  *
  * no response value expected for this operation
  **/
-exports.logoutPlayer = function (req) {
+exports.logoutPlayer = function (body) {
   return new Promise(function (resolve, reject) {
 
+    const { token } = body
 
-    if (req.user.id) {
+    if (token) {
 
       (async () => {
 
+        const sessionPlayerTable = mysqlConnector.sessionPlayer
 
-
-        const addtoken = await db.SessionPlayer.destroy({
+        const removePlayerSession = await sessionPlayerTable.destroy({
           where: {
-            playerId: req.user.id,
+            token: token,
           }
         });
 
-        resolve({
-          deleted: true,
-        });
+        resolve(respConvert.success());
 
-      })();
-
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+    } else {
+      reject(respConvert.validateError(msgConstant.core.invalid_token));
     }
-
-
-
-    reject({
-      deleted: false,
-    });
-
 
   });
 }
@@ -355,35 +298,28 @@ exports.playerPaymentRequest = function (body) {
 
 
 /**
- * register Player
- *
- * body PlayerModel register new player witch agent refcode
- * no response value expected for this operation
+ * Register player from main page.
  **/
 exports.registerPlayer = function (body) {
   return new Promise(function (resolve, reject) {
 
-    if (
-      body.playerName !== undefined &&
-      body.username !== undefined &&
-      body.password !== undefined &&
-      body.phoneNumber !== undefined &&
-      body.refCode !== undefined
-    ) {
+    const { playerName, username, password, phoneNumber, agentRefCode } = body;
+
+    if (!(playerName && username && password && phoneNumber && agentRefCode)) {
 
       (async () => {
 
-        const playerTable = dbConnector.Player
+        const playerTable = mysqlConnector.Player
 
         //Check duplicate player name and username
         const duplicatedPlayer = await playerTable.findOne({
           where: {
             [Op.or]: [
               {
-                player_name: body.playerName,
+                playerName: playerName,
               },
               {
-                username: body.username
+                username: username
               }
             ]
           }
@@ -391,37 +327,43 @@ exports.registerPlayer = function (body) {
 
         //if not duplicate this will be 'null' value
         if (duplicatedPlayer) {
-          reject(respConvert.businessError(msgConstant.player.duplicate_player))
+          return reject(respConvert.businessError(msgConstant.player.duplicate_player))
         }
 
-        console.log(body)
-        console.log(duplicatedPlayer)
+        //Encrypt password
+        const encryptedPassword = await bcrypt.hash(password, 10);
+
+        //Register Player 
+        const resCreatedPlayer = await playerTable.create({
+          playerName: playerName,
+          username: username,
+          password: encryptedPassword,
+          phoneNumber: phoneNumber,
+          agentRefCode: agentRefCode,
+          status: 'active'
+        });
+
+        // create player wallet on mongo
+        const agentWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await agentWalletCollec.insertOne({
+          player_id: resCreatedPlayer.id,
+          amount_coin: 0,
+        })
+
+        //update player wallet id
+        const updatePlayerWallet = await playerTable.update(
+          {
+            walletId: resCreatedWallet.insertedId.toString()
+          },
+          {
+            where: { id: resCreatedPlayer.id }
+          })
+
         resolve(respConvert.success());
 
-        // //console.log('aaaaaa');
-        // //Encrypt user password
-        // const encryptedPassword = await bcrypt.hash(body.password, 10);
-        // const PlayerCreate = await Player.create({
-        //   firstname: body.firstName,
-        //   lastname: body.lastName,
-        //   username: body.username,
-        //   password: encryptedPassword,
-        //   email: body.email,
-        //   refCodeAgent: body.refCodeAgent,
-        //   userStatus: true,
-        // });
-        // console.log(PlayerCreate.toJSON());
-        // const PlayerCreateJSON = PlayerCreate.toJSON();
-        // delete PlayerCreateJSON.password
-        // // Create token
-        // // const token = jwt.sign(
-        // //   PlayerCreateJSON,
-        // //   'shhhhh'
-        // // );
-        // resolve(PlayerCreateJSON);
-
       })().catch(function (err) {
-        reject(new Error(err.message));
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
       })
 
     } else {

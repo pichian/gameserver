@@ -15,8 +15,10 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "connect": "^3.2.0",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "dotenv": "^10.0.0",
+    "express-session": "^1.17.2",
     "js-yaml": "^3.3.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^4.1.0",

@@ -1,17 +1,17 @@
 module.exports = (sequelize, Sequelize) => {
-    const SessionPlayerModel = sequelize.define("SessionPlayerModel", {
+    const sessionPlayerModel = sequelize.define("SessionPlayerModel", {
         id: {
-            field: 'SessionPlayer_ID',
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
         },
         playerId: {
             type: Sequelize.INTEGER,
-            field: 'Player_ID'
+            field: 'player_id'
         },
         token: {
             type: Sequelize.STRING,
-            field: 'SessionPlayer_Token'
+            field: 'token'
         },
 
     },
@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
         }
     );
 
-    return SessionPlayerModel;
+    return sessionPlayerModel;
 };
 
 

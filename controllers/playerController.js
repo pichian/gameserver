@@ -31,6 +31,7 @@ module.exports.registerPlayer = function registerPlayer(req, res, next, body) {
       utils.writeSuccess(res, response);
     })
     .catch(function (response) {
+      console.log(response)
       utils.writeError(res, response);
     });
 };

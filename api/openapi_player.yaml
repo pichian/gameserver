@@ -26,7 +26,7 @@ servers:
 tags:
   - name: player
 paths:
-  /login:
+  /player/login:
     post:
       tags:
         - player
@@ -53,7 +53,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/login_fail_response"
       x-swagger-router-controller: playerController
-  /logout:
+  /player/logout:
     post:
       tags:
         - player
@@ -67,7 +67,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/apiResponse"
       x-swagger-router-controller: playerController
-  /register:
+  /player/register:
     post:
       tags:
         - player
@@ -891,6 +891,9 @@ components:
           type: string
         password:
           type: string
+      example:
+        username: "testUsername"
+        password: "123456789"
     OwnerModel:
       type: object
       properties:
@@ -1060,6 +1063,8 @@ components:
           type: string
       example:
         token: token
+        responseCode: "LTR-200"
+        responseMessage: "Success"
     login_fail_response:
       type: object
       properties:
