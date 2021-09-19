@@ -1,7 +1,63 @@
 'use strict';
 
-var utils = require('../utils/writer.js');
-var agentService = require('../service/agentService');
+const utils = require('../utils/writer.js');
+const middleWare = require('../middleware/auth')
+const agentService = require('../service/agentService');
+const promotionService = require('../service/promotionService')
+
+
+/************************ Main Agent Operation*************************/
+
+module.exports.loginAgent = function loginAgent(req, res, next) {
+  agentService.loginAgent(req.body)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+module.exports.logoutAgent = function logoutAgent(req, res, next) {
+  agentService.logoutAgent(req.body)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+module.exports.findAgentDetail = function findAgentDetail(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    agentService.findAgentDetail(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.agentPaymentRequest = function agentPaymentRequest(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    agentService.agentPaymentRequest(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+
+/************************ Main Agent Operation*************************/
 
 /************************Player Operation By Agent*************************/
 module.exports.listPlayerByAgentId = function listPlayerByAgentId(req, res, next) {
@@ -67,13 +123,17 @@ module.exports.listEmployeeByAgentId = function listEmployeeByAgentId(req, res, 
 
 /************************Promotion Operation By Agent*************************/
 module.exports.promotionCreate = function promotionCreate(req, res, next, body) {
-  agentService.promotionCreate(body)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    promotionService.promotionCreate(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 module.exports.listPromotionByAgentId = function listPromotionByAgentId(req, res, next) {
@@ -90,17 +150,6 @@ module.exports.listPromotionByAgentId = function listPromotionByAgentId(req, res
 
 /************************Promotion Operation By Agent*************************/
 
-
-
-// module.exports.agentPaymentRequest = function agentPaymentRequest(req, res, next, body) {
-//   agentService.agentPaymentRequest(body)
-//     .then(function (response) {
-//       utils.writeJson(res, response);
-//     })
-//     .catch(function (response) {
-//       utils.writeJson(res, response);
-//     });
-// };
 
 // module.exports.agentmpoyee = function agentmpoyee(req, res, next, body) {
 //   agentService.agentmpoyee(body)
@@ -252,7 +301,6 @@ module.exports.registerAgent = function registerAgent(req, res, next, body) {
       utils.writeSuccess(res, response);
     })
     .catch(function (response) {
-      console.error('[Error]:Ctrl, registerAgent =>' + response.message);
       utils.writeError(res, response);
     });
 };

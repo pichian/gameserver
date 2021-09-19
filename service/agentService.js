@@ -1,36 +1,210 @@
 'use strict';
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+const { ObjectID } = require('bson');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const dbConnector = require("../connector/mysqlConnector")
+const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 
-/****
- * agent payment request edit file name
- *
- * body PaymentModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.agentPaymentRequest = function (body, req) {
-  return new Promise(function (resolve, reject) {
-    (async () => {
-      var paymentData = []
-      paymentData.agent_id = '1'
-      paymentData.amount = '1000'
-      paymentData.status = '0'
 
-      const paymentAgent = db.Payment;
-      const paymentCreaterequse = await paymentAgent.create({
-        user_id: '1',
-        amount: '10000',
-        type: '0',
-        status: '0',
+/***************** Service by Agent **************/
+
+/**
+ * Logged in agent into the system
+ **/
+exports.loginAgent = function (body) {
+  return new Promise(function (resolve, reject) {
+    const { username, password } = body
+
+    if (username && password && body !== 'undefined') {
+
+      (async () => {
+
+        const agentTable = dbConnector.agent;
+        const sessionAgentTable = dbConnector.sessionAgent;
+
+        const resAgent = await agentTable.findOne({
+          where: {
+            username: username,
+          },
+          attributes: ['id', 'username', 'password', 'agentName'],
+          raw: true
+        });
+
+        if (!resAgent) return reject(respConvert.businessError(msgConstant.core.login_failed))
+
+        if (resAgent && await bcrypt.compare(password, resAgent.password)) {
+
+          const findSessionAgent = await sessionAgentTable.findOne({
+            where: {
+              agentId: resAgent.id,
+            }
+          });
+
+          if (findSessionAgent) return reject(respConvert.businessError(msgConstant.core.already_login))
+
+          const token = jwt.sign(
+            {
+              id: resAgent.id,
+              agentName: resAgent.agentName,
+              username: resAgent.username,
+              type: 'Agent'
+            },
+            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3',
+            { expiresIn: '8h' }
+          );
+
+          const addTokenToSession = await sessionAgentTable.create({
+            agentId: resAgent.id,
+            token: token,
+          });
+
+          resolve(respConvert.successLogin(token));
+
+        } else {
+          return reject(respConvert.businessError(msgConstant.core.login_failed))
+        }
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
       })
-      resolve({
-        detail: paymentCreaterequse.toJSON()
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Logged out agent from system and session.
+ **/
+exports.logoutAgent = function (body) {
+  return new Promise(function (resolve, reject) {
+
+    const { token } = body
+
+    if (token) {
+      (async () => {
+
+        const decoded = jwt.decode(token);
+
+        if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
+
+        const sessionAgentTable = dbConnector.sessionAgent
+
+        const removeAgentSession = await sessionAgentTable.destroy({
+          where: {
+            token: token,
+          }
+        });
+
+        if (removeAgentSession == 0) return reject(respConvert.businessError(msgConstant.core.invalid_token));
+
+        resolve(respConvert.success());
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+    } else {
+      reject(respConvert.businessError(msgConstant.core.invalid_token));
+    }
+
+  });
+}
+
+
+/**
+ * Finds agent detail include wallet amount, sum player wallet.
+ **/
+exports.findAgentDetail = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const userData = req.user;
+
+    (async () => {
+
+      const agentTable = dbConnector.agent
+
+      const agentInfo = await agentTable.findOne({
+        where: {
+          id: userData.id
+        },
+        attributes: ['agentName', 'walletId'],
+        raw: true
       });
-    })();
+
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+
+      const agentWalletAmount = await agentWalletCollec.findOne({
+        _id: ObjectID(agentInfo.walletId)
+      }, { projection: { _id: 0, amount_coin: 1 } })
+
+      //find total player by agent
+
+      //find total player credit by agent
+
+      //find total promotion credit
+
+      //!!!some data of this resolve still be mock data!!!!
+      resolve(respConvert.successWithData({
+        agentName: agentInfo.agentName,
+        amountCoin: agentWalletAmount.amount_coin,
+        totalPlayer: 0,
+        totalPlayerCredit: 0,
+        totalPromotionCredit: 0
+      })
+      );
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+
+
+/****
+ * Agent payment request.
+ **/
+exports.agentPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { paymentType, wayToPay, paymentAmount, promotionId } = req.body
+
+    if (paymentType && wayToPay && paymentAmount && (promotionId || promotionId === 0)) {
+
+      (async () => {
+
+        const agentPaymentReqTable = dbConnector.agentPaymentReq;
+
+        const patmentReqCreated = await agentPaymentReqTable.create({
+          agentId: req.user.id,
+          paymentType: paymentType,
+          wayToPay: wayToPay,
+          amount: paymentAmount,
+          promotionRefId: promotionId,
+          paymentStatus: 'W',
+          createBy: req.user.id,
+          createDateTime: new Date()
+        })
+
+        resolve(respConvert.success());
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
   });
 
 }
@@ -257,118 +431,6 @@ exports.listplayerPaymentRequestagent = function () {
 }
 
 /**
- * Logs user into the system
- *
- * body PlayerLoginInput ไว้ Login
- * returns inline_response_200
- **/
-exports.loginAgent = function (body) {
-  return new Promise(function (resolve, reject) {
-    if (body.username !== undefined || body.username !== '' && body.password !== undefined || body.password !== '') {
-      const agentTable = dbAgent.Agent;
-      const sessionAgentTable = dbSessionAgent.SessionAgent;
-      (async () => {
-        // const PlayerFindusername = await Player.findOne({
-        //   where: {
-        //     username: body.username,
-        //     //password: body.password,
-        //   }
-        // });
-        // console.log(body.password);
-        // console.log(PlayerFindusername.toJSON().password)
-        // const encryptedPassword = await bcrypt.hash(body.password, 10);
-        // const encryptedPassword2 = await bcrypt.hash(body.password, 10);
-        // console.log(encryptedPassword, encryptedPassword2);
-        // //if(PlayerFindusername)
-        // //console.log(await bcrypt.compare(body.password, PlayerFindusername.toJSON().password));
-
-        // if (PlayerFindusername && await bcrypt.compare(body.password, PlayerFindusername.toJSON().password)) {
-
-        //   const PlayerFindusernameJSON = PlayerFindusername.toJSON();
-
-        //   const SessionPlayerFindid = await SessionPlayer.findOne({
-        //     where: {
-        //       OwnerId: PlayerFindusernameJSON.id,
-        //     }
-        //   });
-
-        //   if (SessionPlayerFindid !== null) {
-
-        //     delete PlayerFindusernameJSON.password
-        //     const token = jwt.sign(
-        //       PlayerFindusernameJSON,
-        //       'shhhhh'
-        //     );
-        //     // add token
-
-        //     const addtoken = await SessionPlayer.update(
-        //       {
-        //         token: token,
-        //       },
-        //       {
-        //         where: {
-        //           OwnerId: PlayerFindusernameJSON.id
-        //         },
-        //       }
-        //     );
-
-        //     if (addtoken[0] == 1) {
-        //       resolve({
-        //         token: token,
-        //       });
-        //     } else {
-        //       reject({
-        //         code: 500,
-        //         message: 'can not update token !!!'
-        //       });
-        //     }
-
-
-
-        //   }
-
-        //   if (SessionPlayerFindid === null) {
-
-        //     delete PlayerFindusernameJSON.password
-        //     const token = jwt.sign(
-        //       PlayerFindusernameJSON,
-        //       'shhhhh'
-        //     );
-        //     // add token
-        //     const addtoken = await SessionPlayer.create({
-        //       OwnerId: PlayerFindusernameJSON.id,
-        //       token: token,
-        //     });
-
-        //     resolve({
-        //       token: addtoken.toJSON().token,
-        //     });
-
-        //   }
-
-
-        // } else {
-
-        //   reject({
-        //     code: 400,
-        //     message: 'Username ไม่ถูกต้อง'
-        //   });
-
-        // }
-
-
-      })();
-    } else {
-      reject({
-        code: 403,
-        message: ' Invalid Username or Password'
-      });
-    }
-  });
-}
-
-
-/**
  * Logs employee into the system
  *
  * body PlayerLoginInput ไว้ Login
@@ -385,18 +447,6 @@ exports.loginemployee = function (body) {
     } else {
       resolve();
     }
-  });
-}
-
-
-/**
- * Logs out current logged in user session
- *
- * no response value expected for this operation
- **/
-exports.logoutAgent = function () {
-  return new Promise(function (resolve, reject) {
-    resolve();
   });
 }
 
@@ -493,7 +543,7 @@ exports.agentPlayerRegister = function (body) {
         });
         resolve(respConvert.success());
       })().catch(function (err) {
-        reject(new Error(err.message));
+        reject(respConvert.systemError(err.message))
       })
 
     } else {
@@ -565,7 +615,7 @@ exports.agentEmployeeRegister = function (body) {
         });
         resolve(respConvert.success());
       })().catch(function (err) {
-        reject(new Error(err.message));
+        reject(respConvert.systemError(err.message))
       })
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
@@ -597,7 +647,7 @@ exports.listEmployeeByAgentId = function () {
       })
       resolve(respConvert.successWithData(employeeList))
     })().catch(function (err) {
-      reject(new Error(err.message));
+      reject(respConvert.systemError(err.message))
     })
 
   });
@@ -657,7 +707,7 @@ exports.promotionCreate = function (body) {
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        reject(new Error(err.message));
+        reject(respConvert.systemError(err.message))
       })
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
@@ -688,7 +738,7 @@ exports.listPromotionByAgentId = function () {
       })
       resolve(respConvert.successWithData(promotionList))
     })().catch(function (err) {
-      reject(new Error(err.message));
+      reject(respConvert.systemError(err.message))
     })
 
   });
@@ -702,25 +752,22 @@ exports.listPromotionByAgentId = function () {
  **/
 exports.registerAgent = function (body) {
   return new Promise(function (resolve, reject) {
-    if (body.name
-      && body.username !== undefined
-      && body.password !== undefined
-      && body.email !== undefined
-      && body.description !== undefined
-      && body.refCode !== undefined
-      && body.status !== undefined
-    ) {
+
+    const { agentName, email, phoneNumber, username, password, description, status, agentRefCode } = body
+
+    if (agentName && email && phoneNumber && username && password && description || description == "" && status && agentRefCode || agentRefCode == "") {
+
       (async () => {
-        const agentTable = dbAgentConnector.Agent
+        const agentTable = dbConnector.agent
 
         const checkDuplucatedUsername = await agentTable.findOne({
           where: {
             [Op.or]: [
               {
-                email: body.email,
+                email: email,
               },
               {
-                username: body.username
+                username: username
               }
             ]
           }
@@ -728,30 +775,48 @@ exports.registerAgent = function (body) {
 
         //if not duplicate this will be 'null' value
         if (checkDuplucatedUsername) {
-          reject(respConvert.businessError(msgConstant.agent.duplicate_user))
+          return reject(respConvert.businessError(msgConstant.agent.duplicate_user))
         }
 
         //Encrypt user password
-        const encryptedPassword = await bcrypt.hash(body.password, 10);
+        const encryptedPassword = await bcrypt.hash(password, 10);
 
-        const agentCreate = await agentTable.create({
-          name: body.name,
-          username: body.username,
+        const resCretedAgent = await agentTable.create({
+          agentName: agentName,
+          username: username,
           password: encryptedPassword,
-          email: body.email,
-          description: body.description,
-          refCode: body.refCode,
-          status: body.status,
+          email: email,
+          phoneNumber: phoneNumber,
+          description: description,
+          agentRefCode: agentRefCode,
+          status: status,
           createBy: 1,
           createDateTime: new Date(),
           updateBy: 1,
           updateDateTime: new Date(),
         });
 
+        // create agent wallet on mongo
+        const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+        const resCreatedWallet = await agentWalletCollec.insertOne({
+          agent_id: resCretedAgent.id,
+          amount_coin: 0,
+        })
+
+        //update agent wallet id
+        const updateAgentWallet = await agentTable.update(
+          {
+            walletId: resCreatedWallet.insertedId.toString()
+          },
+          {
+            where: { id: resCretedAgent.id }
+          })
+
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        reject(new Error(err.message));
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
       })
 
     } else {

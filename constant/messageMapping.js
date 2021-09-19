@@ -11,13 +11,13 @@ module.exports.core = {
 }
 
 module.exports.agent = {
-	duplicate_user: { responseCode: "LTR-2101", responseMessage: "Username หรือ Email ของ Agent มีอยู่แล้วในระบบ" },
+	duplicate_user: { responseCode: "LTR-2101", responseMessage: "Agent Name or Username is already in use." },
 	not_found_user: { responseCode: "LTR-2102", responseMessage: "ไม่พบข้อมูล Agent" },
 	credit_not_enough: { responseCode: "LTR-2103", responseMessage: "ไม่สามาทำรายการได้ เนื่องจากเครดิตไม่เพียงพอ" }
 };
 
 module.exports.owner = {
-	duplicate_user: { responseCode: "LTR-2201", responseMessage: "Playername or Username is already in use." },
+	duplicate_user: { responseCode: "LTR-2201", responseMessage: "Player Name or Username is already in use." },
 	// msg1: {responseCode:"LTR-2201",responseMessage:"example message1"},
 	msg2: { responseCode: "LTR-2202", responseMessage: "example message2" },
 	msg3: { responseCode: "LTR-2203", responseMessage: "example message3" }

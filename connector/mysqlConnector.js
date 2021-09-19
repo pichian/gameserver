@@ -15,7 +15,12 @@ const sequelizeConnector = new Sequelize(config.SQL_DB_NAME, config.SQL_DB_USERN
 
 const db = {};
 
-db.Player = require("../model/player")(sequelizeConnector, Sequelize);
+db.player = require("../model/player")(sequelizeConnector, Sequelize);
 db.sessionPlayer = require("../model/sessionPlayer")(sequelizeConnector, Sequelize);
+db.playerPaymentReq = require("../model/playerPaymentRequest")(sequelizeConnector, Sequelize);
+
+db.agent = require("../model/agent")(sequelizeConnector, Sequelize)
+db.sessionAgent = require("../model/sessionAgent")(sequelizeConnector, Sequelize)
+db.agentPaymentReq = require("../model/agentPaymentRequest")(sequelizeConnector, Sequelize)
 
 module.exports = db;

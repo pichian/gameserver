@@ -1,145 +1,14 @@
 'use strict';
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+const { ObjectID } = require('bson');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const mysqlConnector = require("../connector/mysqlConnector")
-const mongoConnector = require("../connector/mongodb")
+const mongoConnector = require("../connector/mongodb");
 
-/**
- * Finds wallet player by token key
- * Finds wallet player detail by token key.
- *
- * returns List
- **/
-exports.findById = function (req) {
-  return new Promise(function (resolve, reject) {
-    (async () => {
-
-      await client.connect();
-
-      const database = client.db("player");
-      const haiku = database.collection("wallet");
-
-      const wallet = await haiku.findOne(
-        { user_id: 1 },
-      );
-      console.log(wallet);
-      resolve(wallet);
-
-      // var examples = {};
-      // examples['application/json'] = [{
-      //   "amountCoin": 6.027456183070403,
-      //   "coinList": [{
-      //     "key": ""
-      //   }, {
-      //     "key": ""
-      //   }],
-      //   "userid": 0
-      // }, {
-      //   "amountCoin": 6.027456183070403,
-      //   "coinList": [{
-      //     "key": ""
-      //   }, {
-      //     "key": ""
-      //   }],
-      //   "userid": 0
-      // }];
-      // if (Object.keys(examples).length > 0) {
-      //   resolve(examples[Object.keys(examples)[0]]);
-      // } else {
-      //   resolve();
-      // }
-
-    })();
-
-
-  });
-}
-
-
-/**
- * payment player detail
- * Returns a single pet
- *
- * paymentId Long ID of pet to return
- * returns PaymentModel
- **/
-exports.getplayerById = function (paymentId) {
-  console.log("ggggg");
-  return new Promise(function (resolve, reject) {
-
-    const payment = db.Payment;
-    (async () => {
-      const paymentlist = await payment.findOne({
-        where: {
-          id: {
-            [Op.eq]: paymentId,
-          },
-        }
-      });
-      console.log(paymentlist);
-      resolve(paymentlist);
-
-    })();
-
-    // var examples = {};
-    // examples['application/json'] = {
-    //   "Status": "Status",
-    //   "agentId": 9,
-    //   "Amount": 1.4658129805029452,
-    //   "id": 0
-    // };
-    // if (Object.keys(examples).length > 0) {
-    //   resolve(examples[Object.keys(examples)[0]]);
-    // } else {
-    //   resolve();
-    // }
-  });
-}
-
-
-/**
- * List agent payment request
- *
- * returns PaymentModel
- **/
-exports.listplayerPaymentRequest = function (req) {
-  return new Promise(function (resolve, reject) {
-
-    const payment = db.Payment;
-    (async () => {
-      const paymentlist = await payment.findAll({
-        where: {
-          // user_id: {
-          //   [Op.eq]: 1
-          // },
-          // status: {
-          //   [Op.eq]: 1
-          // }
-        }
-      });
-      console.log(paymentlist);
-      resolve(paymentlist);
-
-    })();
-
-    // var examples = {};
-    // examples['application/json'] = {
-    //   "Status": "Status",
-    //   "agentId": 11,
-    //   "Amount": 1.4658129805029452,
-    //   "id": 0
-    // };
-    // if (Object.keys(examples).length > 0) {
-    //   resolve(examples[Object.keys(examples)[0]]);
-    // } else {
-    //   resolve();
-    // }
-  });
-}
-
+/***************** Service by Plyer **************/
 
 /**
  * Logs Player into the system
@@ -153,13 +22,14 @@ exports.loginPlayer = function (body) {
 
       (async () => {
 
-        const playerTable = mysqlConnector.Player
+        const playerTable = mysqlConnector.player
         const sessionPlayerTable = mysqlConnector.sessionPlayer
 
         const resPlayer = await playerTable.findOne({
           where: {
             username: username,
           },
+          attributes: ['id', 'username', 'password', 'playerName'],
           raw: true
         });
 
@@ -177,10 +47,13 @@ exports.loginPlayer = function (body) {
 
           const token = jwt.sign(
             {
+              id: resPlayer.id,
               playerName: resPlayer.playerName,
-              username: resPlayer.username
+              username: resPlayer.username,
+              type: 'Player'
             },
-            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3'
+            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3',
+            { expiresIn: '8h' }
           );
 
           const addTokenToSession = await sessionPlayerTable.create({
@@ -199,7 +72,7 @@ exports.loginPlayer = function (body) {
         reject(respConvert.systemError(err.message))
       })
     } else {
-      reject(respConvert.validateError(msgConstant.core.validate_error));
+      reject(respConvert.businessError(msgConstant.core.invalid_token));
     }
 
   });
@@ -207,9 +80,8 @@ exports.loginPlayer = function (body) {
 
 
 /**
- * Logs out current logged in user session
- *
- * no response value expected for this operation
+ * Logged out player from system.
+ * Also remove session (unfinished)
  **/
 exports.logoutPlayer = function (body) {
   return new Promise(function (resolve, reject) {
@@ -219,6 +91,9 @@ exports.logoutPlayer = function (body) {
     if (token) {
 
       (async () => {
+        const decoded = jwt.decode(token);
+
+        if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
         const sessionPlayerTable = mysqlConnector.sessionPlayer
 
@@ -235,67 +110,11 @@ exports.logoutPlayer = function (body) {
         reject(respConvert.systemError(err.message))
       })
     } else {
-      reject(respConvert.validateError(msgConstant.core.invalid_token));
+      reject(respConvert.businessError(msgConstant.core.invalid_token));
     }
 
   });
 }
-
-
-/**
- * agent payment request
- *
- * body PaymentModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.playerPaymentRequest = function (body) {
-  console.log('gggg');
-  return new Promise(function (resolve, reject) {
-    (async () => {
-
-      const input = {
-        //type: '0',
-      };
-
-      if (body.id !== undefined) {
-        input.id = body.id;
-      }
-      if (body.amount !== undefined) {
-        input.amount = body.amount;
-      }
-      if (body.agentId !== undefined) {
-        input.user_id = body.agentId;
-      }
-      if (body.status !== undefined) {
-        //input.Status = body.Status;
-        input.status = body.status;
-      }
-      if (body.type !== undefined) {
-        //input.Status = body.Status;
-        input.status = body.type;
-      }
-
-
-
-      const payment = db.Payment;
-      console.log('ggggfg');
-      const paymentCreaterequse = await payment.create(
-        {
-          // user_id: '1',
-          // amount: '10000',
-          // type: '0',
-          // status: '0',
-          ...input,
-        }
-      )
-      resolve({
-        detail: paymentCreaterequse.toJSON()
-      });
-    })();
-
-  });
-}
-
 
 /**
  * Register player from main page.
@@ -305,11 +124,11 @@ exports.registerPlayer = function (body) {
 
     const { playerName, username, password, phoneNumber, agentRefCode } = body;
 
-    if (!(playerName && username && password && phoneNumber && agentRefCode)) {
+    if (playerName && username && password && phoneNumber && (agentRefCode || agentRefCode === "")) {
 
       (async () => {
 
-        const playerTable = mysqlConnector.Player
+        const playerTable = mysqlConnector.player
 
         //Check duplicate player name and username
         const duplicatedPlayer = await playerTable.findOne({
@@ -344,8 +163,8 @@ exports.registerPlayer = function (body) {
         });
 
         // create player wallet on mongo
-        const agentWalletCollec = mongoConnector.api.collection('player_wallet')
-        const resCreatedWallet = await agentWalletCollec.insertOne({
+        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await playerWalletCollec.insertOne({
           player_id: resCreatedPlayer.id,
           amount_coin: 0,
         })
@@ -373,124 +192,110 @@ exports.registerPlayer = function (body) {
   });
 }
 
-
 /**
- * Update player detail
- *
- * body PlayerPutInput update Player Detail
- * no response value expected for this operation
+ * Get player info include player name, amount coin.
  **/
-exports.updatePlayerDetail = function (req, body) {
+exports.getPlayerInfo = function (req) {
   return new Promise(function (resolve, reject) {
 
+    const userData = req.user;
 
+    (async () => {
 
-    if (req.user.id && body !== undefined) {
+      const playerTable = mysqlConnector.player
 
-
-
-
-      try {
-
-        console.log('req.user.id=' + req.user.id);
-
-
-        (async () => {
-
-
-
-          const input = {};
-
-          if (body.firstname !== undefined) {
-            input.firstname = body.firstname;
-          }
-          if (body.lastname !== undefined) {
-            input.lastname = body.lastname;
-          }
-          if (body.email !== undefined) {
-            input.email = body.email;
-          }
-          if (body.password !== undefined) {
-            const encryptedPassword = await bcrypt.hash(body.password, 10);
-            input.password = encryptedPassword;
-          }
-          if (body.phone !== undefined) {
-            input.phone = body.phone;
-          }
-          if (body.userStatus !== undefined) {
-            input.userStatus = body.userStatus;
-          }
-          if (body.refCodeAgent !== undefined) {
-            input.refCodeAgent = body.refCodeAgent;
-          }
-
-          console.log(input);
-
-          const Player = db.Player;
-
-          if (Object.keys(input).length > 0) {
-
-
-
-
-
-            const result = await Player.update(
-              {
-                ...input,
-              },
-              {
-                where: {
-                  id: {
-                    [Op.eq]: req.user.id,
-                  },
-                },
-              }
-            );
-
-
-          }
-
-          const NewPlayerUpdate = await Player.findOne({
-            where: {
-              id: req.user.id,
-              //password: body.password,
-            }
-          });
-
-
-          const NewPlayerUpdateJSON = NewPlayerUpdate.toJSON();
-          delete NewPlayerUpdateJSON.password;
-
-          console.log(NewPlayerUpdateJSON);
-
-          resolve(NewPlayerUpdateJSON);
-
-        })();
-
-
-      } catch (error) {
-
-        throw Error('ทำรายการไม่สำเร็จ');
-        reject({
-          code: 500,
-          message: 'ทำรายการไม่สำเร็จ'
-        });
-
-
-      }
-
-
-
-    } else {
-
-      //throw Error('ทำรายการไม่สำเร็จ');
-      reject({
-        code: 500,
-        message: 'ทำรายการไม่สำเร็จ'
+      const playerInfo = await playerTable.findOne({
+        where: {
+          id: userData.id
+        },
+        attributes: ['playerName', 'walletId'],
+        raw: true
       });
 
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+
+      const playerWalletAmount = await playerWalletCollec.findOne({
+        _id: ObjectID(playerInfo.walletId)
+      }, { projection: { _id: 0, amount_coin: 1 } })
+
+      resolve(respConvert.successWithData({ playerName: playerInfo.playerName, amountCoin: playerWalletAmount.amount_coin }));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+
+/**
+ * Player payment request from main page
+ **/
+exports.playerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { paymentType, wayToPay, amount } = req.body
+
+    if (paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+
+        const requestCreate = await playerPaymentReqTable.create(
+          {
+            playerId: req.user.id,
+            paymentType: paymentType,
+            wayToPay: wayToPay,
+            amount: amount,
+            paymentStatus: 'W',
+            createDateTime: new Date()
+          }
+        )
+
+        resolve(respConvert.success());
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
 }
 
+/**
+ * List of player payment request.
+ **/
+exports.listPlayerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+      const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+
+      const paymentReqList = await playerPaymentReqTable.findAll({
+        where: {
+          player_id: req.user.id
+        },
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus', 'createDateTime'],
+        order: [['createDateTime', 'DESC']],
+        limit: 5,
+        raw: true
+      });
+
+      resolve(respConvert.successWithData(paymentReqList));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+
+
+/***************** Service by XXXXXXXXX **************/

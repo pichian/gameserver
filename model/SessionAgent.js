@@ -1,22 +1,22 @@
 module.exports = (sequelize, Sequelize) => {
     const SessionAgentModel = sequelize.define("SessionAgentModel", {
         id: {
-            field: 'SessionAgent_ID',
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
         },
-        AgentId: {
+        agentId: {
             type: Sequelize.INTEGER,
-            field: 'Agent_ID'
+            field: 'agent_id'
         },
         token: {
             type: Sequelize.STRING,
-            field: 'SessionAgent_Token'
+            field: 'token'
         },
 
     },
         {
-            tableName: 'session_Agent',
+            tableName: 'session_agent',
             timestamps: false,
 
         }

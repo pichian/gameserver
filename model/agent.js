@@ -1,21 +1,32 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("AgentModel", {
         id: {
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
-        name: {
+        agentRefCode: {
             type: Sequelize.STRING,
-            field: 'name'
+            field: 'agent_ref_code',
+            allowNull: true,
+            defaultValue: null
         },
-        username: {
+        agentName: {
             type: Sequelize.STRING,
-            field: 'username'
+            field: 'agent_name'
         },
         email: {
             type: Sequelize.STRING,
             field: 'email'
+        },
+        phoneNumber: {
+            type: Sequelize.STRING,
+            field: 'phone'
+        },
+        username: {
+            type: Sequelize.STRING,
+            field: 'username'
         },
         password: {
             type: Sequelize.STRING,
@@ -23,19 +34,29 @@ module.exports = (sequelize, Sequelize) => {
         },
         description: {
             type: Sequelize.STRING,
-            field: 'description'
+            field: 'description',
+            defaultValue: ""
+        },
+        ranking: {
+            type: Sequelize.INTEGER,
+            field: 'ranking',
+            defaultValue: 0
+        },
+        walletId: {
+            type: Sequelize.STRING,
+            field: 'wallet_id',
+            allowNull: true,
+            defaultValue: null
         },
         status: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'status'
-        },
-        refCode: {
-            type: Sequelize.INTEGER,
-            field: 'ref_code'
         },
         createBy: {
             type: Sequelize.INTEGER,
-            field: 'create_by'
+            field: 'create_by',
+            allowNull: true,
+            defaultValue: null
         },
         createDateTime: {
             field: 'create_datetime',
@@ -45,7 +66,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         updateBy: {
             type: Sequelize.INTEGER,
-            field: 'update_by'
+            field: 'update_by',
+            allowNull: true,
+            defaultValue: null
         },
         updateDateTime: {
             field: 'update_datetime',
@@ -55,7 +78,7 @@ module.exports = (sequelize, Sequelize) => {
         }
     },
         {
-            tableName: 'agent',
+            tableName: 'tbm_agent_info',
             timestamps: false,
         }
     );

@@ -8,7 +8,7 @@ exports.successWithData = function (data) {
     return {
         data: data,
         responseCode: msgConstant.core.success.responseCode,
-        responseMessage: msgConstant.core.success.responseCode
+        responseMessage: msgConstant.core.success.responseMessage
     }
 }
 
@@ -27,6 +27,7 @@ exports.businessError = function (messageObj) {
 }
 
 exports.systemError = function (errorMessage) {
+    console.log('system error call ' + errorMessage)
     return {
         responseCode: "LTR-500",
         responseMessage: errorMessage
@@ -37,6 +38,6 @@ exports.successLogin = function (token) {
     return {
         token: token,
         responseCode: msgConstant.core.success.responseCode,
-        responseMessage: msgConstant.core.success.responseCode
+        responseMessage: msgConstant.core.success.responseMessage
     }
 }

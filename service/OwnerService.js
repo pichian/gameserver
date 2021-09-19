@@ -5,9 +5,9 @@ const bcrypt = require("bcryptjs");
 
 
 
-const dbPlayer = require("../model/indexPlayer.js");
-const dbOwner = require("../model/indexOwner.js");
-const dbAgent = require("../model/indexAgent.js");
+// const dbPlayer = require("../model/indexPlayer.js");
+// const dbOwner = require("../model/indexOwner.js");
+// const dbAgent = require("../model/indexAgent.js");
 
 
 const { MongoClient } = require("mongodb");

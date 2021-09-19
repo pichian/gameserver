@@ -1,93 +1,57 @@
 'use strict';
 const jwt = require("jsonwebtoken");
-const db = require("../model");
+const respConvert = require("../utils/responseConverter");
+const msgConstant = require("../constant/messageMapping");
+const mysqlConnector = require("../connector/mysqlConnector")
+const mongoConnector = require("../connector/mongodb")
 
 const config = process.env
 
-exports.authtoken = async function (req, res, next) {
+exports.authToken = function (req) {
+    return new Promise(function (resolve, reject) {
 
+        const token = req.headers['authorization'].split(" ")[1];
 
-    const token = req.headers["api_key"];
+        (async () => {
 
-    if (!token) {
-        return res.status(403).send("A token is required for authentication");
-    }
-
-    try {
-
-
-            const SessionPlayerModel =  db.SessionPlayer
-
-            const findSessionPlayer = await SessionPlayerModel.findOne({
-                where: {
-                  token: token,
-                }
-            });
-
-            //console.log(findSessionPlayer);
-              
-            if(findSessionPlayer){
-
-                //console.log('config.JWT_TOKEN_KEY=' + config.JWT_TOKEN_KEY)
-
-                const PlayerModel =  db.Player
-
-                const findPlayer = await PlayerModel.findOne({
-                    where: {
-                      id: findSessionPlayer.toJSON().playerId,
-                    }
-                });
-    
-
-                const decoded = jwt.verify(token, config.JWT_TOKEN_KEY);
-                console.log(decoded);
-                req.user = findPlayer.toJSON();
-            }else{
-
-                return res.status(401).send(
-                    {
-                        code: 401,
-                        message: 'token ไม่ถูกต้อง'
-                    }
-                );
-
+            if (token == 'null') {
+                return reject(respConvert.businessError(msgConstant.core.invalid_token))
             }
 
+            const decoded = jwt.verify(token, 'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3')
+            req.user = decoded
+            resolve()
 
+        })().catch(function (err) {
+            console.log('[error on catch] : ' + err.message)
 
-       
-    } catch (err) {
-        console.err(err);
-        return res.status(401).send(
-            {
-                code: 401,
-                message: 'token ไม่ถูกต้อง'
+            if (err.message == 'jwt expired') {
+                const decodedExpiredToken = jwt.decode(token);
+                removeUserSessionHandler(decodedExpiredToken, token)
+                return reject(respConvert.businessError(msgConstant.core.token_expire))
             }
-        );
-    }
-    //return next();
 
-
-
-
+            reject(respConvert.systemError(err.message))
+        })
+    });
 
 }
 
-
-// const verifyToken = (req, res, next) => {
-//   const token =
-//     req.body.token || req.query.token || req.headers["api_key"];
-
-//   if (!token) {
-//     return res.status(403).send("A token is required for authentication");
-//   }
-//   try {
-//     const decoded = jwt.verify(token, config);
-//     req.user = decoded;
-//   } catch (err) {
-//     return res.status(401).send("Invalid Token");
-//   }
-//   return next();
-// };
-
-// module.exports = verifyToken;
+function removeUserSessionHandler(decodedExpiredToken, token) {
+    if (decodedExpiredToken.type == 'Player') {
+        const sessionPlayerTable = mysqlConnector.sessionPlayer
+        const removePlayerSession = sessionPlayerTable.destroy({
+            where: {
+                token: token,
+            }
+        });
+    } else if (decodedExpiredToken.type == 'Agent') {
+        const sessionAgentTable = mysqlConnector.sessionAgent
+        const removeAgentSession = sessionAgentTable.destroy({
+            where: {
+                token: token,
+            }
+        });
+    }
+    return
+}

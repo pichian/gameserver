@@ -30,7 +30,7 @@ paths:
     post:
       tags:
         - player
-      summary: Logged player user into system.
+      summary: Logged in player user into system.
       operationId: loginPlayer
       requestBody:
         description: for player login
@@ -59,6 +59,13 @@ paths:
         - player
       summary: Logged out player session.
       operationId: logoutPlayer
+      requestBody:
+        description: token for clear session
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithToken"
+        required: true
       responses:
         "200":
           description: successful logout
@@ -88,6 +95,71 @@ paths:
               schema:
                 $ref: "#/components/schemas/successResponse"
       x-swagger-router-controller: playerController
+  /player/info:
+    post:
+      tags:
+        - player
+      summary: Get player info ex. Player name, wallet amount.
+      description: Returns amount of player wallet searching by token.
+      operationId: getPlayerInfo
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: playerController
+  /player/paymentRequest:
+    post:
+      tags:
+        - player
+      summary: Player payment request.
+      operationId: playerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/playerPaymentRequest"
+        required: true
+      responses:
+        "200":
+          description: Request Complete.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/successResponse"
+      x-swagger-router-controller: playerController
+  /player/paymentRequestList:
+    post:
+      tags:
+        - player
+      summary: Payment request list of player.
+      operationId: listPlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/playerPaymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: playerController
+
   # /agent/paymentRequestList/{agentId}:
   #   post:
   #     tags:
@@ -339,32 +411,6 @@ paths:
   #           application/json:
   #             schema:
   #               $ref: "#/components/schemas/playerListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
-  # /player/paymentRequestList/:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Payment request list of player.
-  #     operationId: listPlayerPaymentRequest
-  #     requestBody:
-  #       required: true
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/listPlayerPaymentRequestBody"
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/paymentRequestListModel"
   #       "404":
   #         description: Empty Response
   #         content:
@@ -850,14 +896,27 @@ components:
           type: string
         phoneNumber:
           type: string
-        refCode:
+        agentRefCode:
           type: string
       example:
         playerName: "PlayerXX"
         username: "PlayerXX"
         password: "123456789"
         phoneNumber: "0000000000"
-        refCode: ""
+        agentRefCode: ""
+    playerPaymentRequest:
+      type: object
+      properties:
+        paymentType:
+          type: string
+        wayToPay:
+          type: string
+        amount:
+          type: integer
+      example:
+        paymentType: "DP"
+        wayToPay: "C"
+        amount: 1000
     EmployeeModel:
       type: object
       properties:
@@ -892,7 +951,7 @@ components:
         password:
           type: string
       example:
-        username: "testUsername"
+        username: "Player1"
         password: "123456789"
     OwnerModel:
       type: object
@@ -1084,40 +1143,37 @@ components:
     emptyResponse:
       type: array
       example: []
-    paymentRequestListModel:
+    playerPaymentRequestListModel:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        type:
+        data:
+          type: array
+        responseCode:
           type: string
-        wayToPay:
-          type: string
-        playerName:
-          type: string
-        promotion:
-          type: string
-        amount:
-          type: number
-          format: int64
-        status:
+        responseMessage:
           type: string
       example:
-        - id: 0
-          type: "Deposit"
-          wayToPay: "Cash"
-          playerName: "PlayerXXX"
-          promotion: "Promotion1"
-          amount: 100
-          status: "0"
-        - id: 1
-          type: "Deposit"
-          wayToPay: "Cash"
-          playerName: "PlayerXXX"
-          promotion: "Promotion1"
-          amount: 100
-          status: "0"
+        {
+          data:
+            [
+              {
+                id: 0,
+                paymentType: "DP",
+                wayToPay: "C",
+                amount: 1000,
+                status: "W",
+              },
+              {
+                id: 1,
+                paymentType: "WD",
+                wayToPay: "T",
+                amount: 500,
+                status: "W",
+              },
+            ],
+          code: "LTR-I-200",
+          message: "Success",
+        }
     playerListModel:
       type: object
       properties:
@@ -1174,18 +1230,6 @@ components:
         - id: 1
           datetime: "20-JUN-1990 08:03:00"
           action: "Approve Withdraw Player 1"
-    listPlayerPaymentRequestBody:
-      type: object
-      properties:
-        playerId:
-          type: integer
-          format: int64
-        agentId:
-          type: integer
-          format: int64
-      example:
-        playerId: 11
-        agentId: 1
     playerLottoHistoryModel:
       type: object
       properties:
@@ -1325,6 +1369,13 @@ components:
         dateStart: "2008-03-09 16:05:07.123"
         dateStop: "2008-03-09 16:05:07.123"
         description: "Description"
+    requestWithToken:
+      type: object
+      properties:
+        token:
+          type: string
+      example:
+        token: yourExampleToken
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http
