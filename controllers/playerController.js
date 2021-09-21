@@ -26,6 +26,16 @@ module.exports.logoutPlayer = function logoutPlayer(req, res, next, body) {
     });
 };
 
+module.exports.authenPlayerToken = function authenPlayerToken(req, res, next) {
+  middleWare.authToken(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
 module.exports.registerPlayer = function registerPlayer(req, res, next, body) {
   playerService.registerPlayer(body)
     .then(function (response) {

@@ -27,7 +27,6 @@ for (let i = 2; i < openApiApp._router.stack.length; i++) {
 }
 
 mongo.mongo(function (db) {
-    console.log(db)
     if (db !== false) {
         // Initialize the Swagger middleware
         http.createServer(app).listen(serverPort, function () {

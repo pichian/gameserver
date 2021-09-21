@@ -3,9 +3,6 @@ const jwt = require("jsonwebtoken");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const mysqlConnector = require("../connector/mysqlConnector")
-const mongoConnector = require("../connector/mongodb")
-
-const config = process.env
 
 exports.authToken = function (req) {
     return new Promise(function (resolve, reject) {
@@ -14,17 +11,43 @@ exports.authToken = function (req) {
 
         (async () => {
 
+            //check if is not valid token.
             if (token == 'null') {
                 return reject(respConvert.businessError(msgConstant.core.invalid_token))
             }
 
-            const decoded = jwt.verify(token, 'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3')
-            req.user = decoded
+            //if it not expired.
+            const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECRET_KEY)
+            //check if it not valid on session.
+            const isNotValidToken = await checkTokenValidHandler(decoded, token)
+            if (isNotValidToken) return reject(respConvert.businessError(msgConstant.core.session_timeout))
+
+            //always generate new token if not expired and still valid.
+            const generatedNewToken = jwt.sign(
+                {
+                    id: decoded.id,
+                    name: decoded.name,
+                    username: decoded.username,
+                    type: decoded.type
+                },
+                process.env.JWT_TOKEN_SECRET_KEY,
+                { expiresIn: '30m' }
+            );
+
+            //decoded and return to req.user
+            const newtokenDecoded = jwt.decode(generatedNewToken)
+
+            //update new token to each user session .
+            updateUserSessionHandler(decoded, generatedNewToken)
+
+            req.user = newtokenDecoded
+
             resolve()
 
         })().catch(function (err) {
             console.log('[error on catch] : ' + err.message)
 
+            //if expired or other error
             if (err.message == 'jwt expired') {
                 const decodedExpiredToken = jwt.decode(token);
                 removeUserSessionHandler(decodedExpiredToken, token)
@@ -37,14 +60,58 @@ exports.authToken = function (req) {
 
 }
 
-function removeUserSessionHandler(decodedExpiredToken, token) {
-    if (decodedExpiredToken.type == 'Player') {
+function updateUserSessionHandler(decodedToken, newToken) {
+    if (decodedToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
-        const removePlayerSession = sessionPlayerTable.destroy({
+        const updatePlayerSession = sessionPlayerTable.update({ token: newToken }, {
+            where: {
+                playerId: decodedToken.id,
+                status: 'Y'
+            },
+        });
+    } else if (decodedToken.type == 'Agent') {
+        const sessionAgentTable = mysqlConnector.sessionAgent
+        const removeAgentSession = sessionAgentTable.destroy({
             where: {
                 token: token,
             }
         });
+    }
+    return
+}
+
+function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
+    if (decodedExpiredToken.type == 'Player') {
+        const sessionPlayerTable = mysqlConnector.sessionPlayer
+        const removePlayerSession = sessionPlayerTable.update({ status: 'N' }, {
+            where: {
+                playerId: decodedExpiredToken.id,
+                token: expiredToken
+            },
+        });
+    } else if (decodedToken.type == 'Agent') {
+        const sessionAgentTable = mysqlConnector.sessionAgent
+        const removeAgentSession = sessionAgentTable.destroy({
+            where: {
+                token: token,
+            }
+        });
+    }
+    return
+}
+
+async function checkTokenValidHandler(decodedTokenData, token) {
+    if (decodedTokenData.type == 'Player') {
+        const sessionPlayerTable = mysqlConnector.sessionPlayer
+        const tokenValid = await sessionPlayerTable.findOne({
+            where: {
+                playerId: decodedTokenData.id,
+                token: token,
+                status: 'N'
+            },
+            raw: true
+        });
+        return tokenValid !== null ? true : false
     } else if (decodedExpiredToken.type == 'Agent') {
         const sessionAgentTable = mysqlConnector.sessionAgent
         const removeAgentSession = sessionAgentTable.destroy({
@@ -55,3 +122,4 @@ function removeUserSessionHandler(decodedExpiredToken, token) {
     }
     return
 }
+

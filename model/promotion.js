@@ -18,16 +18,16 @@ module.exports = (sequelize, Sequelize) => {
             field: 'rate_type'
         },
         rateAmount: {
-            type: Sequelize.FLOAT,
-            field: 'rate_amount'
+            type: Sequelize.DOUBLE,
+            field: 'rate_value'
         },
         dateStart: {
-            field: 'date_start',
+            field: 'start_datetime',
             type: Sequelize.DATE,
             allowNull: false,
         },
         dateStop: {
-            field: 'date_stop',
+            field: 'end_datetime',
             type: Sequelize.DATE,
             allowNull: false,
         },
@@ -61,7 +61,7 @@ module.exports = (sequelize, Sequelize) => {
         }
     },
         {
-            tableName: 'promotion',
+            tableName: 'tbm_promotion',
             timestamps: false,
         }
     );

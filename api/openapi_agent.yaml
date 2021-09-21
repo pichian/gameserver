@@ -564,16 +564,8 @@ paths:
         - agent
       summary: List of promotion by agent id.
       operationId: listPromotionByAgentId
-      # parameters:
-      #   - name: agentId
-      #     in: path
-      #     description: Id of agent.
-      #     required: true
-      #     style: simple
-      #     explode: false
-      #     schema:
-      #       type: integer
-      #       format: int64
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -977,8 +969,8 @@ components:
         type:
           type: number
     emptyResponse:
-      type: array
-      example: []
+      type: object
+      example: { data: [], code: "LTR-200", message: "Success" }
     paymentRequestListModel:
       type: object
       properties:
@@ -1122,11 +1114,9 @@ components:
         promotionName:
           type: string
         promotionType:
-          type: integer
-          format: int64
+          type: string
         rateType:
-          type: integer
-          format: int64
+          type: string
         rateAmount:
           type: number
         dateStart:
@@ -1154,7 +1144,9 @@ components:
         id:
           type: integer
           format: int64
-        name:
+        promotionName:
+          type: string
+        promotionType:
           type: string
         rateType:
           type: integer
@@ -1166,18 +1158,26 @@ components:
         dateStop:
           type: string
       example:
-        - id: 0
-          name: "Promotion 2"
-          rateType: 1
-          rateAmount: 10
-          dateStart: "2008-03-09 16:05:07.123"
-          dateStop: "2008-03-09 16:05:07.123"
-        - id: 1
-          name: "Promotion 2"
-          rateType: 0
-          rateAmount: 15
-          dateStart: "2008-03-09 16:05:07.123"
-          dateStop: "2008-03-09 16:05:07.123"
+        [
+          {
+            id: 1,
+            promotionName: "Promotion 1",
+            promotionType: "freeCredit",
+            rateType: "fixed",
+            rateAmount: 200,
+            dateStart: "2021-09-01 13:13:10",
+            dateStop: "2021-09-20 13:13:12",
+          },
+          {
+            id: 2,
+            promotionName: "Promotion 2",
+            promotionType: "newYear",
+            rateType: "percent",
+            rateAmount: 10,
+            dateStart: "2021-09-01 13:13:10",
+            dateStop: "2021-09-20 13:13:12",
+          },
+        ]
     promotionDetailModel:
       type: object
       properties:

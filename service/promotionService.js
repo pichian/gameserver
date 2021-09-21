@@ -14,44 +14,64 @@ const msgConstant = require("../constant/messageMapping");
 exports.promotionCreate = function (req) {
     return new Promise(function (resolve, reject) {
 
-        console.log(req.body)
-        // if (
-        //     body.promotionName !== undefined &&
-        //     body.promotionType !== undefined &&
-        //     body.rateType !== undefined &&
-        //     body.rateAmount !== undefined &&
-        //     body.dateStart !== undefined &&
-        //     body.dateStop !== undefined &&
-        //     body.description !== undefined &&
-        //     body.status !== undefined
-        // ) {
-        //     (async () => {
-        //         const promotionTable = dbPromotionConnector.Promotion
+        const { promotionName, promotionType, rateType, rateAmount, dateStart, dateStop, status, description } = req.body
 
-        //         await promotionTable.create({
-        //             promotionName: body.promotionName,
-        //             promotionType: body.promotionType,
-        //             rateType: body.rateType,
-        //             rateAmount: body.rateAmount,
-        //             dateStart: body.dateStart,
-        //             dateStop: body.dateStop,
-        //             status: body.status,
-        //             description: body.description,
-        //             createBy: 1,
-        //             createDateTime: new Date(),
-        //             updateBy: 1,
-        //             updateDateTime: new Date(),
-        //         });
+        if (promotionName && promotionType && rateType && rateAmount && dateStart && dateStop && status && description || description == '') {
 
-        //         resolve(respConvert.success());
+            (async () => {
+                const promotionTable = dbConnector.promotion
 
-        //     })().catch(function (err) {
-        //         reject(respConvert.systemError(err.message))
-        //     })
-        // } else {
-        //     reject(respConvert.validateError(msgConstant.core.validate_error));
-        // }
+                await promotionTable.create({
+                    promotionName: promotionName,
+                    promotionType: promotionType,
+                    rateType: rateType,
+                    rateAmount: rateAmount,
+                    dateStart: dateStart,
+                    dateStop: dateStop,
+                    status: status,
+                    description: description,
+                    createBy: req.user.id,
+                    createDateTime: new Date(),
+                    updateBy: req.user.id,
+                    updateDateTime: new Date(),
+                });
 
-        resolve(respConvert.success());
+                resolve(respConvert.success());
+
+            })().catch(function (err) {
+                reject(respConvert.systemError(err.message))
+            })
+        } else {
+            reject(respConvert.validateError(msgConstant.core.validate_error));
+        }
+
+    });
+}
+
+/**
+ * List Player
+ *
+ * returns PlayerModel
+ **/
+exports.listPromotionByAgentId = function (req) {
+    return new Promise(function (resolve, reject) {
+
+        const promotionTable = dbConnector.promotion
+
+            (async () => {
+                const promotionList = await promotionTable.findAll({
+                    where: {
+                        create_by: {
+                            [Op.eq]: req.user.id
+                        }
+                    },
+                    attributes: ['id', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
+                    raw: true
+                })
+                resolve(respConvert.successWithData(promotionList))
+            })().catch(function (err) {
+                reject(respConvert.systemError(err.message))
+            })
+
     });
 }

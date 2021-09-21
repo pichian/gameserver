@@ -27,14 +27,13 @@ exports.businessError = function (messageObj) {
 }
 
 exports.systemError = function (errorMessage) {
-    console.log('system error call ' + errorMessage)
     return {
         responseCode: "LTR-500",
         responseMessage: errorMessage
     }
 }
 
-exports.successLogin = function (token) {
+exports.successWithToken = function (token) {
     return {
         token: token,
         responseCode: msgConstant.core.success.responseCode,

@@ -137,13 +137,17 @@ module.exports.promotionCreate = function promotionCreate(req, res, next, body) 
 };
 
 module.exports.listPromotionByAgentId = function listPromotionByAgentId(req, res, next) {
-  agentService.listPromotionByAgentId()
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    promotionService.listPromotionByAgentId(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 

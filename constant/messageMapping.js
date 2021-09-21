@@ -6,7 +6,6 @@ module.exports.core = {
 	token_expire: { responseCode: "LTR-1003", responseMessage: "Token expire." },
 	validate_error: { responseCode: "LTR-1004", responseMessage: "Invalid input." },
 	no_data_found: { responseCode: "LTR-1005", responseMessage: "No data found." },
-	already_login: { responseCode: "LTR-1006", responseMessage: "This user is already login." },
 	invalid_token: { responseCode: "LTR-1007", responseMessage: "Invalid Token." }
 }
 

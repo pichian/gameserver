@@ -8,6 +8,7 @@ var serverPort = 61;
 var cors = require("cors");
 const mongo = require('./connector/mongodb');
 const app = express();
+require('dotenv').config()
 
 // swaggerRouter configuration
 var options = {
@@ -27,7 +28,6 @@ for (let i = 2; i < openApiApp._router.stack.length; i++) {
 }
 
 mongo.mongo(function (db) {
-    console.log(db)
     if (db !== false) {
         // Initialize the Swagger middleware
         http.createServer(app).listen(serverPort, function () {

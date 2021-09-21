@@ -25,6 +25,7 @@ exports.loginPlayer = function (body) {
         const playerTable = mysqlConnector.player
         const sessionPlayerTable = mysqlConnector.sessionPlayer
 
+        //find player user detail
         const resPlayer = await playerTable.findOne({
           where: {
             username: username,
@@ -33,37 +34,52 @@ exports.loginPlayer = function (body) {
           raw: true
         });
 
+        //if player username not found.
         if (!resPlayer) return reject(respConvert.businessError(msgConstant.core.login_failed))
 
+        //if username and password is true.
         if (resPlayer && await bcrypt.compare(password, resPlayer.password)) {
 
           const findSessionPlayer = await sessionPlayerTable.findOne({
             where: {
               playerId: resPlayer.id,
-            }
+              status: 'Y'
+            },
+            raw: true
           });
 
-          if (findSessionPlayer) return reject(respConvert.businessError(msgConstant.core.already_login))
+          //if this user is already logged in system.
+          if (findSessionPlayer) {
+            // update status of old session and token to 'N' that mean
+            // this token is not valid now.
+            const updateSessionStatus = sessionPlayerTable.update({ status: "N" }, {
+              where: {
+                id: findSessionPlayer.id,
+                playerId: findSessionPlayer.playerId
+              }
+            })
+          }
 
           const token = jwt.sign(
             {
               id: resPlayer.id,
-              playerName: resPlayer.playerName,
+              name: resPlayer.playerName,
               username: resPlayer.username,
               type: 'Player'
             },
-            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3',
-            { expiresIn: '8h' }
+            process.env.JWT_TOKEN_SECRET_KEY,
+            { expiresIn: '30m' }
           );
 
           const addTokenToSession = await sessionPlayerTable.create({
             playerId: resPlayer.id,
             token: token,
+            status: 'Y'
           });
 
-          resolve(respConvert.successLogin(token));
-
+          resolve(respConvert.successWithToken(token));
         } else {
+          //if password wrong.
           return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
 
@@ -93,12 +109,14 @@ exports.logoutPlayer = function (body) {
       (async () => {
         const decoded = jwt.decode(token);
 
+        console.log(decoded, token)
+
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
         const sessionPlayerTable = mysqlConnector.sessionPlayer
-
-        const removePlayerSession = await sessionPlayerTable.destroy({
+        const updatePlayerSessionLogout = await sessionPlayerTable.update({ status: 'N' }, {
           where: {
+            playerId: decoded.id,
             token: token,
           }
         });
@@ -221,7 +239,7 @@ exports.getPlayerInfo = function (req) {
       resolve(respConvert.successWithData({ playerName: playerInfo.playerName, amountCoin: playerWalletAmount.amount_coin }));
 
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
+      console.log('[error on catch] hh: ' + err)
       reject(respConvert.systemError(err.message))
     })
 
@@ -292,7 +310,6 @@ exports.listPlayerPaymentRequest = function (req) {
       console.log('[error on catch] : ' + err)
       reject(respConvert.systemError(err.message))
     })
-
   });
 }
 

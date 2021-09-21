@@ -8,7 +8,6 @@ const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 
-
 /***************** Service by Agent **************/
 
 /**
@@ -48,12 +47,12 @@ exports.loginAgent = function (body) {
           const token = jwt.sign(
             {
               id: resAgent.id,
-              agentName: resAgent.agentName,
+              name: resAgent.agentName,
               username: resAgent.username,
               type: 'Agent'
             },
-            'TOKEN_SECRET_ad1703edd828154322f1543a43ccd4b3',
-            { expiresIn: '8h' }
+            process.env.JWT_TOKEN_SECRET_KEY,
+            { expiresIn: '30m' }
           );
 
           const addTokenToSession = await sessionAgentTable.create({
@@ -716,33 +715,7 @@ exports.promotionCreate = function (body) {
 }
 
 
-/**
- * List Player
- *
- * returns PlayerModel
- **/
-exports.listPromotionByAgentId = function () {
-  return new Promise(function (resolve, reject) {
 
-    const promotionTable = dbPromotionConnector.Promotion;
-
-    (async () => {
-      const promotionList = await promotionTable.findAll({
-        // where: {
-        //   id: {
-        //     [Op.eq]: 1
-        //   }
-        // },
-        attributes: ['id', 'date_start', 'date_stop', 'promotion_name', 'promotion_type', 'rate_type', 'rate_amount'],
-        raw: true
-      })
-      resolve(respConvert.successWithData(promotionList))
-    })().catch(function (err) {
-      reject(respConvert.systemError(err.message))
-    })
-
-  });
-}
 
 /**
  * register Agent for test login

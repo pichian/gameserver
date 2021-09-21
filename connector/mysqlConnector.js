@@ -23,4 +23,6 @@ db.agent = require("../model/agent")(sequelizeConnector, Sequelize)
 db.sessionAgent = require("../model/sessionAgent")(sequelizeConnector, Sequelize)
 db.agentPaymentReq = require("../model/agentPaymentRequest")(sequelizeConnector, Sequelize)
 
+db.promotion = require('../model/promotion')(sequelizeConnector, Sequelize)
+
 module.exports = db;
