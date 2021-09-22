@@ -8,6 +8,7 @@ var serverPort = 62;
 var cors = require("cors");
 const mongo = require('./connector/mongodb');
 const app = express();
+require('dotenv').config()
 
 // swaggerRouter configuration
 var options = {

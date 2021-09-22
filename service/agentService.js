@@ -3,7 +3,7 @@ const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const { ObjectID } = require('bson');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const dbConnector = require("../connector/mysqlConnector")
+const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
@@ -21,8 +21,8 @@ exports.loginAgent = function (body) {
 
       (async () => {
 
-        const agentTable = dbConnector.agent;
-        const sessionAgentTable = dbConnector.sessionAgent;
+        const agentTable = mysqlConnector.agent;
+        const sessionAgentTable = mysqlConnector.sessionAgent;
 
         const resAgent = await agentTable.findOne({
           where: {
@@ -34,15 +34,28 @@ exports.loginAgent = function (body) {
 
         if (!resAgent) return reject(respConvert.businessError(msgConstant.core.login_failed))
 
+        // if username and password is true
         if (resAgent && await bcrypt.compare(password, resAgent.password)) {
 
           const findSessionAgent = await sessionAgentTable.findOne({
             where: {
               agentId: resAgent.id,
-            }
+              status: 'Y'
+            },
+            raw: true
           });
 
-          if (findSessionAgent) return reject(respConvert.businessError(msgConstant.core.already_login))
+          //if this user is already logged in system.
+          if (findSessionAgent) {
+            // update status of old session and token to 'N' that mean
+            // this token is not valid now.
+            const updateSessionStatus = sessionAgentTable.update({ status: "N" }, {
+              where: {
+                id: findSessionAgent.id,
+                agentId: findSessionAgent.agentId
+              }
+            })
+          }
 
           const token = jwt.sign(
             {
@@ -58,9 +71,10 @@ exports.loginAgent = function (body) {
           const addTokenToSession = await sessionAgentTable.create({
             agentId: resAgent.id,
             token: token,
+            status: 'Y'
           });
 
-          resolve(respConvert.successLogin(token));
+          resolve(respConvert.successWithToken(token));
 
         } else {
           return reject(respConvert.businessError(msgConstant.core.login_failed))
@@ -80,10 +94,10 @@ exports.loginAgent = function (body) {
 /**
  * Logged out agent from system and session.
  **/
-exports.logoutAgent = function (body) {
+exports.logoutAgent = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { token } = body
+    const token = req.headers['authorization'].split(" ")[1];
 
     if (token) {
       (async () => {
@@ -92,15 +106,13 @@ exports.logoutAgent = function (body) {
 
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
-        const sessionAgentTable = dbConnector.sessionAgent
-
-        const removeAgentSession = await sessionAgentTable.destroy({
+        const sessionAgentTable = mysqlConnector.sessionAgent
+        const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
           where: {
+            agentId: decoded.id,
             token: token,
           }
         });
-
-        if (removeAgentSession == 0) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
         resolve(respConvert.success());
 
@@ -126,7 +138,7 @@ exports.findAgentDetail = function (req) {
 
     (async () => {
 
-      const agentTable = dbConnector.agent
+      const agentTable = mysqlConnector.agent
 
       const agentInfo = await agentTable.findOne({
         where: {
@@ -155,8 +167,10 @@ exports.findAgentDetail = function (req) {
         totalPlayer: 0,
         totalPlayerCredit: 0,
         totalPromotionCredit: 0
-      })
+      }, req.newTokenReturn)
       );
+
+
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
@@ -180,7 +194,7 @@ exports.agentPaymentRequest = function (req) {
 
       (async () => {
 
-        const agentPaymentReqTable = dbConnector.agentPaymentReq;
+        const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
 
         const patmentReqCreated = await agentPaymentReqTable.create({
           agentId: req.user.id,
@@ -193,7 +207,7 @@ exports.agentPaymentRequest = function (req) {
           createDateTime: new Date()
         })
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -375,7 +389,7 @@ exports.listPlayerByAgentId = function () {
         attributes: ['id', 'playerName', 'credit', 'status'],
         raw: true
       })
-      resolve(respConvert.successWithData(playerList))
+      resolve(respConvert.successWithData(playerList, req.newTokenReturn))
     })().catch(function (err) {
       reject(new Error(err.message));
     })
@@ -540,7 +554,7 @@ exports.agentPlayerRegister = function (body) {
           updateBy: 1,
           updateDateTime: new Date(),
         });
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
       })().catch(function (err) {
         reject(respConvert.systemError(err.message))
       })
@@ -612,7 +626,7 @@ exports.agentEmployeeRegister = function (body) {
           updateBy: 1,
           updateDateTime: new Date(),
         });
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
       })().catch(function (err) {
         reject(respConvert.systemError(err.message))
       })
@@ -644,7 +658,7 @@ exports.listEmployeeByAgentId = function () {
         attributes: ['id', 'username', 'status'],
         raw: true
       })
-      resolve(respConvert.successWithData(employeeList))
+      resolve(respConvert.successWithData(employeeList, req.newTokenReturn))
     })().catch(function (err) {
       reject(respConvert.systemError(err.message))
     })
@@ -703,7 +717,7 @@ exports.promotionCreate = function (body) {
           updateDateTime: new Date(),
         });
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         reject(respConvert.systemError(err.message))
@@ -731,7 +745,7 @@ exports.registerAgent = function (body) {
     if (agentName && email && phoneNumber && username && password && description || description == "" && status && agentRefCode || agentRefCode == "") {
 
       (async () => {
-        const agentTable = dbConnector.agent
+        const agentTable = mysqlConnector.agent
 
         const checkDuplucatedUsername = await agentTable.findOne({
           where: {
@@ -785,7 +799,7 @@ exports.registerAgent = function (body) {
             where: { id: resCretedAgent.id }
           })
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)

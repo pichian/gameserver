@@ -125,6 +125,26 @@ paths:
           description: Id not found
           content: {}
       x-swagger-router-controller: playerController
+  /player/playerWallet:
+    post:
+      tags:
+        - player
+      summary: Get player info ex. Player name, wallet amount.
+      description: Returns amount of player wallet searching by token.
+      operationId: getPlayerWallet
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EmployeeModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: playerController
   /player/paymentRequest:
     post:
       tags:
@@ -1166,20 +1186,8 @@ components:
         {
           data:
             [
-              {
-                id: 0,
-                paymentType: "DP",
-                wayToPay: "C",
-                amount: 1000,
-                status: "W",
-              },
-              {
-                id: 1,
-                paymentType: "WD",
-                wayToPay: "T",
-                amount: 500,
-                status: "W",
-              },
+              { id: 0, paymentType: "DP", wayToPay: "C", amount: 1000, status: "W" },
+              { id: 1, paymentType: "WD", wayToPay: "T", amount: 500, status: "W" },
             ],
           code: "LTR-I-200",
           message: "Success",

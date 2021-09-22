@@ -1,14 +1,19 @@
 const msgConstant = require("../constant/messageMapping");
 
-exports.success = function () {
-    return msgConstant.core.success
+exports.success = function (newToken) {
+    return {
+        responseCode: msgConstant.core.success.responseCode,
+        responseMessage: msgConstant.core.success.responseMessage,
+        newToken: newToken
+    }
 }
 
-exports.successWithData = function (data) {
+exports.successWithData = function (data, newToken) {
     return {
         data: data,
         responseCode: msgConstant.core.success.responseCode,
-        responseMessage: msgConstant.core.success.responseMessage
+        responseMessage: msgConstant.core.success.responseMessage,
+        newToken: newToken
     }
 }
 

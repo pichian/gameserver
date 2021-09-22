@@ -2,7 +2,7 @@ const { Sequelize, Op, Model, DataTypes } = require("sequelize");
 const { ObjectID } = require('bson');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const dbConnector = require("../connector/mysqlConnector")
+const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
@@ -19,7 +19,7 @@ exports.promotionCreate = function (req) {
         if (promotionName && promotionType && rateType && rateAmount && dateStart && dateStop && status && description || description == '') {
 
             (async () => {
-                const promotionTable = dbConnector.promotion
+                const promotionTable = mysqlConnector.promotion
 
                 await promotionTable.create({
                     promotionName: promotionName,
@@ -36,7 +36,7 @@ exports.promotionCreate = function (req) {
                     updateDateTime: new Date(),
                 });
 
-                resolve(respConvert.success());
+                resolve(respConvert.success(req.newTokenReturn));
 
             })().catch(function (err) {
                 reject(respConvert.systemError(err.message))
@@ -49,29 +49,26 @@ exports.promotionCreate = function (req) {
 }
 
 /**
- * List Player
- *
- * returns PlayerModel
+ * List Promotion
  **/
 exports.listPromotionByAgentId = function (req) {
     return new Promise(function (resolve, reject) {
+        (async () => {
+            const promotionTable = mysqlConnector.promotion
 
-        const promotionTable = dbConnector.promotion
+            const promotionList = await promotionTable.findAll({
+                where: {
+                    create_by: req.user.id
+                },
+                attributes: ['id', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
+                raw: true
+            });
 
-            (async () => {
-                const promotionList = await promotionTable.findAll({
-                    where: {
-                        create_by: {
-                            [Op.eq]: req.user.id
-                        }
-                    },
-                    attributes: ['id', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
-                    raw: true
-                })
-                resolve(respConvert.successWithData(promotionList))
-            })().catch(function (err) {
-                reject(respConvert.systemError(err.message))
-            })
+            resolve(respConvert.successWithData(promotionList, req.newTokenReturn));
 
+        })().catch(function (err) {
+            console.log('[error on catch] : ' + err)
+            reject(respConvert.systemError(err.message))
+        })
     });
 }

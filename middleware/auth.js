@@ -18,7 +18,7 @@ exports.authToken = function (req) {
 
             //if it not expired.
             const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECRET_KEY)
-            //check if it not valid on session.
+            //check if it not valid on session
             const isNotValidToken = await checkTokenValidHandler(decoded, token)
             if (isNotValidToken) return reject(respConvert.businessError(msgConstant.core.session_timeout))
 
@@ -38,9 +38,10 @@ exports.authToken = function (req) {
             const newtokenDecoded = jwt.decode(generatedNewToken)
 
             //update new token to each user session .
-            updateUserSessionHandler(decoded, generatedNewToken)
+            updateUserSessionHandler(decoded, generatedNewToken, token)
 
             req.user = newtokenDecoded
+            req.newTokenReturn = generatedNewToken
 
             resolve()
 
@@ -60,7 +61,7 @@ exports.authToken = function (req) {
 
 }
 
-function updateUserSessionHandler(decodedToken, newToken) {
+function updateUserSessionHandler(decodedToken, newToken, oldToken) {
     if (decodedToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const updatePlayerSession = sessionPlayerTable.update({ token: newToken }, {
@@ -71,10 +72,11 @@ function updateUserSessionHandler(decodedToken, newToken) {
         });
     } else if (decodedToken.type == 'Agent') {
         const sessionAgentTable = mysqlConnector.sessionAgent
-        const removeAgentSession = sessionAgentTable.destroy({
+        const removeAgentSession = sessionAgentTable.update({ token: newToken }, {
             where: {
-                token: token,
-            }
+                agentId: decodedToken.id,
+                status: 'Y'
+            },
         });
     }
     return
@@ -91,9 +93,10 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
         });
     } else if (decodedToken.type == 'Agent') {
         const sessionAgentTable = mysqlConnector.sessionAgent
-        const removeAgentSession = sessionAgentTable.destroy({
+        const removeAgentSession = sessionAgentTable.update({ status: 'N' }, {
             where: {
-                token: token,
+                agentId: decodedExpiredToken.id,
+                token: expiredToken
             }
         });
     }
@@ -112,13 +115,17 @@ async function checkTokenValidHandler(decodedTokenData, token) {
             raw: true
         });
         return tokenValid !== null ? true : false
-    } else if (decodedExpiredToken.type == 'Agent') {
+    } else if (decodedTokenData.type == 'Agent') {
         const sessionAgentTable = mysqlConnector.sessionAgent
-        const removeAgentSession = sessionAgentTable.destroy({
+        const tokenValid = await sessionAgentTable.findOne({
             where: {
+                agentId: decodedTokenData.id,
                 token: token,
-            }
+                status: 'N'
+            },
+            raw: true
         });
+        return tokenValid !== null ? true : false
     }
     return
 }

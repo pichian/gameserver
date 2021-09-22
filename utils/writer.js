@@ -6,7 +6,9 @@ exports.writeSuccess = function (response, objMessage) {
 
   if (objMessage.data) objResponse.data = objMessage.data
   if (objMessage.token) objResponse.token = objMessage.token
+  if (objMessage.newToken) objResponse.newToken = objMessage.newToken
 
+  console.log('Success ' + objResponse)
   response.setHeader('Content-Type', 'application/json');
   response.status(200)
   response.json(objResponse);
@@ -18,6 +20,8 @@ exports.writeError = function (response, objMessage) {
   objResponse.code = objMessage.responseCode;
   objResponse.message = objMessage.responseMessage;
 
+
+  console.log('Error ' + JSON.stringify(objResponse))
   response.setHeader('Content-Type', 'application/json');
   response.status(200)
   response.json(objResponse);

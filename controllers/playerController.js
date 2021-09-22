@@ -16,8 +16,8 @@ module.exports.loginPlayer = function loginPlayer(req, res, next, body) {
     });
 };
 
-module.exports.logoutPlayer = function logoutPlayer(req, res, next, body) {
-  playerService.logoutPlayer(body)
+module.exports.logoutPlayer = function logoutPlayer(req, res, next) {
+  playerService.logoutPlayer(req)
     .then(function (response) {
       utils.writeSuccess(res, response);
     })
@@ -49,6 +49,20 @@ module.exports.registerPlayer = function registerPlayer(req, res, next, body) {
 module.exports.getPlayerInfo = function getPlayerInfo(req, res) {
   middleWare.authToken(req).then(function () {
     playerService.getPlayerInfo(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.getPlayerWallet = function getPlayerWallet(req, res) {
+  middleWare.authToken(req).then(function () {
+    playerService.getPlayerWallet(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })

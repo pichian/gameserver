@@ -8,8 +8,8 @@ const promotionService = require('../service/promotionService')
 
 /************************ Main Agent Operation*************************/
 
-module.exports.loginAgent = function loginAgent(req, res, next) {
-  agentService.loginAgent(req.body)
+module.exports.loginAgent = function loginAgent(req, res, next, body) {
+  agentService.loginAgent(body)
     .then(function (response) {
       utils.writeSuccess(res, response);
     })
@@ -19,7 +19,7 @@ module.exports.loginAgent = function loginAgent(req, res, next) {
 };
 
 module.exports.logoutAgent = function logoutAgent(req, res, next) {
-  agentService.logoutAgent(req.body)
+  agentService.logoutAgent(req)
     .then(function (response) {
       utils.writeSuccess(res, response);
     })
@@ -149,6 +149,20 @@ module.exports.listPromotionByAgentId = function listPromotionByAgentId(req, res
     utils.writeError(res, response);
   });
 };
+
+module.exports.getPromotionDetailById = function getPromotionDetailById(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    agentService.getPromotionDetailById(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+}
 
 
 
