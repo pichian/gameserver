@@ -99,10 +99,10 @@ exports.loginPlayer = function (body) {
  * Logged out player from system.
  * Also remove session (unfinished)
  **/
-exports.logoutPlayer = function (req) {
+exports.logoutPlayer = function (body) {
   return new Promise(function (resolve, reject) {
 
-    const token = req.headers['authorization'].split(" ")[1];
+    const { token } = body
 
     if (token) {
 
@@ -196,7 +196,7 @@ exports.registerPlayer = function (body) {
             where: { id: resCreatedPlayer.id }
           })
 
-        resolve(respConvert.success(req.newTokenReturn));
+        resolve(respConvert.success());
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -226,37 +226,7 @@ exports.getPlayerInfo = function (req) {
         where: {
           id: userData.id
         },
-        attributes: ['playerName'],
-        raw: true
-      });
-
-      resolve(respConvert.successWithData({ playerName: playerInfo.playerName }, req.newTokenReturn));
-
-    })().catch(function (err) {
-      console.log('[error on catch] hh: ' + err)
-      reject(respConvert.systemError(err.message))
-    })
-
-  });
-}
-
-/**
- * Get player  amount coin.
- **/
-exports.getPlayerWallet = function (req) {
-  return new Promise(function (resolve, reject) {
-
-    const userData = req.user;
-
-    (async () => {
-
-      const playerTable = mysqlConnector.player
-
-      const playerInfo = await playerTable.findOne({
-        where: {
-          id: userData.id
-        },
-        attributes: ['walletId'],
+        attributes: ['playerName', 'walletId'],
         raw: true
       });
 
@@ -266,7 +236,7 @@ exports.getPlayerWallet = function (req) {
         _id: ObjectID(playerInfo.walletId)
       }, { projection: { _id: 0, amount_coin: 1 } })
 
-      resolve(respConvert.successWithData({ amountCoin: playerWalletAmount.amount_coin }, req.newTokenReturn));
+      resolve(respConvert.successWithData({ playerName: playerInfo.playerName, amountCoin: playerWalletAmount.amount_coin }));
 
     })().catch(function (err) {
       console.log('[error on catch] hh: ' + err)
@@ -275,7 +245,6 @@ exports.getPlayerWallet = function (req) {
 
   });
 }
-
 
 
 /**
@@ -303,7 +272,7 @@ exports.playerPaymentRequest = function (req) {
           }
         )
 
-        resolve(respConvert.success(req.newTokenReturn));
+        resolve(respConvert.success());
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -335,7 +304,7 @@ exports.listPlayerPaymentRequest = function (req) {
         raw: true
       });
 
-      resolve(respConvert.successWithData(paymentReqList, req.newTokenReturn));
+      resolve(respConvert.successWithData(paymentReqList));
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
