@@ -13,10 +13,7 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             field: 'token'
         },
-        status: {
-            type: Sequelize.STRING,
-            field: 'status',
-        }
+
     },
         {
             tableName: 'session_agent',
