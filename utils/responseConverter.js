@@ -17,8 +17,12 @@ exports.successWithData = function (data, newToken) {
     }
 }
 
-exports.validateError = function () {
-    return msgConstant.core.validate_error
+exports.validateError = function (newToken) {
+    return {
+        responseCode: msgConstant.core.validate_error.responseCode,
+        responseMessage: msgConstant.core.validate_error.responseMessage,
+        newToken: newToken
+    }
 }
 
 exports.businessError = function (messageObj) {

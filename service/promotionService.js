@@ -1,9 +1,4 @@
-const { Sequelize, Op, Model, DataTypes } = require("sequelize");
-const { ObjectID } = require('bson');
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
 const mysqlConnector = require("../connector/mysqlConnector")
-const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 
@@ -39,6 +34,7 @@ exports.promotionCreate = function (req) {
                 resolve(respConvert.success(req.newTokenReturn));
 
             })().catch(function (err) {
+                console.log('[error on catch] : ' + err)
                 reject(respConvert.systemError(err.message))
             })
         } else {

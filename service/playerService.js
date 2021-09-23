@@ -8,10 +8,10 @@ const msgConstant = require("../constant/messageMapping");
 const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
 
-/***************** Service by Plyer **************/
+/***************** Service by Player **************/
 
 /**
- * Logs Player into the system
+ * Logged Player into the system.
  **/
 exports.loginPlayer = function (body) {
   return new Promise(function (resolve, reject) {
@@ -96,20 +96,17 @@ exports.loginPlayer = function (body) {
 
 
 /**
- * Logged out player from system.
- * Also remove session (unfinished)
+ * Logged out player from system and also remove session.
  **/
-exports.logoutPlayer = function (body) {
+exports.logoutPlayer = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { token } = body
+    const token = req.headers['authorization'].split(" ")[1];
 
     if (token) {
 
       (async () => {
         const decoded = jwt.decode(token);
-
-        console.log(decoded, token)
 
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
@@ -196,7 +193,7 @@ exports.registerPlayer = function (body) {
             where: { id: resCreatedPlayer.id }
           })
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -226,7 +223,38 @@ exports.getPlayerInfo = function (req) {
         where: {
           id: userData.id
         },
-        attributes: ['playerName', 'walletId'],
+        attributes: ['playerName'],
+        raw: true
+      });
+
+      resolve(respConvert.successWithData({ playerName: playerInfo.playerName }, req.newTokenReturn));
+
+    })().catch(function (err) {
+      console.log('[error on catch] hh: ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+
+/**
+ * Get player info amount coin.
+ **/
+exports.getPlayerWallet = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const userData = req.user;
+
+    (async () => {
+
+      const playerTable = mysqlConnector.player
+
+      const playerInfo = await playerTable.findOne({
+        where: {
+          id: userData.id
+        },
+        attributes: ['walletId'],
         raw: true
       });
 
@@ -236,7 +264,7 @@ exports.getPlayerInfo = function (req) {
         _id: ObjectID(playerInfo.walletId)
       }, { projection: { _id: 0, amount_coin: 1 } })
 
-      resolve(respConvert.successWithData({ playerName: playerInfo.playerName, amountCoin: playerWalletAmount.amount_coin }));
+      resolve(respConvert.successWithData({ amountCoin: playerWalletAmount.amount_coin }, req.newTokenReturn));
 
     })().catch(function (err) {
       console.log('[error on catch] hh: ' + err)
@@ -272,7 +300,7 @@ exports.playerPaymentRequest = function (req) {
           }
         )
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -304,7 +332,7 @@ exports.listPlayerPaymentRequest = function (req) {
         raw: true
       });
 
-      resolve(respConvert.successWithData(paymentReqList));
+      resolve(respConvert.successWithData(paymentReqList, req.newTokenReturn));
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
@@ -315,4 +343,120 @@ exports.listPlayerPaymentRequest = function (req) {
 
 
 
-/***************** Service by XXXXXXXXX **************/
+
+
+
+
+
+
+
+/***************** Service by Agent **************/
+
+/**
+ * Register Player by Agent.
+ **/
+exports.agentPlayerRegister = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { playerName, phoneNumber, username, password, description, status } = req.body
+
+    if (playerName && phoneNumber && username && password && description || description == '' && status) {
+      (async () => {
+
+        const playerTable = mysqlConnector.player
+
+        const checkDuplucatedUsername = await playerTable.findOne({
+          where: {
+            [Op.or]: [
+              {
+                playerName: playerName,
+              },
+              {
+                username: username
+              }
+            ]
+          }
+        });
+
+        //if not duplicate this will be 'null' value
+        if (checkDuplucatedUsername) {
+          reject(respConvert.businessError(msgConstant.agent.duplicate_user))
+        }
+
+        //Encrypt user password
+        const encryptedPassword = await bcrypt.hash(password, 10);
+
+        const playerCreatedByAgent = await playerTable.create({
+          playerName: playerName,
+          username: username,
+          password: encryptedPassword,
+          phoneNumber: phoneNumber,
+          description: description,
+          status: status,
+          createBy: req.user.id,
+          createDateTime: new Date(),
+          updateBy: req.user.id,
+          updateDateTime: new Date(),
+        });
+
+
+        // create player wallet on mongo
+        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await playerWalletCollec.insertOne({
+          player_id: playerCreatedByAgent.id,
+          amount_coin: 0,
+        })
+
+        //update player wallet id
+        const updatePlayerWallet = await playerTable.update(
+          {
+            walletId: resCreatedWallet.insertedId.toString()
+          },
+          {
+            where: { id: playerCreatedByAgent.id }
+          })
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+  });
+}
+
+
+/**
+ * List Player by agent id.
+ *
+ * returns PlayerModel
+ **/
+exports.listPlayerByAgentId = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const playerTable = mysqlConnector.player;
+
+    (async () => {
+      const playerList = await playerTable.findAll({
+        where: {
+          createBy: {
+            [Op.eq]: req.user.id
+          }
+        },
+        attributes: ['id', 'playerName', 'phoneNumber', 'username', 'ranking', 'status'],
+        raw: true
+      })
+
+      resolve(respConvert.successWithData(playerList, req.newTokenReturn))
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
+
+  });
+}
+

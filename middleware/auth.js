@@ -55,6 +55,7 @@ exports.authToken = function (req) {
                 return reject(respConvert.businessError(msgConstant.core.token_expire))
             }
 
+            console.log('malform case ' + token)
             reject(respConvert.systemError(err.message))
         })
     });
@@ -91,7 +92,7 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
                 token: expiredToken
             },
         });
-    } else if (decodedToken.type == 'Agent') {
+    } else if (decodedExpiredToken.type == 'Agent') {
         const sessionAgentTable = mysqlConnector.sessionAgent
         const removeAgentSession = sessionAgentTable.update({ status: 'N' }, {
             where: {

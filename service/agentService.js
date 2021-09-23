@@ -1,5 +1,5 @@
 'use strict';
-const { Sequelize, Op, Model, DataTypes } = require("sequelize");
+const { Op } = require("sequelize");
 const { ObjectID } = require('bson');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -190,7 +190,7 @@ exports.agentPaymentRequest = function (req) {
 
     const { paymentType, wayToPay, paymentAmount, promotionId } = req.body
 
-    if (paymentType && wayToPay && paymentAmount && (promotionId || promotionId === 0)) {
+    if (paymentType && wayToPay && paymentAmount && (promotionId || promotionId === 0 || promotionId === 'default')) {
 
       (async () => {
 
@@ -201,7 +201,7 @@ exports.agentPaymentRequest = function (req) {
           paymentType: paymentType,
           wayToPay: wayToPay,
           amount: paymentAmount,
-          promotionRefId: promotionId,
+          promotionRefId: promotionId === 0 || promotionId === 'default' ? null : promotionId,
           paymentStatus: 'W',
           createBy: req.user.id,
           createDateTime: new Date()
@@ -370,35 +370,6 @@ exports.listAgentPaymentRequest = function () {
 }
 
 /**
- * List Player
- *
- * returns PlayerModel
- **/
-exports.listPlayerByAgentId = function () {
-  return new Promise(function (resolve, reject) {
-
-    const playerTable = dbPlayerConnector.Player;
-
-    (async () => {
-      const playerList = await playerTable.findAll({
-        // where: {
-        //   id: {
-        //     [Op.eq]: 1
-        //   }
-        // },
-        attributes: ['id', 'playerName', 'credit', 'status'],
-        raw: true
-      })
-      resolve(respConvert.successWithData(playerList, req.newTokenReturn))
-    })().catch(function (err) {
-      reject(new Error(err.message));
-    })
-
-  });
-}
-
-
-/**
  * List agent payment request
  *
  * returns PaymentModel
@@ -500,235 +471,6 @@ exports.playerAgentRequestupdate = function (body) {
     resolve();
   });
 }
-
-
-/**
- * register Player
- *
- * body PlayerModel register new player witch agent refcode
- * no response value expected for this operation
- **/
-exports.agentPlayerRegister = function (body) {
-  return new Promise(function (resolve, reject) {
-    if (body.playerName !== undefined
-      && body.username !== undefined
-      && body.password !== undefined
-      && body.email !== undefined
-      && body.description !== undefined
-      // && body.refCode !== undefined
-      && body.status !== undefined
-    ) {
-      (async () => {
-        const playerTable = dbPlayerConnector.Player
-
-        const checkDuplucatedUsername = await playerTable.findOne({
-          where: {
-            [Op.or]: [
-              {
-                email: body.email,
-              },
-              {
-                username: body.username
-              }
-            ]
-          }
-        });
-
-        //if not duplicate this will be 'null' value
-        if (checkDuplucatedUsername) {
-          reject(respConvert.businessError(msgConstant.agent.duplicate_user))
-        }
-
-        //Encrypt user password
-        const encryptedPassword = await bcrypt.hash(body.password, 10);
-
-        const playerCreate = await playerTable.create({
-          playerName: body.playerName,
-          username: body.username,
-          password: encryptedPassword,
-          email: body.email,
-          description: body.description,
-          status: body.status,
-          createBy: 1,
-          createDateTime: new Date(),
-          updateBy: 1,
-          updateDateTime: new Date(),
-        });
-        resolve(respConvert.success(req.newTokenReturn));
-      })().catch(function (err) {
-        reject(respConvert.systemError(err.message))
-      })
-
-    } else {
-      reject(respConvert.validateError(msgConstant.core.validate_error));
-    }
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-/**
- * register empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.agentEmployeeRegister = function (body) {
-  return new Promise(function (resolve, reject) {
-    if (body.employeeName !== undefined
-      && body.username !== undefined
-      && body.password !== undefined
-      && body.email !== undefined
-      && body.description !== undefined
-      && body.status !== undefined
-    ) {
-      (async () => {
-        const employeeTable = dbEmployeeConnector.Employee
-
-        const checkDuplucatedUsername = await employeeTable.findOne({
-          where: {
-            [Op.or]: [
-              {
-                email: body.email,
-              },
-              {
-                username: body.username
-              }
-            ]
-          }
-        });
-
-        //if not duplicate this will be 'null' value
-        if (checkDuplucatedUsername) {
-          reject(respConvert.businessError(msgConstant.agent.duplicate_user))
-        }
-
-        //Encrypt user password
-        const encryptedPassword = await bcrypt.hash(body.password, 10);
-
-        const employeeCreate = await employeeTable.create({
-          employeeName: body.employeeName,
-          username: body.username,
-          password: encryptedPassword,
-          email: body.email,
-          description: body.description,
-          status: body.status,
-          createBy: 1,
-          createDateTime: new Date(),
-          updateBy: 1,
-          updateDateTime: new Date(),
-        });
-        resolve(respConvert.success(req.newTokenReturn));
-      })().catch(function (err) {
-        reject(respConvert.systemError(err.message))
-      })
-    } else {
-      reject(respConvert.validateError(msgConstant.core.validate_error));
-    }
-
-  });
-}
-
-
-/**
- * List employee
- *
- * no response value expected for this operation
- **/
-exports.listEmployeeByAgentId = function () {
-  return new Promise(function (resolve, reject) {
-
-    const employeeTable = dbEmployeeConnector.Employee;
-
-    (async () => {
-      const employeeList = await employeeTable.findAll({
-        // where: {
-        //   id: {
-        //     [Op.eq]: 1
-        //   }
-        // },
-        attributes: ['id', 'username', 'status'],
-        raw: true
-      })
-      resolve(respConvert.successWithData(employeeList, req.newTokenReturn))
-    })().catch(function (err) {
-      reject(respConvert.systemError(err.message))
-    })
-
-  });
-}
-
-
-
-/**
- * Update player empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.updateempoyeeDetail = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-/**
- * register empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.promotionCreate = function (body) {
-  return new Promise(function (resolve, reject) {
-    if (
-      body.promotionName !== undefined &&
-      body.promotionType !== undefined &&
-      body.rateType !== undefined &&
-      body.rateAmount !== undefined &&
-      body.dateStart !== undefined &&
-      body.dateStop !== undefined &&
-      body.description !== undefined &&
-      body.status !== undefined
-    ) {
-      (async () => {
-        const promotionTable = dbPromotionConnector.Promotion
-
-        await promotionTable.create({
-          promotionName: body.promotionName,
-          promotionType: body.promotionType,
-          rateType: body.rateType,
-          rateAmount: body.rateAmount,
-          dateStart: body.dateStart,
-          dateStop: body.dateStop,
-          status: body.status,
-          description: body.description,
-          createBy: 1,
-          createDateTime: new Date(),
-          updateBy: 1,
-          updateDateTime: new Date(),
-        });
-
-        resolve(respConvert.success(req.newTokenReturn));
-
-      })().catch(function (err) {
-        reject(respConvert.systemError(err.message))
-      })
-    } else {
-      reject(respConvert.validateError(msgConstant.core.validate_error));
-    }
-  });
-}
-
-
 
 
 /**

@@ -5,13 +5,25 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        employeeName: {
+        title: {
             type: Sequelize.STRING,
-            field: 'employee_name'
+            field: 'title'
+        },
+        firstname: {
+            type: Sequelize.STRING,
+            field: 'firstname'
+        },
+        lastname: {
+            type: Sequelize.STRING,
+            field: 'lastname'
         },
         email: {
             type: Sequelize.STRING,
             field: 'email'
+        },
+        phoneNumber: {
+            type: Sequelize.STRING,
+            field: 'phone'
         },
         username: {
             type: Sequelize.STRING,
@@ -25,8 +37,12 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             field: 'description'
         },
+        workBeginDate: {
+            type: Sequelize.DATE,
+            field: 'starting_date',
+        },
         status: {
-            type: Sequelize.BOOLEAN,
+            type: Sequelize.STRING,
             field: 'status'
         },
         createBy: {
@@ -51,7 +67,7 @@ module.exports = (sequelize, Sequelize) => {
         }
     },
         {
-            tableName: 'employee',
+            tableName: 'tbm_employee_info',
             timestamps: false,
 
         }

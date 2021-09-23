@@ -205,12 +205,14 @@ paths:
         - agent
       summary: Agent player register.
       operationId: agentPlayerRegister
+      security:
+        - bearerAuth: []
       requestBody:
         description: register new player by agent.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PlayerModel"
+              $ref: "#/components/schemas/playerModel"
         required: true
       responses:
         "200":
@@ -225,6 +227,8 @@ paths:
         - agent
       summary: List of player.
       operationId: listPlayerByAgentId
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -402,12 +406,14 @@ paths:
         - agent
       summary: Agent employee register.
       operationId: agentEmployeeRegister
+      security:
+        - bearerAuth: []
       requestBody:
         description: register new employee by agent.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EmployeeModel"
+              $ref: "#/components/schemas/employeeRegisterModel"
         required: true
       responses:
         "200":
@@ -422,6 +428,8 @@ paths:
         - agent
       summary: List of employee by agent id.
       operationId: listEmployeeByAgentId
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -459,7 +467,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EmployeeModel"
+                $ref: "#/components/schemas/employeeRegisterModel"
         "404":
           description: Id not found
           content: {}
@@ -693,7 +701,7 @@ components:
           type: integer
           description: User Status
           format: int32
-    PlayerModel:
+    playerModel:
       type: object
       properties:
         id:
@@ -701,7 +709,7 @@ components:
           format: int64
         playerName:
           type: string
-        email:
+        phoneNumber:
           type: string
         username:
           type: string
@@ -710,14 +718,14 @@ components:
         description:
           type: string
         status:
-          type: integer
+          type: string
       example:
         playerName: "PlayerXXX"
-        email: email
+        phoneNumber: "000000000"
         username: "username123"
         password: "123456789"
         description: "This is description."
-        status: 1
+        status: "active"
     agentRegisterRequest:
       type: object
       properties:
@@ -748,15 +756,18 @@ components:
           agentRefCode: "",
           status: "active",
         }
-    EmployeeModel:
+    employeeRegisterModel:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        playerName:
+        title:
+          type: string
+        firstname:
+          type: string
+        lastname:
           type: string
         email:
+          type: string
+        phoneNumber:
           type: string
         username:
           type: string
@@ -764,16 +775,23 @@ components:
           type: string
         description:
           type: string
+        workBrginDate:
+          type: string
         status:
-          type: integer
+          type: string
       example:
-        id: 0
-        playerName: "PlayerXXX"
-        email: email
-        username: "username123"
-        password: "123456789"
-        description: "This is description."
-        status: 1
+        {
+          title: "นาย",
+          firstname: "test",
+          lastname: "test",
+          email: "test@test.com",
+          phoneNumber: "0000000000",
+          username: "emp0",
+          password: "123456789",
+          description: "test",
+          workBrginDate: "23-Sep-2021 01:07:15",
+          status: "active",
+        }
     agentLoginInput:
       type: object
       properties:
@@ -877,7 +895,14 @@ components:
         promotionId:
           type: integer
           format: int64
-      example: { paymentType: "DP", wayToPay: "T", paymentAmount: 1000, promotionId: 1 }
+          nullable: true
+      example:
+        {
+          paymentType: "DP",
+          wayToPay: "T",
+          paymentAmount: 1000,
+          promotionId: 1,
+        }
     paymentDetailModel:
       type: object
       properties:
@@ -1005,14 +1030,6 @@ components:
         status:
           type: string
       example:
-        - id: 0
-          username: "PlayerXXX"
-          credit: 100
-          status: "0"
-        - id: 1
-          username: "PlayerXXX"
-          credit: 500
-          status: "1"
     employeeListModel:
       type: object
       properties:

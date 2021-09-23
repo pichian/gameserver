@@ -4,6 +4,8 @@ const utils = require('../utils/writer.js');
 const middleWare = require('../middleware/auth')
 const agentService = require('../service/agentService');
 const promotionService = require('../service/promotionService')
+const employeeService = require('../service/employeeService')
+const playerService = require('../service/playerService')
 
 
 /************************ Main Agent Operation*************************/
@@ -59,27 +61,49 @@ module.exports.agentPaymentRequest = function agentPaymentRequest(req, res, next
 
 /************************ Main Agent Operation*************************/
 
+
+
+
+
+
+
+
+
+
 /************************Player Operation By Agent*************************/
 module.exports.listPlayerByAgentId = function listPlayerByAgentId(req, res, next) {
-  agentService.listPlayerByAgentId()
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    playerService.listPlayerByAgentId(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
-module.exports.agentPlayerRegister = function agentPlayerRegister(req, res, next, body) {
-  agentService.agentPlayerRegister(body)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+module.exports.agentPlayerRegister = function agentPlayerRegister(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.agentPlayerRegister(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 /************************Player Operation By Agent*************************/
+
+
+
+
+
 
 
 
@@ -87,24 +111,32 @@ module.exports.agentPlayerRegister = function agentPlayerRegister(req, res, next
 
 /************************Employee Operation By Agent*************************/
 
-module.exports.agentEmployeeRegister = function agentEmployeeRegister(req, res, next, body) {
-  agentService.agentEmployeeRegister(body)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+module.exports.agentEmployeeRegister = function agentEmployeeRegister(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    employeeService.agentEmployeeRegister(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 module.exports.listEmployeeByAgentId = function listEmployeeByAgentId(req, res, next) {
-  agentService.listEmployeeByAgentId()
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    employeeService.listEmployeeByAgentId(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 // module.exports.updateempoyeeDetail = function updateempoyeeDetail(req, res, next, body) {
