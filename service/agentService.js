@@ -7,11 +7,12 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const util = require("../utils/log")
 
 /***************** Service by Agent **************/
 
 /**
- * Logged in agent into the system
+ * Logged in agent and employee into the system
  **/
 exports.loginAgent = function (body) {
   return new Promise(function (resolve, reject) {
@@ -22,7 +23,9 @@ exports.loginAgent = function (body) {
       (async () => {
 
         const agentTable = mysqlConnector.agent;
+        const employeeTable = mysqlConnector.employee
         const sessionAgentTable = mysqlConnector.sessionAgent;
+        const sessionEmployeeTable = mysqlConnector.sessionEmployee
 
         const resAgent = await agentTable.findOne({
           where: {
@@ -32,32 +35,72 @@ exports.loginAgent = function (body) {
           raw: true
         });
 
-        if (!resAgent) return reject(respConvert.businessError(msgConstant.core.login_failed))
+        const resEmp = await employeeTable.findOne({
+          where: {
+            username: username,
+          },
+          attributes: ['id', 'username', 'password', 'firstname', 'lastname'],
+          raw: true
+        });
 
-        // if username and password is true
+        if (!resAgent && !resEmp) {
+          return reject(respConvert.businessError(msgConstant.core.login_failed))
+        }
+
+        let findSessionAgent;
+        // if username and password of Agent is true
         if (resAgent && await bcrypt.compare(password, resAgent.password)) {
-
-          const findSessionAgent = await sessionAgentTable.findOne({
+          findSessionAgent = await sessionAgentTable.findOne({
             where: {
               agentId: resAgent.id,
               status: 'Y'
             },
             raw: true
           });
+        }
 
-          //if this user is already logged in system.
-          if (findSessionAgent) {
-            // update status of old session and token to 'N' that mean
-            // this token is not valid now.
-            const updateSessionStatus = sessionAgentTable.update({ status: "N" }, {
-              where: {
-                id: findSessionAgent.id,
-                agentId: findSessionAgent.agentId
-              }
-            })
-          }
+        let findSessionEmployee;
+        // if username and password of Employee is true
+        if (resEmp && await bcrypt.compare(password, resEmp.password)) {
+          findSessionEmployee = await sessionEmployeeTable.findOne({
+            where: {
+              employeeId: resEmp.id,
+              status: 'Y'
+            },
+            raw: true
+          });
+        }
+        // else {
+        //   return reject(respConvert.businessError(msgConstant.core.login_failed))
+        // }
 
-          const token = jwt.sign(
+        //if this Agent is already logged in system.
+        if (findSessionAgent) {
+          // update status of old session and token to 'N' that mean
+          // this token is not valid now.
+          const updateSessionStatus = sessionAgentTable.update({ status: "N" }, {
+            where: {
+              id: findSessionAgent.id,
+              agentId: findSessionAgent.agentId
+            }
+          })
+        }
+
+        //if this Employee is already logged in system.
+        if (findSessionEmployee) {
+          // update status of old session and token to 'N' that mean
+          // this token is not valid now.
+          const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
+            where: {
+              id: findSessionEmployee.id,
+              employeeId: findSessionEmployee.employeeId
+            }
+          })
+        }
+
+        let token;
+        if (resAgent) {
+          token = jwt.sign(
             {
               id: resAgent.id,
               name: resAgent.agentName,
@@ -73,12 +116,29 @@ exports.loginAgent = function (body) {
             token: token,
             status: 'Y'
           });
-
-          resolve(respConvert.successWithToken(token));
-
-        } else {
-          return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
+        if (resEmp) {
+          token = jwt.sign(
+            {
+              id: resEmp.id,
+              username: resEmp.username,
+              firstname: resEmp.firstname,
+              lastname: resEmp.lastname,
+              type: 'Employee'
+            },
+            process.env.JWT_TOKEN_SECRET_KEY,
+            { expiresIn: '30m' }
+          );
+
+          const addTokenToSession = await sessionEmployeeTable.create({
+            employeeId: resEmp.id,
+            token: token,
+            status: 'Y'
+          });
+        }
+
+        resolve(respConvert.successWithToken(token));
+
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
         reject(respConvert.systemError(err.message))
@@ -106,13 +166,23 @@ exports.logoutAgent = function (req) {
 
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
-        const sessionAgentTable = mysqlConnector.sessionAgent
-        const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
-          where: {
-            agentId: decoded.id,
-            token: token,
-          }
-        });
+        if (decoded.type == 'Agent') {
+          const sessionAgentTable = mysqlConnector.sessionAgent
+          const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
+            where: {
+              agentId: decoded.id,
+              token: token,
+            }
+          });
+        } else {
+          const sessionEmployeeTable = mysqlConnector.sessionEmployee
+          const updateEmployeeSessionLogout = await sessionEmployeeTable.update({ status: 'N' }, {
+            where: {
+              employeeId: decoded.id,
+              token: token,
+            }
+          });
+        }
 
         resolve(respConvert.success());
 
@@ -184,28 +254,32 @@ exports.findAgentDetail = function (req) {
 
 /****
  * Agent payment request.
+ * Also add log. (unfunished)
  **/
 exports.agentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, paymentAmount, promotionId } = req.body
+    const { paymentType, wayToPay, amount, promotionId } = req.body
 
-    if (paymentType && wayToPay && paymentAmount && (promotionId || promotionId === 0 || promotionId === 'default')) {
+    if (paymentType && wayToPay && amount && (promotionId || promotionId === 0 || promotionId === 'default' || promotionId == null)) {
 
       (async () => {
 
         const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
 
-        const patmentReqCreated = await agentPaymentReqTable.create({
+        const paymentReqCreated = await agentPaymentReqTable.create({
           agentId: req.user.id,
           paymentType: paymentType,
           wayToPay: wayToPay,
-          amount: paymentAmount,
+          amount: amount,
           promotionRefId: promotionId === 0 || promotionId === 'default' ? null : promotionId,
           paymentStatus: 'W',
           createBy: req.user.id,
           createDateTime: new Date()
         })
+
+        //(type, ref, desc, userId, createBy) 
+        await util.agentLog('pay', paymentReqCreated.id, null, null, req.user.id)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -359,13 +433,36 @@ exports.getplayerById = function (paymentId) {
 
 
 /**
- * List agent payment request
+ * List payment request by agent Id.
  *
- * no response value expected for this operation
  **/
-exports.listAgentPaymentRequest = function () {
+exports.listAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
-    resolve();
+    (async () => {
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq
+      const promotionTable = mysqlConnector.promotion
+      agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
+
+      const paymentRequestList = await agentPaymentReqTable.findAll({
+        where: {
+          createBy: req.user.id
+        },
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: promotionTable,
+            attributes: ['promotionName'],
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+      
+      resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
   });
 }
 
@@ -391,28 +488,6 @@ exports.listplayerPaymentRequest = function () {
   });
 }
 
-
-/**
- * List agent payment request
- *
- * no response value expected for this operation
- **/
-exports.listplayerPaymentRequestagent = function () {
-  return new Promise(function (resolve, reject) {
-    const payment = dbPlayer.Payment;
-    (async () => {
-      const paymentlist = await payment.findAll({
-        where: {
-          status: {
-            [Op.eq]: 0
-          }
-        }
-      });
-      resolve(paymentlist);
-
-    })();
-  });
-}
 
 /**
  * Logs employee into the system

@@ -79,6 +79,14 @@ function updateUserSessionHandler(decodedToken, newToken, oldToken) {
                 status: 'Y'
             },
         });
+    } else if (decodedToken.type == 'Employee') {
+        const sessionEmployeeTable = mysqlConnector.sessionEmployee
+        const removeEmployeeSession = sessionEmployeeTable.update({ token: newToken }, {
+            where: {
+                employeeId: decodedToken.id,
+                status: 'Y'
+            },
+        });
     }
     return
 }
@@ -97,6 +105,15 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
         const removeAgentSession = sessionAgentTable.update({ status: 'N' }, {
             where: {
                 agentId: decodedExpiredToken.id,
+                token: expiredToken
+            }
+        });
+    }
+    else if (decodedExpiredToken.type == 'Employee') {
+        const sessionEmployeeTable = mysqlConnector.sessionEmployee
+        const removeEmployeeSession = sessionEmployeeTable.update({ status: 'N' }, {
+            where: {
+                employeeId: decodedExpiredToken.id,
                 token: expiredToken
             }
         });
@@ -121,6 +138,17 @@ async function checkTokenValidHandler(decodedTokenData, token) {
         const tokenValid = await sessionAgentTable.findOne({
             where: {
                 agentId: decodedTokenData.id,
+                token: token,
+                status: 'N'
+            },
+            raw: true
+        });
+        return tokenValid !== null ? true : false
+    } else if (decodedTokenData.type == 'Employee') {
+        const sessionEmployeeTable = mysqlConnector.sessionEmployee
+        const tokenValid = await sessionEmployeeTable.findOne({
+            where: {
+                employeeId: decodedTokenData.id,
                 token: token,
                 status: 'N'
             },

@@ -1,6 +1,7 @@
 module.exports = (sequelize, Sequelize) => {
-    return sequelize.define("PromotionModel", {
+    return sequelize.define("promotion", {
         id: {
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
@@ -64,5 +65,5 @@ module.exports = (sequelize, Sequelize) => {
             tableName: 'tbm_promotion',
             timestamps: false,
         }
-    );
+    )
 };

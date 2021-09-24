@@ -3,6 +3,7 @@ const bcrypt = require("bcryptjs");
 const mysqlConnector = require("../connector/mysqlConnector")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const utilLog = require("../utils/log")
 
 /**
  * Register Employee
@@ -35,7 +36,7 @@ exports.agentEmployeeRegister = function (req) {
                 //Encrypt user password
                 const encryptedPassword = await bcrypt.hash(password, 10);
 
-                const employeeCreate = await employeeTable.create({
+                const employeeCreated = await employeeTable.create({
                     title: title,
                     firstname: firstname,
                     lastname: lastname,
@@ -51,7 +52,12 @@ exports.agentEmployeeRegister = function (req) {
                     updateBy: req.user.id,
                     updateDateTime: new Date(),
                 });
+
+                //(type, ref, desc, userId, createBy) 
+                await utilLog.agentLog('register', null, 'employee', employeeCreated.id, req.user.id)
+
                 resolve(respConvert.success(req.newTokenReturn));
+
             })().catch(function (err) {
                 console.log('[error on catch] : ' + err)
                 reject(respConvert.systemError(err.message))
@@ -69,10 +75,9 @@ exports.agentEmployeeRegister = function (req) {
  **/
 exports.listEmployeeByAgentId = function (req) {
     return new Promise(function (resolve, reject) {
-
-        const employeeTable = mysqlConnector.employee;
-
         (async () => {
+            const employeeTable = mysqlConnector.employee;
+
             const employeeList = await employeeTable.findAll({
                 where: {
                     createBy: {
@@ -90,6 +95,32 @@ exports.listEmployeeByAgentId = function (req) {
     });
 }
 
+
+/**
+ * Get single employee info.
+ **/
+exports.getEmployeeInfo = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+
+            const { empId } = req.body
+            const employeeTable = mysqlConnector.employee;
+
+            const employeeInfo = await employeeTable.findOne({
+                where: {
+                    id: empId
+                },
+                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
+                raw: true
+            })
+
+            resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
+
+        })().catch(function (err) {
+            reject(respConvert.systemError(err.message))
+        })
+    });
+}
 
 
 /**

@@ -7,6 +7,7 @@ const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
+const utilLog = require("../utils/log")
 
 /***************** Service by Player **************/
 
@@ -230,7 +231,7 @@ exports.getPlayerInfo = function (req) {
       resolve(respConvert.successWithData({ playerName: playerInfo.playerName }, req.newTokenReturn));
 
     })().catch(function (err) {
-      console.log('[error on catch] hh: ' + err)
+      console.log('[error on catch]: ' + err)
       reject(respConvert.systemError(err.message))
     })
 
@@ -416,6 +417,9 @@ exports.agentPlayerRegister = function (req) {
             where: { id: playerCreatedByAgent.id }
           })
 
+        //(type, ref, desc, userId, createBy) 
+        await utilLog.agentLog('register', null, 'player', playerCreatedByAgent.id, req.user.id)
+
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
@@ -460,3 +464,39 @@ exports.listPlayerByAgentId = function (req) {
   });
 }
 
+/**
+ * List player payment request by Agent.
+ * This table is in Agent page.
+ **/
+exports.listplayerPaymentRequestByAgent = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+      const promotionTable = mysqlConnector.promotion
+      playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
+
+      const paymentRequestList = await playerPaymentReqTable.findAll({
+        // where: {
+        //   createBy: req.user.id
+        // },
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: promotionTable,
+            attributes: ['promotionName'],
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+
+      resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}

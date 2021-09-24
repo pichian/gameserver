@@ -1,6 +1,7 @@
 const mysqlConnector = require("../connector/mysqlConnector")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const utilLog = require('../utils/log')
 
 
 /**
@@ -30,6 +31,9 @@ exports.promotionCreate = function (req) {
                     updateBy: req.user.id,
                     updateDateTime: new Date(),
                 });
+
+                //(type, ref, desc, userId, createBy) 
+                await utilLog.agentLog('create', null, 'promotion', promotionTable.id, req.user.id)
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -68,3 +72,31 @@ exports.listPromotionByAgentId = function (req) {
         })
     });
 }
+
+/**
+ * Get single promotion detail.
+ **/
+exports.getPromotionDetailById = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+
+            const { promotionId } = req.body
+            const promotionTable = mysqlConnector.promotion;
+
+            const promotionInfo = await promotionTable.findOne({
+                where: {
+                    id: promotionId
+                },
+                attributes: ['id', 'dateStart', 'dateStop', 'promotionName',
+                    'promotionType', 'rateType', 'rateAmount', 'status', 'description'],
+                raw: true
+            })
+
+            resolve(respConvert.successWithData(promotionInfo, req.newTokenReturn))
+
+        })().catch(function (err) {
+            reject(respConvert.systemError(err.message))
+        })
+    });
+}
+
