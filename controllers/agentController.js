@@ -65,12 +65,27 @@ module.exports.listAgentPaymentRequest = function listAgentPaymentRequest(req, r
         utils.writeSuccess(res, response);
       })
       .catch(function (response) {
-        utils.writeSuccess(res, response);
+        utils.writeError(res, response);
       });
   }).catch(function (response) {
     utils.writeError(res, response);
   });
 };
+
+module.exports.getPaymentDetailById = function getPaymentDetailById(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    agentService.getPaymentDetailById(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
 
 /************************ Main Agent Operation*************************/
 
@@ -119,7 +134,36 @@ module.exports.listplayerPaymentRequestByAgent = function listplayerPaymentReque
         utils.writeSuccess(res, response);
       })
       .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.findPlayerWalletById = function findPlayerWalletById(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.findPlayerWalletById(req)
+      .then(function (response) {
         utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+
+module.exports.findPlayerInfo = function findPlayerInfo(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.findPlayerInfo(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
       });
   }).catch(function (response) {
     utils.writeError(res, response);
@@ -156,6 +200,20 @@ module.exports.agentEmployeeRegister = function agentEmployeeRegister(req, res, 
 module.exports.listEmployeeByAgentId = function listEmployeeByAgentId(req, res, next) {
   middleWare.authToken(req).then(function () {
     employeeService.listEmployeeByAgentId(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.getEmployeeDetail = function getEmployeeDetail(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    employeeService.getEmployeeDetail(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })
@@ -273,15 +331,6 @@ module.exports.getPromotionDetailById = function getPromotionDetailById(req, res
 //     });
 // };
 
-// module.exports.getPaymentDetail = function getPaymentDetail(req, res, next, paymentId) {
-//   agentService.getPaymentDetail(paymentId)
-//     .then(function (response) {
-//       utils.writeJson(res, response);
-//     })
-//     .catch(function (response) {
-//       utils.writeJson(res, response);
-//     });
-// };
 
 // module.exports.getplayerById = function getplayerById(req, res, next, paymentId) {
 //   agentService.getplayerById(paymentId)

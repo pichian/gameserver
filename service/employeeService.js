@@ -97,9 +97,9 @@ exports.listEmployeeByAgentId = function (req) {
 
 
 /**
- * Get single employee info.
+ * Get single employee detail.
  **/
-exports.getEmployeeInfo = function (req) {
+exports.getEmployeeDetail = function (req) {
     return new Promise(function (resolve, reject) {
         (async () => {
 
@@ -121,6 +121,32 @@ exports.getEmployeeInfo = function (req) {
         })
     });
 }
+
+/**
+ * Get employee info when employee login.
+ **/
+exports.getEmployeeInfo = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+
+            const employeeTable = mysqlConnector.employee;
+
+            const employeeInfo = await employeeTable.findOne({
+                where: {
+                    id: req.user.id
+                },
+                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
+                raw: true
+            })
+
+            resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
+
+        })().catch(function (err) {
+            reject(respConvert.systemError(err.message))
+        })
+    });
+}
+
 
 
 /**

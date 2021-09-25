@@ -118,23 +118,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: agentController
-  /agent/paymentDetail/{paymentId}:
+  /agent/paymentDetail:
     post:
       tags:
         - agent
-      summary: Agent payment detail.
+      summary: Get a single payment detail by payment id.
       description: Returns a single payment detail by payment id.
       operationId: getPaymentDetailById
-      parameters:
-        - name: paymentId
-          in: path
-          description: Id of payment record..
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Agent payment request insert data.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/paymentInfoId"
+        required: true
       responses:
         "200":
           description: successful operation
@@ -257,23 +256,22 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: agentController
-  /player/playerWallet/{playerId}:
+  /player/playerWallet:
     post:
       tags:
         - agent
       summary: Finds player wallet amount by player id.
       description: Finds player wallet.
       operationId: findPlayerWalletById
-      parameters:
-        - name: playerId
-          in: path
-          description: Id of agent.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerId"
+        required: true
       responses:
         "200":
           description: successful operation
@@ -286,52 +284,15 @@ paths:
           description: Invalid tag value
           content: {}
       x-swagger-router-controller: agentController
-  /player/playerRank/{playerId}:
+  /player/playerInfo:
     post:
       tags:
         - agent
-      summary: Finds player rank by player id.
-      description: Finds player rank.
-      operationId: findPlayerRank
-      parameters:
-        - name: playerId
-          in: path
-          description: Id of agent.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/playerRank"
-                x-content-type: application/json
-        "400":
-          description: Invalid tag value
-          content: {}
-      x-swagger-router-controller: agentController
-  /player/playerStatus/{playerId}:
-    post:
-      tags:
-        - agent
-      summary: Finds player status by player id.
-      description: Finds player status.
-      operationId: findPlayerStatus
-      parameters:
-        - name: playerId
-          in: path
-          description: Id of agent.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      summary: Finds player rank and status by player id.
+      description: Finds player rank and status.
+      operationId: findPlayerInfo
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -432,13 +393,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: agentController
-  /employee/employeeInfo:
+  /agent/employee/employeeDetail:
     post:
       tags:
         - agent
-      summary: Single Employee info.
+      summary: Single Employee detail.
       description: Returns a single employee detail.
-      operationId: getEmployeeInfo
+      operationId: getEmployeeDetail
       security:
         - bearerAuth: []
       requestBody:
@@ -447,6 +408,26 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/employeeInfo"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/employeeRegisterModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
+  /employee/employeeInfo:
+    post:
+      tags:
+        - agent
+      summary: Get employee info when employee logged in.
+      description: Get id by req.header, Returns a single employee info .
+      operationId: getEmployeeInfo
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -869,6 +850,13 @@ components:
           type: integer
           format: int64
       example: { empId: 1 }
+    paymentInfoId:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+          format: int64
+      example: { paymentId: 1 }
     promotionCredit:
       type: object
       properties:
@@ -1196,6 +1184,13 @@ components:
           type: string
       example:
         token: yourExampleToken
+    requestWithPlayerId:
+      type: object
+      properties:
+        playerId:
+          type: integer
+      example:
+        playerId: 1
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

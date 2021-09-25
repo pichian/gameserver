@@ -375,35 +375,28 @@ exports.findById = function () {
 
 
 /**
- * payment detail
- * Returns a single pet
- *
- * paymentId Long ID of pet to return
- * returns PlayerModel
+ * Get payment detail from page agent-detail payment request list table.
  **/
-exports.getPaymentDetail = function (paymentId) {
+exports.getPaymentDetailById = function (req) {
   return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-      "firstName": "firstName",
-      "lastName": "lastName",
-      "password": "password",
-      "userStatus": [{
-        "key": ""
-      }, {
-        "key": ""
-      }],
-      "refCodeAgent": "refCodeAgent",
-      "phone": "phone",
-      "id": 0,
-      "email": "email",
-      "username": "username"
-    };
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
+    (async () => {
+
+      const { paymentId } = req.body
+
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+
+      const paymentDetail = await agentPaymentReqTable.findOne({
+        where: {
+          id: paymentId
+        },
+        attributes: ['id', 'createDateTime', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        raw: true
+      })
+
+      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
+    })().catch(function (err) {
+      reject(respConvert.systemError(err.message))
+    })
   });
 }
 
@@ -457,7 +450,7 @@ exports.listAgentPaymentRequest = function (req) {
         raw: true,
         nest: true
       })
-      
+
       resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)

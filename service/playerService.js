@@ -500,3 +500,73 @@ exports.listplayerPaymentRequestByAgent = function (req) {
 
   });
 }
+
+/**
+ * Agent get Player wallet amount by Player Id.
+ **/
+exports.findPlayerWalletById = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { playerId } = req.body
+
+    console.log('playerId ' + playerId)
+
+    const playerTable = mysqlConnector.player;
+
+    (async () => {
+      const playerWalletId = await playerTable.findOne({
+        where: {
+          id: playerId
+        },
+        attributes: ['wallet_id'],
+        raw: true
+      })
+
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+
+      const playerWalletAmount = await playerWalletCollec.findOne({
+        _id: ObjectID(playerWalletId.wallet_id)
+      }, { projection: { _id: 0, amount_coin: 1 } })
+
+      console.log(playerWalletAmount)
+
+      resolve(respConvert.successWithData(playerWalletAmount, req.newTokenReturn))
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
+
+  });
+}
+
+/**
+ * Agent get Player rand and status.
+ **/
+exports.findPlayerInfo = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { playerId } = req.body
+
+    const playerTable = mysqlConnector.player;
+
+    (async () => {
+      const playerInfo = await playerTable.findOne({
+        where: {
+          createBy: {
+            [Op.eq]: req.user.id
+          }
+        },
+        attributes: ['ranking', 'status'],
+        raw: true
+      })
+
+      console.log(playerInfo)
+
+      resolve(respConvert.successWithData(playerInfo, req.newTokenReturn))
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
+
+  });
+}
