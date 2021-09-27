@@ -127,9 +127,9 @@ module.exports.agentPlayerRegister = function agentPlayerRegister(req, res, next
   });
 };
 
-module.exports.listplayerPaymentRequestByAgent = function listplayerPaymentRequestByAgent(req, res, next) {
+module.exports.listPlayerPaymentRequestAll = function listPlayerPaymentRequestAll(req, res, next) {
   middleWare.authToken(req).then(function () {
-    playerService.listplayerPaymentRequestByAgent(req)
+    playerService.listPlayerPaymentRequestAll(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })
@@ -140,6 +140,21 @@ module.exports.listplayerPaymentRequestByAgent = function listplayerPaymentReque
     utils.writeError(res, response);
   });
 };
+
+module.exports.paymentRequestListOfPlayer = function paymentRequestListOfPlayer(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.paymentRequestListOfPlayer(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
 
 module.exports.findPlayerWalletById = function findPlayerWalletById(req, res, next) {
   middleWare.authToken(req).then(function () {
@@ -159,6 +174,48 @@ module.exports.findPlayerWalletById = function findPlayerWalletById(req, res, ne
 module.exports.findPlayerInfo = function findPlayerInfo(req, res, next) {
   middleWare.authToken(req).then(function () {
     playerService.findPlayerInfo(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.playerPaymentRequestByAgent = function playerPaymentRequestByAgent(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.playerPaymentRequest(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.getPlayerPaymentDetailById = function getPlayerPaymentDetailById(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.getPlayerPaymentDetailById(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.approvePlayerPaymentRequest = function approvePlayerPaymentRequest(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.approvePlayerPaymentRequest(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })
@@ -311,15 +368,7 @@ module.exports.getPromotionDetailById = function getPromotionDetailById(req, res
 //     });
 // };
 
-// module.exports.approvePlayerPayment = function approvePlayerPayment(req, res, next, playerPaymentId) {
-//   agentService.approvePlayerPayment(playerPaymentId)
-//     .then(function (response) {
-//       utils.writeJson(res, response);
-//     })
-//     .catch(function (response) {
-//       utils.writeJson(res, response);
-//     });
-// };
+
 
 // module.exports.findById = function findById(req, res, next) {
 //   agentService.findById()
@@ -415,16 +464,3 @@ module.exports.getPromotionDetailById = function getPromotionDetailById(req, res
 //       utils.writeJson(res, response);
 //     });
 // };
-
-
-/***********This for test purpose only. (This will move to ownerController next time)**********/
-module.exports.registerAgent = function registerAgent(req, res, next, body) {
-  agentService.registerAgent(body)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
-};
-/***********This for test purpose only. **********/

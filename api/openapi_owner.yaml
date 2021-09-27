@@ -1,6 +1,6 @@
 openapi: 3.0.1
 info:
-  title: API lotto rich for player operation.
+  title: API lotto rich for owner or manager operation.
   description: "This is a sample API server of lotto rich"
   termsOfService: http://swagger.io/terms/
   contact:
@@ -13,199 +13,97 @@ externalDocs:
   description: Find out more about Swagger
   url: http://swagger.io
 servers:
-  - url: http://localhost:8080/v2
-    description: สำหรับ Production server (ไว้ Generate)
-  - url: http://localhost:61/v2
+  # - url: http://localhost:8080/v2
+  #   description: สำหรับ Production server (ไว้ Generate)
+  - url: http://localhost:62/v2
     description: สำหรับ Dev server (เครื่องตัวเอง Player)
-  - url: http://128.199.216.219:61/V2/
-    description: สำหรับ Test play server
-  - url: http://128.199.216.219:62/V2/
-    description: สำหรับ Test agent server
-  - url: http://128.199.216.219:63/V2/
-    description: สำหรับ Test owner server
+  # - url: http://128.199.216.219:61/V2/
+  #   description: สำหรับ Test play server
+  # - url: http://128.199.216.219:62/V2/
+  #   description: สำหรับ Test agent server
+  # - url: http://128.199.216.219:63/V2/
+  #   description: สำหรับ Test owner server
 tags:
-  - name: player
+  - name: agent
 paths:
-  /player/login:
-    post:
-      tags:
-        - player
-      summary: Logged in player user into system.
-      operationId: loginPlayer
-      requestBody:
-        description: for player login
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/playerLoginInput"
-        required: true
-      responses:
-        "200":
-          description: successful login
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/login_success_response"
-        "400":
-          description: Invalid username/password
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/login_fail_response"
-      x-swagger-router-controller: playerController
-  /player/logout:
-    post:
-      tags:
-        - player
-      summary: Logged out player session.
-      operationId: logoutPlayer
-      requestBody:
-        description: token for clear session
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/requestWithToken"
-        required: true
-      responses:
-        "200":
-          description: successful logout
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/apiResponse"
-      x-swagger-router-controller: playerController
-  /player/register:
-    post:
-      tags:
-        - player
-      summary: Player register.
-      operationId: registerPlayer
-      requestBody:
-        description: Player register data.
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/playerRegisterRequest"
-        required: true
-      responses:
-        "200":
-          description: Register Complete.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/successResponse"
-      x-swagger-router-controller: playerController
-  /player/authenToken:
-    post:
-      tags:
-        - player
-      summary: Authenticated player token for update session.
-      operationId: authenPlayerToken
-      responses:
-        "200":
-          description: successful
-      x-swagger-router-controller: playerController
-  /player/info:
-    post:
-      tags:
-        - player
-      summary: Get player info ex. Player name, wallet amount.
-      description: Returns amount of player wallet searching by token.
-      operationId: getPlayerInfo
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmployeeModel"
-        "404":
-          description: Id not found
-          content: {}
-      x-swagger-router-controller: playerController
-  /player/playerWallet:
-    post:
-      tags:
-        - player
-      summary: Get player info ex. Player name, wallet amount.
-      description: Returns amount of player wallet searching by token.
-      operationId: getPlayerWallet
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EmployeeModel"
-        "404":
-          description: Id not found
-          content: {}
-      x-swagger-router-controller: playerController
-  /player/paymentRequest:
-    post:
-      tags:
-        - player
-      summary: Player payment request.
-      operationId: playerPaymentRequest
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/playerPaymentRequest"
-        required: true
-      responses:
-        "200":
-          description: Request Complete.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/successResponse"
-      x-swagger-router-controller: playerController
-  /player/paymentRequestList:
-    post:
-      tags:
-        - player
-      summary: Payment request list of player.
-      operationId: listPlayerPaymentRequest
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: successful operation
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/playerPaymentRequestListModel"
-        "404":
-          description: Empty Response
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/emptyResponse"
-      x-swagger-router-controller: playerController
-
-  # /agent/paymentRequestList/{agentId}:
+  # /agent/login:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Logged in agent user into system.
+  #     operationId: loginAgent
+  #     requestBody:
+  #       description: for agent login
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/agentLoginInput"
+  #       required: true
+  #     responses:
+  #       "200":
+  #         description: successful login
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/login_success_response"
+  #       "400":
+  #         description: Invalid username/password
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/login_fail_response"
+  #     x-swagger-router-controller: agentController
+  # /agent/logout:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Loggged out current logged in user session.
+  #     operationId: logoutAgent
+  #     requestBody:
+  #       description: token for clear session
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/requestWithToken"
+  #       required: true
+  #     responses:
+  #       "200":
+  #         description: successful logout
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/apiResponse"
+  #     x-swagger-router-controller: agentController
+  # /agent/paymentRequest:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Agent payment request insert.
+  #     operationId: agentPaymentRequest
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: Agent payment request insert data.
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/paymentRequestModel"
+  #       required: true
+  #     responses:
+  #       "200":
+  #         description: Insert Complete.
+  #       "405":
+  #         description: Invalid input
+  #         content: {}
+  #     x-swagger-router-controller: agentController
+  # /agent/paymentRequestList:
   #   post:
   #     tags:
   #       - agent
   #     summary: List agent payment request list by agent id.
   #     operationId: listAgentPaymentRequest
-  #     parameters:
-  #       - name: agentId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -220,43 +118,22 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /agent/paymentRequestInsert:
+  # /agent/paymentDetail:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Agent payment request insert.
-  #     operationId: agentPaymentRequest
+  #     summary: Get a single payment detail by payment id.
+  #     description: Returns a single payment detail by payment id.
+  #     operationId: getPaymentDetailById
+  #     security:
+  #       - bearerAuth: []
   #     requestBody:
   #       description: Agent payment request insert data.
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/paymentModel"
+  #             $ref: "#/components/schemas/paymentInfoId"
   #       required: true
-  #     responses:
-  #       "200":
-  #         description: Insert Complete.
-  #       "405":
-  #         description: Invalid input
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/paymentDetail/{paymentId}:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Agent payment detail.
-  #     description: Returns a single payment detail by payment id.
-  #     operationId: getPaymentDetailById
-  #     parameters:
-  #       - name: paymentId
-  #         in: path
-  #         description: Id of payment record..
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
   #     responses:
   #       "200":
   #         description: successful operation
@@ -268,23 +145,22 @@ paths:
   #         description: Id not found
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/approvePlayerPayment/{paymentId}:
+  # /agent/approvePlayerPayment:
   #   post:
   #     tags:
   #       - agent
   #     summary: Approve player payment.
   #     description: Approve player payment by payment id.
-  #     operationId: approvePlayerPayment
-  #     parameters:
-  #       - name: paymentId
-  #         in: path
-  #         description: Id of payment record.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     operationId: approvePlayerPaymentRequest
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: "Approve "
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/approvePaymentInfo"
+  #       required: true
   #     responses:
   #       "200":
   #         description: Approve Complete.
@@ -292,148 +168,101 @@ paths:
   #         description: Id not found
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/agentWallet/{agentId}:
+  # /agent/agentDetail:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Finds agent wallet amount by agent id.
-  #     description: Finds agent wallet.
-  #     operationId: findAgentWalletById
-  #     parameters:
-  #       - name: agentId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     summary: Finds agent detail include wallet amount, sum player wallet.
+  #     description: Finds agent detail.
+  #     operationId: findAgentDetail
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
   #         content:
   #           application/json:
   #             schema:
-  #               $ref: "#/components/schemas/agentWallet"
+  #               $ref: "#/components/schemas/agentDetail"
   #               x-content-type: application/json
   #       "400":
   #         description: Invalid tag value
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/playerWallet/totalPlayer/{agentId}:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Finds sum of player wallet amount by agent id.
-  #     description: Finds sum player wallet amount.
-  #     operationId: findSumPlayerWalletAmountByAgentId
-  #     parameters:
-  #       - name: agentId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/totalPlayer"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/playerWallet/totalCredit/{agentId}:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Finds sum of all player credit by agent id.
-  #     description: Finds sum of all player credit.
-  #     operationId: findSumPlayerCreditByAgentId
-  #     parameters:
-  #       - name: agentId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/totalCredit"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/playerWallet/promotionCredit/{agentId}:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Finds sum of player promotions credit by agent id.
-  #     description: Finds sum player promotions credit.
-  #     operationId: findSumPlayerPromotionCreditByAgentId
-  #     parameters:
-  #       - name: agentId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/promotionCredit"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/player/playerRegister:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Agent player register.
-  #     operationId: agentPlayerRegister
-  #     requestBody:
-  #       description: register new player by agent.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/PlayerModel"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Insert Complete.
-  #       "405":
-  #         description: Invalid input
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  /owner/agent/agentRegister:
+    post:
+      tags:
+        - owner
+      summary: Owner agent register.
+      operationId: ownerAgentRegister
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Register new Agent by Owner.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/agentRegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: Insert Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: ownerController
+  /owner/agent/agentList:
+    post:
+      tags:
+        - agent
+      summary: List of Agent by onwe id..
+      operationId: listAgentByOwnerId
+      # security:
+      #   - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/playerListModel"
+      #   "404":
+      #     description: Empty Response
+      #     content:
+      #       application/json:
+      #         schema:
+      #           $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
+  /owner/agent/paymentRequestList:
+    post:
+      tags:
+        - owner
+      summary: List agent payment request list all.
+      operationId: listAgentPaymentRequestAll
+      # security:
+      #   - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
   # /agent/player/playerList:
   #   post:
   #     tags:
   #       - agent
   #     summary: List of player.
   #     operationId: listPlayerByAgentId
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -448,23 +277,115 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /player/playerWallet/{playerId}:
+  # /agent/player/PaymentRequest:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Insert payment request of player by Agent.
+  #     operationId: playerPaymentRequestByAgent
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: Insert new player payemnt request by agent.
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/paymentRequestModel"
+  #       required: true
+  #     responses:
+  #       "200":
+  #         description: Insert Complete.
+  #       "405":
+  #         description: Invalid input
+  #         content: {}
+  #     x-swagger-router-controller: agentController
+  # /player/paymentRequestListAll:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Payment request list of player. Return all data
+  #     operationId: listPlayerPaymentRequestAll
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       "200":
+  #         description: successful operation
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/paymentRequestListModel"
+  #       "404":
+  #         description: Empty Response
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/emptyResponse"
+  #     x-swagger-router-controller: agentController
+  # /player/paymentRequestListOfPlayer:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Payment request list of player. Return all data
+  #     operationId: paymentRequestListOfPlayer
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       "200":
+  #         description: successful operation
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/paymentRequestListModel"
+  #       "404":
+  #         description: Empty Response
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/emptyResponse"
+  #     x-swagger-router-controller: agentController
+  # /player/paymentDetail:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Get a single payment detail by payment id.
+  #     description: Returns a single payment detail by payment id.
+  #     operationId: getPlayerPaymentDetailById
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: Agent payment request insert data.
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/paymentInfoId"
+  #       required: true
+  #     responses:
+  #       "200":
+  #         description: successful operation
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/paymentDetailModel"
+  #       "404":
+  #         description: Id not found
+  #         content: {}
+  #     x-swagger-router-controller: agentController
+  # /player/playerWallet:
   #   post:
   #     tags:
   #       - agent
   #     summary: Finds player wallet amount by player id.
   #     description: Finds player wallet.
   #     operationId: findPlayerWalletById
-  #     parameters:
-  #       - name: playerId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: Request player Id.
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/requestWithPlayerId"
+  #       required: true
   #     responses:
   #       "200":
   #         description: successful operation
@@ -477,52 +398,15 @@ paths:
   #         description: Invalid tag value
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /player/playerRank/{playerId}:
+  # /player/playerInfo:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Finds player rank by player id.
-  #     description: Finds player rank.
-  #     operationId: findPlayerRank
-  #     parameters:
-  #       - name: playerId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/playerRank"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /player/playerStatus/{playerId}:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Finds player status by player id.
-  #     description: Finds player status.
-  #     operationId: findPlayerStatus
-  #     parameters:
-  #       - name: playerId
-  #         in: path
-  #         description: Id of agent.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     summary: Finds player rank and status by player id.
+  #     description: Finds player rank and status.
+  #     operationId: findPlayerInfo
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -585,12 +469,14 @@ paths:
   #       - agent
   #     summary: Agent employee register.
   #     operationId: agentEmployeeRegister
+  #     security:
+  #       - bearerAuth: []
   #     requestBody:
   #       description: register new employee by agent.
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/EmployeeModel"
+  #             $ref: "#/components/schemas/employeeRegisterModel"
   #       required: true
   #     responses:
   #       "200":
@@ -605,6 +491,8 @@ paths:
   #       - agent
   #     summary: List of employee by agent id.
   #     operationId: listEmployeeByAgentId
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -619,30 +507,48 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /employee/employeeDetail/{employeeId}:
+  # /agent/employee/employeeDetail:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Employee detail.
+  #     summary: Single Employee detail.
   #     description: Returns a single employee detail.
-  #     operationId: getEmployeeDetailById
-  #     parameters:
-  #       - name: employeeId
-  #         in: path
-  #         description: Id of employee.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     operationId: getEmployeeDetail
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody:
+  #       description: send employee id with body.
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: "#/components/schemas/employeeInfo"
   #     responses:
   #       "200":
   #         description: successful operation
   #         content:
   #           application/json:
   #             schema:
-  #               $ref: "#/components/schemas/EmployeeModel"
+  #               $ref: "#/components/schemas/employeeRegisterModel"
+  #       "404":
+  #         description: Id not found
+  #         content: {}
+  #     x-swagger-router-controller: agentController
+  # /employee/employeeInfo:
+  #   post:
+  #     tags:
+  #       - agent
+  #     summary: Get employee info when employee logged in.
+  #     description: Get id by req.header, Returns a single employee info .
+  #     operationId: getEmployeeInfo
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       "200":
+  #         description: successful operation
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: "#/components/schemas/employeeRegisterModel"
   #       "404":
   #         description: Id not found
   #         content: {}
@@ -723,14 +629,16 @@ paths:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Promotion create.
+  #     summary: Promotion create by agent.
   #     operationId: promotionCreate
+  #     security:
+  #       - bearerAuth: []
   #     requestBody:
   #       description: create new promotion by agent.
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/promotionModel"
+  #             $ref: "#/components/schemas/promotionCreateModel"
   #       required: true
   #     responses:
   #       "200":
@@ -745,16 +653,8 @@ paths:
   #       - agent
   #     summary: List of promotion by agent id.
   #     operationId: listPromotionByAgentId
-  #     # parameters:
-  #     #   - name: agentId
-  #     #     in: path
-  #     #     description: Id of agent.
-  #     #     required: true
-  #     #     style: simple
-  #     #     explode: false
-  #     #     schema:
-  #     #       type: integer
-  #     #       format: int64
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -769,23 +669,15 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /promotion/promotionDetail/{promotionId}:
+  # /agent/promotion/promotionDetail:
   #   post:
   #     tags:
   #       - agent
-  #     summary: Get promotion detail.
+  #     summary: Get single promotion detail.
   #     description: Returns a single promotion detail by promotionId id.
-  #     operationId: getPrmotionDetailById
-  #     parameters:
-  #       - name: promotionId
-  #         in: path
-  #         description: Id of promotion.
-  #         required: true
-  #         style: simple
-  #         explode: false
-  #         schema:
-  #           type: integer
-  #           format: int64
+  #     operationId: getPromotionDetailById
+  #     security:
+  #       - bearerAuth: []
   #     responses:
   #       "200":
   #         description: successful operation
@@ -808,7 +700,7 @@ paths:
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/promotionModel"
+  #             $ref: "#/components/schemas/promotionCreateModel"
   #       required: true
   #     responses:
   #       "200":
@@ -828,7 +720,7 @@ paths:
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/AgentRegisterRequest"
+  #             $ref: "#/components/schemas/agentRegisterRequest"
   #       required: true
   #     responses:
   #       "200":
@@ -840,7 +732,7 @@ paths:
   #     x-swagger-router-controller: agentController
 components:
   schemas:
-    successResponse:
+    SuccessResponse:
       type: object
       properties:
         code:
@@ -890,7 +782,7 @@ components:
           type: integer
           description: User Status
           format: int32
-    PlayerModel:
+    playerModel:
       type: object
       properties:
         id:
@@ -898,7 +790,7 @@ components:
           format: int64
         playerName:
           type: string
-        email:
+        phoneNumber:
           type: string
         username:
           type: string
@@ -907,18 +799,18 @@ components:
         description:
           type: string
         status:
-          type: integer
+          type: string
       example:
         playerName: "PlayerXXX"
-        email: email
+        phoneNumber: "000000000"
         username: "username123"
         password: "123456789"
         description: "This is description."
-        status: 1
-    playerRegisterRequest:
+        status: "active"
+    agentRegisterRequest:
       type: object
       properties:
-        playerName:
+        agentName:
           type: string
         username:
           type: string
@@ -926,36 +818,37 @@ components:
           type: string
         phoneNumber:
           type: string
+        email:
+          type: string
+        description:
+          type: string
         agentRefCode:
           type: string
+        status:
+          type: string
       example:
-        playerName: "PlayerXX"
-        username: "PlayerXX"
-        password: "123456789"
-        phoneNumber: "0000000000"
-        agentRefCode: ""
-    playerPaymentRequest:
+        {
+          agentName: "AgentXX",
+          email: "test@test.com",
+          phoneNumber: "0000000000",
+          username: "AgentXX",
+          password: "123456789",
+          description: "desc..",
+          agentRefCode: "",
+          status: "active",
+        }
+    employeeRegisterModel:
       type: object
       properties:
-        paymentType:
+        title:
           type: string
-        wayToPay:
+        firstname:
           type: string
-        amount:
-          type: number
-      example:
-        paymentType: "DP"
-        wayToPay: "C"
-        amount: 1000
-    EmployeeModel:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        playerName:
+        lastname:
           type: string
         email:
+          type: string
+        phoneNumber:
           type: string
         username:
           type: string
@@ -963,26 +856,31 @@ components:
           type: string
         description:
           type: string
+        workBrginDate:
+          type: string
         status:
-          type: integer
+          type: string
       example:
-        id: 0
-        playerName: "PlayerXXX"
-        email: email
-        username: "username123"
-        password: "123456789"
-        description: "This is description."
-        status: 1
-    playerLoginInput:
+        {
+          title: "นาย",
+          firstname: "test",
+          lastname: "test",
+          email: "test@test.com",
+          phoneNumber: "0000000000",
+          username: "emp0",
+          password: "123456789",
+          description: "test",
+          workBrginDate: "23-Sep-2021 01:07:15",
+          status: "active",
+        }
+    agentLoginInput:
       type: object
       properties:
         username:
           type: string
         password:
           type: string
-      example:
-        username: "Player1"
-        password: "123456789"
+      example: { username: "AgentXX", password: "123456789" }
     OwnerModel:
       type: object
       properties:
@@ -1019,10 +917,16 @@ components:
           type: integer
           description: Manager type
           format: int32
-    agentWallet:
+    agentDetail:
       type: object
       properties:
-        amount:
+        amountCoin:
+          type: number
+        totalPlayer:
+          type: number
+        totalPlayerCredit:
+          type: number
+        totalPromotionnCredit:
           type: number
     playerWallet:
       type: object
@@ -1053,6 +957,23 @@ components:
           type: number
       example:
         amount: 150000
+    employeeInfo:
+      type: object
+      properties:
+        empId:
+          type: integer
+          format: int64
+      example: { empId: 1 }
+    paymentInfoId:
+      type: object
+      properties:
+        paymentId:
+          type: integer
+          format: int64
+      example: { paymentId: 1 }
+    approvePaymentInfo:
+      type: object
+      example: { id: 11, paymentType: "DP", wayToPay: "T", amount: 10000 }
     promotionCredit:
       type: object
       properties:
@@ -1060,38 +981,26 @@ components:
           type: number
       example:
         amount: 20000
-    paymentModel:
+    paymentRequestModel:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
         paymentType:
           type: string
         wayToPay:
           type: string
-        agentId:
-          type: integer
-          format: int64
         amount:
           type: number
         promotionId:
           type: integer
           format: int64
-        create_by:
-          type: integer
-          format: int64
-        create_datetime:
-          type: string
+          nullable: true
       example:
-        id: 0
-        paymentType: "0"
-        wayToPay: "2"
-        agentId: 6
-        amount: 10000
-        promotionId: 1
-        create_by: 10
-        create_datetime: "2008-03-09 16:05:07.123"
+        {
+          paymentType: "DP",
+          wayToPay: "T",
+          paymentAmount: 1000,
+          promotionId: 1,
+        }
     paymentDetailModel:
       type: object
       properties:
@@ -1152,8 +1061,6 @@ components:
           type: string
       example:
         token: token
-        responseCode: "LTR-200"
-        responseMessage: "Success"
     login_fail_response:
       type: object
       properties:
@@ -1171,27 +1078,42 @@ components:
         type:
           type: number
     emptyResponse:
-      type: array
+      type: object
       example: { data: [], code: "LTR-200", message: "Success" }
-    playerPaymentRequestListModel:
+    paymentRequestListModel:
       type: object
       properties:
-        data:
-          type: array
-        responseCode:
+        id:
+          type: integer
+          format: int64
+        type:
           type: string
-        responseMessage:
+        wayToPay:
+          type: string
+        playerName:
+          type: string
+        promotion:
+          type: string
+        amount:
+          type: number
+          format: int64
+        status:
           type: string
       example:
-        {
-          data:
-            [
-              { id: 0, paymentType: "DP", wayToPay: "C", amount: 1000, status: "W" },
-              { id: 1, paymentType: "WD", wayToPay: "T", amount: 500, status: "W" },
-            ],
-          code: "LTR-I-200",
-          message: "Success",
-        }
+        - id: 0
+          type: "Deposit"
+          wayToPay: "Cash"
+          playerName: "PlayerXXX"
+          promotion: "Promotion1"
+          amount: 100
+          status: "0"
+        - id: 1
+          type: "Deposit"
+          wayToPay: "Cash"
+          playerName: "PlayerXXX"
+          promotion: "Promotion1"
+          amount: 100
+          status: "0"
     playerListModel:
       type: object
       properties:
@@ -1206,14 +1128,6 @@ components:
         status:
           type: string
       example:
-        - id: 0
-          username: "PlayerXXX"
-          credit: 100
-          status: "0"
-        - id: 1
-          username: "PlayerXXX"
-          credit: 500
-          status: "1"
     employeeListModel:
       type: object
       properties:
@@ -1283,54 +1197,45 @@ components:
       example:
         oldPassword: "123456789"
         newPassword: "987654321"
-    promotionModel:
+    promotionCreateModel:
       type: object
       properties:
-        id:
-          type: integer
-          format: int64
-        name:
+        promotionName:
           type: string
-        type:
-          type: integer
-          format: int64
+        promotionType:
+          type: string
         rateType:
-          type: integer
-          format: int64
+          type: string
         rateAmount:
           type: number
         dateStart:
           type: string
         dateStop:
           type: string
-        status:
-          type: integer
-          format: int64
         description:
           type: string
-        create_by:
-          type: integer
-          format: int64
-        create_datetime:
+        status:
           type: string
       example:
-        id: 0
-        name: "Promotion 1"
-        type: 1
-        rateType: 1
-        rateAmount: 10
-        dateStart: "2008-03-09 16:05:07.123"
-        dateStop: "2008-03-09 16:05:07.123"
-        description: "Description"
-        create_by: 9
-        create_datetime: "2008-03-09 16:05:07.123"
+        {
+          promotionName: "Prmotion 1",
+          promotionType: "ฟรีเครดิต",
+          rateType: "fixed",
+          rateAmount: 500,
+          dateStart: "2008-03-09 16:05:07.123",
+          dateStop: "2008-4-09 16:05:07.123",
+          description: "",
+          status: "active",
+        }
     promotionListModel:
       type: object
       properties:
         id:
           type: integer
           format: int64
-        name:
+        promotionName:
+          type: string
+        promotionType:
           type: string
         rateType:
           type: integer
@@ -1342,18 +1247,26 @@ components:
         dateStop:
           type: string
       example:
-        - id: 0
-          name: "Promotion 2"
-          rateType: 1
-          rateAmount: 10
-          dateStart: "2008-03-09 16:05:07.123"
-          dateStop: "2008-03-09 16:05:07.123"
-        - id: 1
-          name: "Promotion 2"
-          rateType: 0
-          rateAmount: 15
-          dateStart: "2008-03-09 16:05:07.123"
-          dateStop: "2008-03-09 16:05:07.123"
+        [
+          {
+            id: 1,
+            promotionName: "Promotion 1",
+            promotionType: "freeCredit",
+            rateType: "fixed",
+            rateAmount: 200,
+            dateStart: "2021-09-01 13:13:10",
+            dateStop: "2021-09-20 13:13:12",
+          },
+          {
+            id: 2,
+            promotionName: "Promotion 2",
+            promotionType: "newYear",
+            rateType: "percent",
+            rateAmount: 10,
+            dateStart: "2021-09-01 13:13:10",
+            dateStop: "2021-09-20 13:13:12",
+          },
+        ]
     promotionDetailModel:
       type: object
       properties:
@@ -1394,6 +1307,13 @@ components:
           type: string
       example:
         token: yourExampleToken
+    requestWithPlayerId:
+      type: object
+      properties:
+        playerId:
+          type: integer
+      example:
+        playerId: 1
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

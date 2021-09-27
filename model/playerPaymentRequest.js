@@ -43,6 +43,10 @@ module.exports = (sequelize, Sequelize) => {
             field: 'approved_datetime',
             type: Sequelize.DATE,
         },
+        createRoleType: {
+            type: Sequelize.STRING,
+            field: 'create_rtype'
+        },
         createBy: {
             type: Sequelize.INTEGER,
             field: 'create_by',

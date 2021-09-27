@@ -145,23 +145,22 @@ paths:
           description: Id not found
           content: {}
       x-swagger-router-controller: agentController
-  /agent/approvePlayerPayment/{paymentId}:
+  /agent/approvePlayerPayment:
     post:
       tags:
         - agent
       summary: Approve player payment.
       description: Approve player payment by payment id.
-      operationId: approvePlayerPayment
-      parameters:
-        - name: paymentId
-          in: path
-          description: Id of payment record.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      operationId: approvePlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Approve "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
       responses:
         "200":
           description: Approve Complete.
@@ -234,12 +233,34 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: agentController
-  /player/paymentRequestList:
+  /agent/player/PaymentRequest:
     post:
       tags:
         - agent
-      summary: Payment request list of player.
-      operationId: listplayerPaymentRequestByAgent
+      summary: Insert payment request of player by Agent.
+      operationId: playerPaymentRequestByAgent
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Insert new player payemnt request by agent.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/paymentRequestModel"
+        required: true
+      responses:
+        "200":
+          description: Insert Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: agentController
+  /player/paymentRequestListAll:
+    post:
+      tags:
+        - agent
+      summary: Payment request list of player. Return all data
+      operationId: listPlayerPaymentRequestAll
       security:
         - bearerAuth: []
       responses:
@@ -255,6 +276,55 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: agentController
+  /player/paymentRequestListOfPlayer:
+    post:
+      tags:
+        - agent
+      summary: Payment request list of player. Return all data
+      operationId: paymentRequestListOfPlayer
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: agentController
+  /player/paymentDetail:
+    post:
+      tags:
+        - agent
+      summary: Get a single payment detail by payment id.
+      description: Returns a single payment detail by payment id.
+      operationId: getPlayerPaymentDetailById
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Agent payment request insert data.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/paymentInfoId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentDetailModel"
+        "404":
+          description: Id not found
+          content: {}
       x-swagger-router-controller: agentController
   /player/playerWallet:
     post:
@@ -595,27 +665,6 @@ paths:
           description: Invalid input
           content: {}
       x-swagger-router-controller: agentController
-  /agent/register:
-    post:
-      tags:
-        - agent
-      summary: Create agent for login test.
-      operationId: registerAgent
-      requestBody:
-        description: Create agent for login test.
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/agentRegisterRequest"
-        required: true
-      responses:
-        "200":
-          description: Insert Complete.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SuccessResponse"
-      x-swagger-router-controller: agentController
 components:
   schemas:
     SuccessResponse:
@@ -857,6 +906,9 @@ components:
           type: integer
           format: int64
       example: { paymentId: 1 }
+    approvePaymentInfo:
+      type: object
+      example: { id: 11, paymentType: "DP", wayToPay: "T", amount: 10000 }
     promotionCredit:
       type: object
       properties:
@@ -877,7 +929,13 @@ components:
           type: integer
           format: int64
           nullable: true
-      example: { paymentType: "DP", wayToPay: "T", paymentAmount: 1000, promotionId: 1 }
+      example:
+        {
+          paymentType: "DP",
+          wayToPay: "T",
+          paymentAmount: 1000,
+          promotionId: 1,
+        }
     paymentDetailModel:
       type: object
       properties:

@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    return sequelize.define("AgentModel", {
+    return sequelize.define("agent", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,

@@ -1,6 +1,6 @@
 'use strict';
 const { Sequelize, Op, Model, DataTypes } = require("sequelize");
-const { ObjectID } = require('bson');
+const { ObjectId } = require('mongodb');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const respConvert = require("../utils/responseConverter");
@@ -262,7 +262,7 @@ exports.getPlayerWallet = function (req) {
       const playerWalletCollec = mongoConnector.api.collection('player_wallet')
 
       const playerWalletAmount = await playerWalletCollec.findOne({
-        _id: ObjectID(playerInfo.walletId)
+        _id: ObjectId(playerInfo.walletId)
       }, { projection: { _id: 0, amount_coin: 1 } })
 
       resolve(respConvert.successWithData({ amountCoin: playerWalletAmount.amount_coin }, req.newTokenReturn));
@@ -282,7 +282,7 @@ exports.getPlayerWallet = function (req) {
 exports.playerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, amount } = req.body
+    const { paymentType, wayToPay, amount, playerId, promotionId } = req.body
 
     if (paymentType && wayToPay && amount) {
 
@@ -292,12 +292,15 @@ exports.playerPaymentRequest = function (req) {
 
         const requestCreate = await playerPaymentReqTable.create(
           {
-            playerId: req.user.id,
+            playerId: !playerId ? req.user.id : playerId,
             paymentType: paymentType,
             wayToPay: wayToPay,
             amount: amount,
+            promotionRefId: !promotionId ? null : promotionId,
             paymentStatus: 'W',
-            createDateTime: new Date()
+            createBy: req.user.id,
+            createDateTime: new Date(),
+            createRoleType: req.user.type
           }
         )
 
@@ -316,7 +319,34 @@ exports.playerPaymentRequest = function (req) {
 }
 
 /**
- * List of player payment request.
+ * Get payment detail from page agent-detail payment request list table.
+ **/
+exports.getPlayerPaymentDetailById = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const { paymentId } = req.body
+
+      const playerPaymentReqTable = mysqlConnector.playerPaymentReq;
+
+      const paymentDetail = await playerPaymentReqTable.findOne({
+        where: {
+          id: paymentId
+        },
+        attributes: ['id', 'createDateTime', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        raw: true
+      })
+
+      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
+    })().catch(function (err) {
+      reject(respConvert.systemError(err.message))
+    })
+  });
+}
+
+
+/**
+ * List of player payment request in player page.
  **/
 exports.listPlayerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
@@ -343,6 +373,73 @@ exports.listPlayerPaymentRequest = function (req) {
 }
 
 
+
+/**
+ * Approve player payment request by Agent .
+ **/
+exports.approvePlayerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+        const playerTable = mysqlConnector.player
+
+        //Find record for player id 
+        const findUpdateRecordData = await playerPaymentReqTable.findOne({
+          where: {
+            id: id
+          },
+          attributes: ['playerId'],
+          raw: true
+        })
+
+        //get player wallet id for update wallet
+        const playerData = await playerTable.findOne({
+          where: {
+            id: findUpdateRecordData.playerId
+          },
+          attributes: ['walletId'],
+          raw: true
+        })
+
+        //update status of payment request
+        await playerPaymentReqTable.update(
+          {
+            approvedBy: req.user.id,
+            approveDateTime: new Date(),
+            paymentStatus: 'A'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        //update player wallet
+        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await playerWalletCollec.updateOne({
+          _id: ObjectId(playerData.walletId)
+        },
+          { $inc: { amount_coin: amount } }
+        )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
 
 
 
@@ -451,11 +548,45 @@ exports.listPlayerByAgentId = function (req) {
             [Op.eq]: req.user.id
           }
         },
-        attributes: ['id', 'playerName', 'phoneNumber', 'username', 'ranking', 'status'],
+        attributes: ['id', 'playerName', 'phoneNumber', 'username', 'ranking', 'status', 'walletId'],
         raw: true
       })
 
-      resolve(respConvert.successWithData(playerList, req.newTokenReturn))
+      const listOfPlayerWalletId = playerList.map((id) => ObjectId(id.walletId))
+
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+      const resultOfPlayerWalletAmount = await playerWalletCollec.aggregate([
+        {
+          $match: {
+            _id: { $in: listOfPlayerWalletId }
+
+          }
+        },
+      ]).toArray()
+
+      const returnDataMatchedCredit = playerList.map((player) => {
+        return resultOfPlayerWalletAmount.reduce((acc, curr) => {
+          if (player.walletId === curr._id.toString()) {
+            return {
+              ...player,
+              credit: parseFloat(curr.amount_coin),
+            };
+          }
+          return acc;
+        },
+          {
+            id: player._id,
+            playerName: player.playerName,
+            phoneNumber: player.phoneNumber,
+            username: player.username,
+            ranking: player,
+            status: player.status,
+            walletId: player.walletId
+          })
+      })
+
+      resolve(respConvert.successWithData(returnDataMatchedCredit, req.newTokenReturn))
+
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
       reject(new Error(err.message));
@@ -465,26 +596,30 @@ exports.listPlayerByAgentId = function (req) {
 }
 
 /**
- * List player payment request by Agent.
- * This table is in Agent page.
+ * List player payment request all.
+ * This table is in Player/Payment request list page.
  **/
-exports.listplayerPaymentRequestByAgent = function (req) {
+exports.listPlayerPaymentRequestAll = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
       const playerPaymentReqTable = mysqlConnector.playerPaymentReq
       const promotionTable = mysqlConnector.promotion
+      const playerTable = mysqlConnector.player
+
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
+      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
 
       const paymentRequestList = await playerPaymentReqTable.findAll({
-        // where: {
-        //   createBy: req.user.id
-        // },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         include: [
           {
             model: promotionTable,
             attributes: ['promotionName'],
+          },
+          {
+            model: playerTable,
+            attributes: ['id', 'playerName'],
           }
         ],
         raw: true,
@@ -502,14 +637,51 @@ exports.listplayerPaymentRequestByAgent = function (req) {
 }
 
 /**
+ * List player payment request of each Player.
+ **/
+exports.paymentRequestListOfPlayer = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const { playerId } = req.body
+
+      const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+      const promotionTable = mysqlConnector.promotion
+
+      playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
+
+      const paymentRequestListOfPlayer = await playerPaymentReqTable.findAll({
+        where: {
+          playerId: playerId
+        },
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: promotionTable,
+            attributes: ['promotionName'],
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+
+      resolve(respConvert.successWithData(paymentRequestListOfPlayer, req.newTokenReturn));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+/**
  * Agent get Player wallet amount by Player Id.
  **/
 exports.findPlayerWalletById = function (req) {
   return new Promise(function (resolve, reject) {
 
     const { playerId } = req.body
-
-    console.log('playerId ' + playerId)
 
     const playerTable = mysqlConnector.player;
 
@@ -525,10 +697,8 @@ exports.findPlayerWalletById = function (req) {
       const playerWalletCollec = mongoConnector.api.collection('player_wallet')
 
       const playerWalletAmount = await playerWalletCollec.findOne({
-        _id: ObjectID(playerWalletId.wallet_id)
+        _id: ObjectId(playerWalletId.wallet_id)
       }, { projection: { _id: 0, amount_coin: 1 } })
-
-      console.log(playerWalletAmount)
 
       resolve(respConvert.successWithData(playerWalletAmount, req.newTokenReturn))
     })().catch(function (err) {
@@ -552,15 +722,11 @@ exports.findPlayerInfo = function (req) {
     (async () => {
       const playerInfo = await playerTable.findOne({
         where: {
-          createBy: {
-            [Op.eq]: req.user.id
-          }
+          id: playerId
         },
         attributes: ['ranking', 'status'],
         raw: true
       })
-
-      console.log(playerInfo)
 
       resolve(respConvert.successWithData(playerInfo, req.newTokenReturn))
     })().catch(function (err) {
