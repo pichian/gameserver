@@ -7,7 +7,9 @@ module.exports = (sequelize, Sequelize) => {
         },
         agentRefCode: {
             type: Sequelize.STRING,
-            field: 'agent_ref_code'
+            field: 'agent_ref_code',
+            allowNull: true,
+            defaultValue: null
         },
         title: {
             type: Sequelize.STRING,

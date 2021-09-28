@@ -31,7 +31,7 @@ exports.loginAgent = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'agentName','agentRefCode'],
+          attributes: ['id', 'username', 'password', 'agentName', 'agentRefCode'],
           raw: true
         });
 
@@ -39,7 +39,7 @@ exports.loginAgent = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'firstname', 'lastname','agentRefCode'],
+          attributes: ['id', 'username', 'password', 'firstname', 'lastname', 'agentRefCode'],
           raw: true
         });
 
@@ -106,7 +106,7 @@ exports.loginAgent = function (body) {
               name: resAgent.agentName,
               username: resAgent.username,
               type: 'Agent',
-              agentRefCode:agentRefCode
+              agentRefCode: resAgent.agentRefCode
             },
             process.env.JWT_TOKEN_SECRET_KEY,
             { expiresIn: '30m' }
@@ -126,7 +126,7 @@ exports.loginAgent = function (body) {
               firstname: resEmp.firstname,
               lastname: resEmp.lastname,
               type: 'Employee',
-              agentRefCode:agentRefCode
+              agentRefCode: resEmp.agentRefCode
             },
             process.env.JWT_TOKEN_SECRET_KEY,
             { expiresIn: '30m' }
@@ -217,7 +217,7 @@ exports.findAgentDetail = function (req) {
         where: {
           id: userData.id
         },
-        attributes: ['agentName', 'walletId','agentRefCode'],
+        attributes: ['agentName', 'walletId', 'agentRefCode'],
         raw: true
       });
 
