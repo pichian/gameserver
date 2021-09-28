@@ -7,7 +7,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         agentRefCode: {
             type: Sequelize.STRING,
-            field: 'agentRefCode'
+            field: 'agent_ref_code'
         },
         title: {
             type: Sequelize.STRING,
