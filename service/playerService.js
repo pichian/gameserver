@@ -479,7 +479,7 @@ exports.listPlayerByAgentId = function (req) {
 
     (async () => {
 
-      
+
       const rtype = req.user.type;
       const user_id = req.user.id;
 
@@ -502,13 +502,13 @@ exports.listPlayerByAgentId = function (req) {
             [Op.eq]: agentInfo.agentRefCode
           }
         }
-      } else if (rtype.toLowerCast() == 'employee') {
+      } else if (rtype.toLowerCase() == 'employee') {
         console.log('employeeemployeeemployee')
         const employeeInfo = await employeeTable.findOne({
           where: {
             id: user_id
           },
-          attributes: ['employeeName', 'agentRefCode'],
+          attributes: ['username', 'agentRefCode'],
           raw: true
         });
 
