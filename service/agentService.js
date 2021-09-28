@@ -31,7 +31,7 @@ exports.loginAgent = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'agentName'],
+          attributes: ['id', 'username', 'password', 'agentName','agentRefCode'],
           raw: true
         });
 
@@ -39,7 +39,7 @@ exports.loginAgent = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'firstname', 'lastname'],
+          attributes: ['id', 'username', 'password', 'firstname', 'lastname','agentRefCode'],
           raw: true
         });
 
@@ -105,7 +105,8 @@ exports.loginAgent = function (body) {
               id: resAgent.id,
               name: resAgent.agentName,
               username: resAgent.username,
-              type: 'Agent'
+              type: 'Agent',
+              agentRefCode:agentRefCode
             },
             process.env.JWT_TOKEN_SECRET_KEY,
             { expiresIn: '30m' }
@@ -124,7 +125,8 @@ exports.loginAgent = function (body) {
               username: resEmp.username,
               firstname: resEmp.firstname,
               lastname: resEmp.lastname,
-              type: 'Employee'
+              type: 'Employee',
+              agentRefCode:agentRefCode
             },
             process.env.JWT_TOKEN_SECRET_KEY,
             { expiresIn: '30m' }
@@ -215,7 +217,7 @@ exports.findAgentDetail = function (req) {
         where: {
           id: userData.id
         },
-        attributes: ['agentName', 'walletId'],
+        attributes: ['agentName', 'walletId','agentRefCode'],
         raw: true
       });
 
@@ -228,15 +230,16 @@ exports.findAgentDetail = function (req) {
       //find total player by agent
       const totalPlayerOfThisAgent = await playerTable.count({
         where: {
-          createBy: req.user.id
+          agentRefCode: agentInfo.agentRefCode
         },
         raw: true
       })
 
+
       //find total player credit by agent
       const listOfPlayerWalletId = await playerTable.findAll({
         where: {
-          createBy: req.user.id
+          agentRefCode: agentInfo.agentRefCode
         },
         attributes: ['walletId'],
         raw: true

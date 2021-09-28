@@ -28,7 +28,8 @@ exports.authToken = function (req) {
                     id: decoded.id,
                     name: decoded.name,
                     username: decoded.username,
-                    type: decoded.type
+                    type: decoded.type,
+                    agentRefCode: decoded.agentRefCode
                 },
                 process.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }

@@ -37,6 +37,7 @@ exports.agentEmployeeRegister = function (req) {
                 const encryptedPassword = await bcrypt.hash(password, 10);
 
                 const employeeCreated = await employeeTable.create({
+                    agentRefCode: 'ag210909114131',
                     title: title,
                     firstname: firstname,
                     lastname: lastname,

@@ -474,14 +474,55 @@ exports.listPlayerByAgentId = function (req) {
   return new Promise(function (resolve, reject) {
 
     const playerTable = mysqlConnector.player;
+    const agentTable = mysqlConnector.agent;
+    const employeeTable = mysqlConnector.employee;
 
     (async () => {
-      const playerList = await playerTable.findAll({
-        where: {
-          createBy: {
-            [Op.eq]: req.user.id
+
+      
+      const rtype = req.user.type;
+      const user_id = req.user.id;
+
+      let whereQry = {}
+
+      if (rtype.toLowerCase() == 'agent') {
+        console.log('agentagentagentagent')
+        const agentInfo = await agentTable.findOne({
+          where: {
+            id: user_id
+          },
+          attributes: ['agentName', 'agentRefCode'],
+          raw: true
+        });
+
+        console.log(agentInfo);
+
+        whereQry = {
+          agentRefCode: {
+            [Op.eq]: agentInfo.agentRefCode
           }
-        },
+        }
+      } else if (rtype.toLowerCast() == 'employee') {
+        console.log('employeeemployeeemployee')
+        const employeeInfo = await employeeTable.findOne({
+          where: {
+            id: user_id
+          },
+          attributes: ['employeeName', 'agentRefCode'],
+          raw: true
+        });
+
+        whereQry = {
+          agentRefCode: {
+            [Op.eq]: employeeInfo.agentRefCode
+          }
+        }
+      } else {
+        console.log('other')
+      }
+
+      const playerList = await playerTable.findAll({
+        where: whereQry,
         attributes: ['id', 'playerName', 'phoneNumber', 'username', 'ranking', 'status', 'walletId'],
         raw: true
       })

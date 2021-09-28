@@ -5,6 +5,10 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
+        agentRefCode: {
+            type: Sequelize.STRING,
+            field: 'agentRefCode'
+        },
         title: {
             type: Sequelize.STRING,
             field: 'title'
