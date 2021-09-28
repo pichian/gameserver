@@ -576,6 +576,7 @@ exports.listPlayerByAgentId = function (req) {
  * This table is in Player/Payment request list page.
  **/
 exports.listPlayerPaymentRequestAll = function (req) {
+  
   return new Promise(function (resolve, reject) {
     (async () => {
 
@@ -586,7 +587,62 @@ exports.listPlayerPaymentRequestAll = function (req) {
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
       playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
 
+      const rtype = req.user.type;
+      const userId = req.user.id;
+
+      const agentTable = mysqlConnector.agent
+      const employeeTable = mysqlConnector.employee
+
+      var arrayCreateId = [];
+      if (rtype.toLowerCase() == 'agent') {
+        const agentInfo = await agentTable.findOne({
+          where: {
+            id: userId
+          },
+          attributes: ['id', 'agentName', 'agentRefCode'],
+          raw: true
+        });
+  
+        const employeeInfo = await employeeTable.findAll({
+          where: {
+            agentRefCode: agentInfo.agentRefCode
+          },
+          attributes: ['id', 'username', 'agentRefCode'],
+          raw: true
+        });
+
+        // console.log(agentInfo);
+        // console.log(employeeInfo);
+        arrayCreateId = stringUtils.pushCreateById(employeeInfo,agentInfo)
+      }else{
+
+        const employeeInfo = await employeeTable.findAll({
+          where: {
+            agentRefCode: req.user.agentRefCode
+          },
+          attributes: ['id', 'username', 'agentRefCode'],
+          raw: true
+        });
+
+        const agentInfo = await agentTable.findOne({
+          where: {
+            agentRefCode: req.user.agentRefCode
+          },
+          attributes: ['id', 'agentName', 'agentRefCode'],
+          raw: true
+        });
+
+        console.log(employeeInfo);
+        console.log(agentInfo);
+
+        arrayCreateId = stringUtils.pushCreateById(employeeInfo,agentInfo)
+      }
+
+      console.log(arrayCreateId);
       const paymentRequestList = await playerPaymentReqTable.findAll({
+        where: {
+          createBy: arrayCreateId
+        },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         include: [
           {

@@ -8,3 +8,15 @@ exports.getPaymentTypeText = function (paymentType) {
         return '';
     }
 }
+
+exports.pushCreateById = function (dataList,dataObj) {
+    
+    var result = []
+    result.push(dataObj.id)
+
+    dataList.forEach(element => {
+        result.push(element.id)
+    });
+
+    return result;
+}
