@@ -9,12 +9,16 @@ exports.getPaymentTypeText = function (paymentType) {
     }
 }
 
-exports.pushCreateById = function (dataList,dataObj) {
+exports.pushCreateById = function (dataList,dataList2,dataObj) {
     
     var result = []
     result.push(dataObj.id)
 
     dataList.forEach(element => {
+        result.push(element.id)
+    });
+
+    dataList2.forEach(element => {
         result.push(element.id)
     });
 

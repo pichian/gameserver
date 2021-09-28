@@ -587,56 +587,43 @@ exports.listPlayerPaymentRequestAll = function (req) {
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
       playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
 
-      const rtype = req.user.type;
-      const userId = req.user.id;
-
       const agentTable = mysqlConnector.agent
       const employeeTable = mysqlConnector.employee
 
       var arrayCreateId = [];
-      if (rtype.toLowerCase() == 'agent') {
-        const agentInfo = await agentTable.findOne({
-          where: {
-            id: userId
-          },
-          attributes: ['id', 'agentName', 'agentRefCode'],
-          raw: true
-        });
-  
-        const employeeInfo = await employeeTable.findAll({
-          where: {
-            agentRefCode: agentInfo.agentRefCode
-          },
-          attributes: ['id', 'username', 'agentRefCode'],
-          raw: true
-        });
 
-        // console.log(agentInfo);
-        // console.log(employeeInfo);
-        arrayCreateId = stringUtils.pushCreateById(employeeInfo,agentInfo)
-      }else{
+      //get payment request with player
+      const playerInfo = await playerTable.findAll({
+        where: {
+          agentRefCode: req.user.agentRefCode
+        },
+        attributes: ['id', 'username', 'agentRefCode'],
+        raw: true
+      });
 
-        const employeeInfo = await employeeTable.findAll({
-          where: {
-            agentRefCode: req.user.agentRefCode
-          },
-          attributes: ['id', 'username', 'agentRefCode'],
-          raw: true
-        });
+      //get payment request with employee
+      const employeeInfo = await employeeTable.findAll({
+        where: {
+          agentRefCode: req.user.agentRefCode
+        },
+        attributes: ['id', 'username', 'agentRefCode'],
+        raw: true
+      });
 
-        const agentInfo = await agentTable.findOne({
-          where: {
-            agentRefCode: req.user.agentRefCode
-          },
-          attributes: ['id', 'agentName', 'agentRefCode'],
-          raw: true
-        });
+      //get payment request with agent
+      const agentInfo = await agentTable.findOne({
+        where: {
+          agentRefCode: req.user.agentRefCode
+        },
+        attributes: ['id', 'agentName', 'agentRefCode'],
+        raw: true
+      });
 
-        console.log(employeeInfo);
-        console.log(agentInfo);
+      console.log(playerInfo);
+      console.log(employeeInfo);
+      console.log(agentInfo);
 
-        arrayCreateId = stringUtils.pushCreateById(employeeInfo,agentInfo)
-      }
+      arrayCreateId = stringUtils.pushCreateById(playerInfo,employeeInfo,agentInfo)
 
       console.log(arrayCreateId);
       const paymentRequestList = await playerPaymentReqTable.findAll({
@@ -791,7 +778,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId','createBy','createRoleType'],
+          attributes: ['playerId','createBy','createRoleType','approved_by'],
           raw: true
         })
 
@@ -826,10 +813,15 @@ exports.approvePlayerPaymentRequest = function (req) {
 
         //
         console.log(findUpdateRecordData)
+        const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
+        let logsCreateBy = '';
         if(findUpdateRecordData.createRoleType.toLowerCase()=='employee'){
-          const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
-          await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, findUpdateRecordData.createBy) 
+          logsCreateBy = findUpdateRecordData.createBy;
+        }else if(findUpdateRecordData.createRoleType.toLowerCase()=='player'){
+          logsCreateBy= req.user.id
         }
+
+        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy) 
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -888,12 +880,17 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           attributes: ['username'],
           raw: true
         })
-
+        
         console.log(playerPaymentData)
+        const textDesc = 'Disapproved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
+        let logsCreateBy = '';
         if(playerPaymentData.createRoleType.toLowerCase()=='employee'){
-          const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
-          await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, playerPaymentData.createBy)
+          logsCreateBy = playerPaymentData.createBy;
+        }else if(playerPaymentData.createRoleType.toLowerCase()=='player'){
+          logsCreateBy= req.user.id
         }
+
+        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy) 
 
         resolve(respConvert.success(req.newTokenReturn));
 
