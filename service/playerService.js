@@ -8,6 +8,7 @@ const msgConstant = require("../constant/messageMapping");
 const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
 const utilLog = require("../utils/log")
+const stringUtils = require("../utils/String")
 
 /***************** Service by Player **************/
 
@@ -720,6 +721,8 @@ exports.approvePlayerPaymentRequest = function (req) {
 
     const { id, paymentType, wayToPay, amount } = req.body
 
+    console.log(req.body);
+
     if (id && paymentType && wayToPay && amount) {
 
       (async () => {
@@ -732,7 +735,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId'],
+          attributes: ['playerId','createBy'],
           raw: true
         })
 
@@ -741,7 +744,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: findUpdateRecordData.playerId
           },
-          attributes: ['walletId'],
+          attributes: ['walletId','username'],
           raw: true
         })
 
@@ -764,6 +767,10 @@ exports.approvePlayerPaymentRequest = function (req) {
         },
           { $inc: { amount_coin: paymentType == 'WD' ? -Math.abs(amount) : amount } }
         )
+
+        //
+        const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
+        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, findUpdateRecordData.createBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -793,6 +800,7 @@ exports.disapprovePlayerPaymentRequest = function (req) {
       (async () => {
 
         const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+        const playerTable = mysqlConnector.player
 
         //update status of payment request
         await playerPaymentReqTable.update(
@@ -803,6 +811,27 @@ exports.disapprovePlayerPaymentRequest = function (req) {
             where: { id: id }
           }
         )
+
+        //Find record for player id 
+        const playerPaymentData = await playerPaymentReqTable.findOne({
+          where: {
+            id: id
+          },
+          attributes: ['playerId'],
+          raw: true
+        })
+
+        //get player info
+        const playerData = await playerTable.findOne({
+          where: {
+            id: playerPaymentData.playerId
+          },
+          attributes: ['username'],
+          raw: true
+        })
+
+        const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
+        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, playerPaymentData.createBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 

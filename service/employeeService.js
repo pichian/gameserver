@@ -36,8 +36,18 @@ exports.agentEmployeeRegister = function (req) {
                 //Encrypt user password
                 const encryptedPassword = await bcrypt.hash(password, 10);
 
+                const agentTable = mysqlConnector.agent
+          
+                const agentInfo = await agentTable.findOne({
+                  where: {
+                    id: req.user.id
+                  },
+                  attributes: ['agentName', 'agentRefCode'],
+                  raw: true
+                });
+
                 const employeeCreated = await employeeTable.create({
-                    agentRefCode: 'ag210909114131',
+                    agentRefCode: agentInfo.agentRefCode,
                     title: title,
                     firstname: firstname,
                     lastname: lastname,
@@ -131,6 +141,7 @@ exports.getEmployeeInfo = function (req) {
         (async () => {
 
             const employeeTable = mysqlConnector.employee;
+            const employeeLogTable = mysqlConnector.employeeLog
 
             const employeeInfo = await employeeTable.findOne({
                 where: {
@@ -139,6 +150,28 @@ exports.getEmployeeInfo = function (req) {
                 attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
                 raw: true
             })
+
+            //find total player credit by agent
+            const listEmployeeLogs = await employeeLogTable.findAll({
+                where: {
+                    createBy: req.user.id
+                },
+                attributes: ['id','description','createDateTime'],
+                raw: true
+            })
+
+            //find employee logs
+            let employeeLogs = []
+            listEmployeeLogs.forEach(element => {
+                let logObj = {}
+                logObj._id = element.id;
+                logObj.dateTime = element.createDateTime;
+                logObj.action = element.description;
+                employeeLogs.push(logObj)
+            });
+
+            console.log(req.user.id)
+            employeeInfo.employeeLogs =    employeeLogs
 
             resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
 
