@@ -735,7 +735,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId','createBy'],
+          attributes: ['playerId','createBy','createRoleType'],
           raw: true
         })
 
@@ -769,8 +769,11 @@ exports.approvePlayerPaymentRequest = function (req) {
         )
 
         //
-        const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
-        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, findUpdateRecordData.createBy)
+        console.log(findUpdateRecordData)
+        if(findUpdateRecordData.createRoleType.toLowerCase()=='employee'){
+          const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
+          await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, findUpdateRecordData.createBy) 
+        }
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -817,7 +820,7 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId'],
+          attributes: ['playerId','createRoleType','createBy'],
           raw: true
         })
 
@@ -830,8 +833,11 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           raw: true
         })
 
-        const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
-        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, playerPaymentData.createBy)
+        console.log(playerPaymentData)
+        if(playerPaymentData.createRoleType.toLowerCase()=='employee'){
+          const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
+          await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, playerPaymentData.createBy)
+        }
 
         resolve(respConvert.success(req.newTokenReturn));
 

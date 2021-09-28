@@ -116,6 +116,7 @@ exports.getEmployeeDetail = function (req) {
 
             const { empId } = req.body
             const employeeTable = mysqlConnector.employee;
+            const employeeLogTable = mysqlConnector.employeeLog
 
             const employeeInfo = await employeeTable.findOne({
                 where: {
@@ -124,6 +125,18 @@ exports.getEmployeeDetail = function (req) {
                 attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
                 raw: true
             })
+
+            
+            //find total player credit by agent
+            const listEmployeeLogs = await employeeLogTable.findAll({
+                where: {
+                    createBy: empId
+                },
+                attributes: ['id','description','createDateTime'],
+                raw: true
+            })
+
+            employeeInfo.employeeLogs = setEmployeeLogs(listEmployeeLogs)
 
             resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
 
@@ -160,18 +173,7 @@ exports.getEmployeeInfo = function (req) {
                 raw: true
             })
 
-            //find employee logs
-            let employeeLogs = []
-            listEmployeeLogs.forEach(element => {
-                let logObj = {}
-                logObj._id = element.id;
-                logObj.dateTime = element.createDateTime;
-                logObj.action = element.description;
-                employeeLogs.push(logObj)
-            });
-
-            console.log(req.user.id)
-            employeeInfo.employeeLogs =    employeeLogs
+            employeeInfo.employeeLogs = setEmployeeLogs(listEmployeeLogs)
 
             resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
 
@@ -193,4 +195,18 @@ exports.updateempoyeeDetail = function (body) {
     return new Promise(function (resolve, reject) {
         resolve();
     });
+}
+
+function setEmployeeLogs(listEmployeeLogs) {
+    //find employee logs
+    let employeeLogs = []
+    listEmployeeLogs.forEach(element => {
+        let logObj = {}
+        logObj._id = element.id;
+        logObj.dateTime = element.createDateTime;
+        logObj.action = element.description;
+        employeeLogs.push(logObj)
+    });
+
+    return employeeLogs;
 }
