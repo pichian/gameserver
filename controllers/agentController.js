@@ -227,6 +227,34 @@ module.exports.approvePlayerPaymentRequest = function approvePlayerPaymentReques
   });
 };
 
+module.exports.disapprovePlayerPaymentRequest = function disapprovePlayerPaymentRequest(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.disapprovePlayerPaymentRequest(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.cancelPlayerPaymentRequest = function cancelPlayerPaymentRequest(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.cancelPlayerPaymentRequest(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
 /************************Player Operation By Agent*************************/
 
 

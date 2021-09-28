@@ -168,6 +168,52 @@ paths:
           description: Id not found
           content: {}
       x-swagger-router-controller: agentController
+  /agent/disapprovePlayerPayment:
+    post:
+      tags:
+        - agent
+      summary: Disapprove player payment.
+      description: Disapprove player payment by payment id.
+      operationId: disapprovePlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Get this detail from table "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
+  /agent/cancelPlayerPayment:
+    post:
+      tags:
+        - agent
+      summary: Cancel player payment.
+      description: Cancel player payment by payment id.
+      operationId: cancelPlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Approve "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
   /agent/agentDetail:
     post:
       tags:

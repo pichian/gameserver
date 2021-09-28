@@ -24,7 +24,7 @@ servers:
   # - url: http://128.199.216.219:63/V2/
   #   description: สำหรับ Test owner server
 tags:
-  - name: agent
+  - name: owner
 paths:
   # /agent/login:
   #   post:
@@ -214,7 +214,7 @@ paths:
   /owner/agent/agentList:
     post:
       tags:
-        - agent
+        - owner
       summary: List of Agent by onwe id..
       operationId: listAgentByOwnerId
       # security:
@@ -277,28 +277,28 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /agent/player/PaymentRequest:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Insert payment request of player by Agent.
-  #     operationId: playerPaymentRequestByAgent
-  #     security:
-  #       - bearerAuth: []
-  #     requestBody:
-  #       description: Insert new player payemnt request by agent.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/paymentRequestModel"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Insert Complete.
-  #       "405":
-  #         description: Invalid input
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  /owner/agent/paymentRequest:
+    post:
+      tags:
+        - owner
+      summary: Insert payment request of owner by Owner.
+      operationId: agentPaymentRequestByOwner
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Insert new agent payemnt request by owner.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/paymentRequestModel"
+        required: true
+      responses:
+        "200":
+          description: Insert Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: ownerController
   # /player/paymentRequestListAll:
   #   post:
   #     tags:
@@ -321,28 +321,28 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /player/paymentRequestListOfPlayer:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Payment request list of player. Return all data
-  #     operationId: paymentRequestListOfPlayer
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/paymentRequestListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
+  /agent/paymentRequestListOfAgent:
+    post:
+      tags:
+        - owner
+      summary: Payment request list of agent. When go to agent detail page.
+      operationId: paymentRequestListOfAgent
+      # security:
+      #   - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
   # /player/paymentDetail:
   #   post:
   #     tags:
@@ -370,21 +370,47 @@ paths:
   #         description: Id not found
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /player/playerWallet:
+  /agent/agentWallet:
+    post:
+      tags:
+        - owner
+      summary: Finds agent wallet amount by agent id.
+      operationId: findAgentWalletById
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Request by object of agent id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithAgentId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/agentWallet"
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: ownerController
+  # /agent/agentInfo:
   #   post:
   #     tags:
-  #       - agent
-  #     summary: Finds player wallet amount by player id.
-  #     description: Finds player wallet.
-  #     operationId: findPlayerWalletById
-  #     security:
-  #       - bearerAuth: []
+  #       - owner
+  #     summary: Finds agent rank, status, name by agent id.
+  #     operationId: findAgentInfo
+  #     # security:
+  #     #   - bearerAuth: []
   #     requestBody:
-  #       description: Request player Id.
+  #       description: Request by object of agent id.
   #       content:
   #         application/json:
   #           schema:
-  #             $ref: "#/components/schemas/requestWithPlayerId"
+  #             $ref: "#/components/schemas/requestWithAgentId"
   #       required: true
   #     responses:
   #       "200":
@@ -392,33 +418,12 @@ paths:
   #         content:
   #           application/json:
   #             schema:
-  #               $ref: "#/components/schemas/playerWallet"
+  #               $ref: "#/components/schemas/agentInfo"
   #               x-content-type: application/json
   #       "400":
   #         description: Invalid tag value
   #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /player/playerInfo:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Finds player rank and status by player id.
-  #     description: Finds player rank and status.
-  #     operationId: findPlayerInfo
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/playerRank"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  #     x-swagger-router-controller: ownerController
   # /player/banPlayer/{playerId}:
   #   post:
   #     tags:
@@ -928,16 +933,19 @@ components:
           type: number
         totalPromotionnCredit:
           type: number
-    playerWallet:
+    agentWallet:
       type: object
       properties:
-        amount:
+        amount_coin:
           type: number
-    playerRank:
+    agentInfo:
       type: object
       properties:
-        rank:
-          type: number
+        agentName:
+          type: string
+        status:
+          type: string
+      example: { agentName: "AgentXX", status: "active" }
     playerStatus:
       type: object
       properties:
@@ -1307,13 +1315,13 @@ components:
           type: string
       example:
         token: yourExampleToken
-    requestWithPlayerId:
+    requestWithAgentId:
       type: object
       properties:
-        playerId:
+        agentId:
           type: integer
       example:
-        playerId: 1
+        agentId: 1
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

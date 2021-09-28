@@ -135,10 +135,10 @@ exports.logoutPlayer = function (req) {
 /**
  * Register player from main page.
  **/
-exports.registerPlayer = function (body) {
+exports.registerPlayer = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { playerName, username, password, phoneNumber, agentRefCode } = body;
+    const { playerName, username, password, phoneNumber, agentRefCode } = req.body;
 
     if (playerName && username && password && phoneNumber && (agentRefCode || agentRefCode === "")) {
 
@@ -194,7 +194,7 @@ exports.registerPlayer = function (body) {
             where: { id: resCreatedPlayer.id }
           })
 
-        resolve(respConvert.success(req.newTokenReturn));
+        resolve(respConvert.success());
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
@@ -374,72 +374,6 @@ exports.listPlayerPaymentRequest = function (req) {
 
 
 
-/**
- * Approve player payment request by Agent .
- **/
-exports.approvePlayerPaymentRequest = function (req) {
-  return new Promise(function (resolve, reject) {
-
-    const { id, paymentType, wayToPay, amount } = req.body
-
-    if (id && paymentType && wayToPay && amount) {
-
-      (async () => {
-
-        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
-        const playerTable = mysqlConnector.player
-
-        //Find record for player id 
-        const findUpdateRecordData = await playerPaymentReqTable.findOne({
-          where: {
-            id: id
-          },
-          attributes: ['playerId'],
-          raw: true
-        })
-
-        //get player wallet id for update wallet
-        const playerData = await playerTable.findOne({
-          where: {
-            id: findUpdateRecordData.playerId
-          },
-          attributes: ['walletId'],
-          raw: true
-        })
-
-        //update status of payment request
-        await playerPaymentReqTable.update(
-          {
-            approvedBy: req.user.id,
-            approveDateTime: new Date(),
-            paymentStatus: 'A'
-          },
-          {
-            where: { id: id }
-          }
-        )
-
-        //update player wallet
-        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
-        const resCreatedWallet = await playerWalletCollec.updateOne({
-          _id: ObjectId(playerData.walletId)
-        },
-          { $inc: { amount_coin: amount } }
-        )
-
-        resolve(respConvert.success(req.newTokenReturn));
-
-      })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
-
-    } else {
-      reject(respConvert.validateError(msgConstant.core.validate_error));
-    }
-
-  });
-}
 
 
 
@@ -724,7 +658,7 @@ exports.findPlayerInfo = function (req) {
         where: {
           id: playerId
         },
-        attributes: ['ranking', 'status'],
+        attributes: ['ranking', 'status', 'playerName'],
         raw: true
       })
 
@@ -733,6 +667,150 @@ exports.findPlayerInfo = function (req) {
       console.log('[error on catch] : ' + err)
       reject(new Error(err.message));
     })
+
+  });
+}
+
+/**
+ * Approve player payment request by Agent .
+ **/
+exports.approvePlayerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+        const playerTable = mysqlConnector.player
+
+        //Find record for player id 
+        const findUpdateRecordData = await playerPaymentReqTable.findOne({
+          where: {
+            id: id
+          },
+          attributes: ['playerId'],
+          raw: true
+        })
+
+        //get player wallet id for update wallet
+        const playerData = await playerTable.findOne({
+          where: {
+            id: findUpdateRecordData.playerId
+          },
+          attributes: ['walletId'],
+          raw: true
+        })
+
+        //update status of payment request
+        await playerPaymentReqTable.update(
+          {
+            approvedBy: req.user.id,
+            approveDateTime: new Date(),
+            paymentStatus: 'A'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        //update player wallet
+        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await playerWalletCollec.updateOne({
+          _id: ObjectId(playerData.walletId)
+        },
+          { $inc: { amount_coin: paymentType == 'WD' ? -Math.abs(amount) : amount } }
+        )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+
+/**
+ * Disapprove player payment request by Agent .
+ **/
+exports.disapprovePlayerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+
+        //update status of payment request
+        await playerPaymentReqTable.update(
+          {
+            paymentStatus: 'D'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Cancel player payment request by Agent .
+ **/
+exports.cancelPlayerPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+
+        //update status of payment request
+        await playerPaymentReqTable.update(
+          {
+            paymentStatus: 'C'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
 
   });
 }

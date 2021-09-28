@@ -36,8 +36,8 @@ module.exports.authenPlayerToken = function authenPlayerToken(req, res, next) {
     });
 };
 
-module.exports.registerPlayer = function registerPlayer(req, res, next, body) {
-  playerService.registerPlayer(body)
+module.exports.registerPlayer = function registerPlayer(req, res, next) {
+  playerService.registerPlayer(req)
     .then(function (response) {
       utils.writeSuccess(res, response);
     })

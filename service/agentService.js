@@ -460,6 +460,144 @@ exports.listAgentPaymentRequest = function (req) {
   });
 }
 
+
+
+
+
+
+
+
+
+
+/************************ Agent Operation By Owner*************************/
+
+/**
+ * Get Agent wallet amount by agent Id.
+ **/
+exports.findAgentWalletById = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { agentId } = req.body
+
+    const agentTable = mysqlConnector.agent;
+
+    (async () => {
+      const agentWalletId = await agentTable.findOne({
+        where: {
+          id: agentId
+        },
+        attributes: ['walletId'],
+        raw: true
+      })
+
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+      const agentWalletAmount = await agentWalletCollec.findOne({
+        _id: ObjectId(agentWalletId.walletId)
+      }, { projection: { _id: 0, amount_coin: 1 } })
+
+      resolve(respConvert.successWithData(agentWalletAmount))
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
+
+  });
+}
+
+
+/**
+ * Agent payment request By Owner
+ **/
+exports.agentPaymentRequestByOwner = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { paymentType, wayToPay, amount, agentId, promotionId } = req.body
+
+    if (paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const agentPaymentReqTable = mysqlConnector.agentPaymentReq
+
+        const requestCreate = await agentPaymentReqTable.create(
+          {
+            agentId: !agentId ? req.user.id : agentId,
+            paymentType: paymentType,
+            wayToPay: wayToPay,
+            amount: amount,
+            promotionRefId: !promotionId ? null : promotionId,
+            paymentStatus: 'W',
+            // createBy: req.user.id,
+            createBy: null,
+            createDateTime: new Date(),
+            // createRoleType: req.user.type
+            createRoleType: null
+          }
+        )
+
+        resolve(respConvert.success());
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * List player payment request of each Player.
+ **/
+exports.paymentRequestListOfAgent = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const { agentId } = req.body
+
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq
+      const promotionTable = mysqlConnector.promotion
+
+      agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
+
+      const paymentRequestListOfAgent = await agentPaymentReqTable.findAll({
+        where: {
+          agentId: agentId
+        },
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: promotionTable,
+            attributes: ['promotionName'],
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+
+      resolve(respConvert.successWithData(paymentRequestListOfAgent));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+/************************ Agent Operation By Owner*************************/
+
+
+
+
+
+
+
+
+
 /**
  * List agent payment request
  *

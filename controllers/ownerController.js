@@ -3,7 +3,9 @@
 const utils = require('../utils/writer.js');
 const middleWare = require('../middleware/auth')
 const ownerService = require('../service/ownerService');
+const agentService = require('../service/agentService')
 
+/************************ Main Operation of Owner*************************/
 
 module.exports.ownerAgentRegister = function ownerAgentRegister(req, res, next, body) {
   ownerService.ownerAgentRegister(body)
@@ -34,6 +36,74 @@ module.exports.listAgentPaymentRequestAll = function listAgentPaymentRequestAll(
       utils.writeError(res, response);
     });
 };
+
+/************************ Main Operation of Owner*************************/
+
+
+
+
+
+
+
+
+
+
+/************************ Agent Operation By Owner*************************/
+
+module.exports.findAgentWalletById = function findAgentWalletById(req, res, next) {
+  agentService.findAgentWalletById(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+// module.exports.findAgentInfo = function findAgentInfo(req, res, next) {
+//   middleWare.authToken(req).then(function () {
+//     playerService.findAgentInfo(req)
+//       .then(function (response) {
+//         utils.writeSuccess(res, response);
+//       })
+//       .catch(function (response) {
+//         utils.writeError(res, response);
+//       });
+//   }).catch(function (response) {
+//     utils.writeError(res, response);
+//   });
+// };
+
+module.exports.agentPaymentRequestByOwner = function agentPaymentRequestByOwner(req, res, next) {
+  agentService.agentPaymentRequestByOwner(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+module.exports.paymentRequestListOfAgent = function paymentRequestListOfAgent(req, res, next) {
+  agentService.paymentRequestListOfAgent(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+};
+
+/************************ Agent Operation By Owner*************************/
+
+
+
+
+
+
+
+
+
 
 // module.exports.agentPaymentRequest = function agentPaymentRequest (req, res, next, body) {
 //   Owner.agentPaymentRequest(body)
