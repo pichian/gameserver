@@ -258,7 +258,6 @@ exports.findAgentDetail = function (req) {
         },
       ]).toArray()
 
-      console.log(totalPlayerWalletSum)
       //find total promotion credit
 
       //!!!Warning. Some data of this resolve still mock data!!!!
@@ -525,10 +524,6 @@ exports.getAgentInfo = function (req) {
         },
       ]).toArray()
 
-      console.log(totalPlayerOfThisAgent, totalPlayerWalletSum)
-
-
-
       resolve(respConvert.successWithData({
         agentName: agentInfo.agentName,
         status: agentInfo.status,
@@ -707,8 +702,6 @@ exports.approveAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
     const { id, paymentType, wayToPay, amount } = req.body
-
-    console.log(req.body)
 
     if (id && paymentType && wayToPay && amount) {
 

@@ -438,6 +438,7 @@ exports.agentPlayerRegister = function (req) {
           phoneNumber: phoneNumber,
           description: description,
           status: status,
+          agentRefCode: req.user.agentRefCode,
           createBy: req.user.id,
           createDateTime: new Date(),
           updateBy: req.user.id,
@@ -507,8 +508,6 @@ exports.listPlayerByAgentId = function (req) {
           attributes: ['agentName', 'agentRefCode'],
           raw: true
         });
-
-        console.log(agentInfo);
 
         whereQry = {
           agentRefCode: {
@@ -778,8 +777,6 @@ exports.approvePlayerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
     const { id, paymentType, wayToPay, amount } = req.body
-
-    console.log(req.body);
 
     if (id && paymentType && wayToPay && amount) {
 
