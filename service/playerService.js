@@ -615,33 +615,33 @@ exports.listPlayerPaymentRequestAll = function (req) {
       });
 
       //get payment request with employee
-      const employeeInfo = await employeeTable.findAll({
-        where: {
-          agentRefCode: req.user.agentRefCode
-        },
-        attributes: ['id', 'username', 'agentRefCode'],
-        raw: true
-      });
+      // const employeeInfo = await employeeTable.findAll({
+      //   where: {
+      //     agentRefCode: req.user.agentRefCode
+      //   },
+      //   attributes: ['id', 'username', 'agentRefCode'],
+      //   raw: true
+      // });
 
-      //get payment request with agent
-      const agentInfo = await agentTable.findOne({
-        where: {
-          agentRefCode: req.user.agentRefCode
-        },
-        attributes: ['id', 'agentName', 'agentRefCode'],
-        raw: true
-      });
+      // //get payment request with agent
+      // const agentInfo = await agentTable.findOne({
+      //   where: {
+      //     agentRefCode: req.user.agentRefCode
+      //   },
+      //   attributes: ['id', 'agentName', 'agentRefCode'],
+      //   raw: true
+      // });
 
-      console.log(playerInfo);
-      console.log(employeeInfo);
-      console.log(agentInfo);
+      // console.log(playerInfo);
+      // console.log(employeeInfo);
+      // console.log(agentInfo);
 
-      arrayCreateId = stringUtils.pushCreateById(playerInfo, employeeInfo, agentInfo)
+      // arrayCreateId = stringUtils.pushCreateById(playerInfo, employeeInfo, agentInfo)
 
-      console.log(arrayCreateId);
+      console.log(req.user.agentRefCode);
       const paymentRequestList = await playerPaymentReqTable.findAll({
         where: {
-          createBy: arrayCreateId
+          agentRefCode: req.user.agentRefCode
         },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         order: [['createDateTime', 'DESC']],
@@ -659,6 +659,7 @@ exports.listPlayerPaymentRequestAll = function (req) {
         nest: true
       })
 
+      console.log(paymentRequestList.length);
       resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
 
     })().catch(function (err) {
