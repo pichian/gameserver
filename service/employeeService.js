@@ -37,13 +37,13 @@ exports.agentEmployeeRegister = function (req) {
                 const encryptedPassword = await bcrypt.hash(password, 10);
 
                 const agentTable = mysqlConnector.agent
-          
+
                 const agentInfo = await agentTable.findOne({
-                  where: {
-                    id: req.user.id
-                  },
-                  attributes: ['agentName', 'agentRefCode'],
-                  raw: true
+                    where: {
+                        id: req.user.id
+                    },
+                    attributes: ['agentName', 'agentRefCode'],
+                    raw: true
                 });
 
                 const employeeCreated = await employeeTable.create({
@@ -126,13 +126,13 @@ exports.getEmployeeDetail = function (req) {
                 raw: true
             })
 
-            
+
             //find total player credit by agent
             const listEmployeeLogs = await employeeLogTable.findAll({
                 where: {
                     createBy: empId
                 },
-                attributes: ['id','description','createDateTime'],
+                attributes: ['id', 'description', 'createDateTime'],
                 raw: true
             })
 
@@ -164,12 +164,12 @@ exports.getEmployeeInfo = function (req) {
                 raw: true
             })
 
-            //find total player credit by agent
+            //find employee log
             const listEmployeeLogs = await employeeLogTable.findAll({
                 where: {
                     createBy: req.user.id
                 },
-                attributes: ['id','description','createDateTime'],
+                attributes: ['id', 'description', 'createDateTime'],
                 raw: true
             })
 
@@ -183,19 +183,88 @@ exports.getEmployeeInfo = function (req) {
     });
 }
 
-
-
 /**
- * Update player empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
+ * Ban employee by agent.
  **/
-exports.updateempoyeeDetail = function (body) {
+exports.banEmployee = function (req) {
     return new Promise(function (resolve, reject) {
-        resolve();
+
+        const { employeeId } = req.body
+
+        if (employeeId) {
+
+            (async () => {
+
+                const employeeTable = mysqlConnector.employee
+
+                await employeeTable.update(
+                    {
+                        status: 'banned'
+                    },
+                    {
+                        where: { id: employeeId }
+                    }
+                )
+
+                //(type, ref, desc, userId, createBy) 
+                await utilLog.agentLog('ban', null, 'employee', employeeId, req.user.id)
+
+                resolve(respConvert.success(req.newTokenReturn));
+
+            })().catch(function (err) {
+                console.log('[error on catch] : ' + err)
+                reject(respConvert.systemError(err.message))
+            })
+
+        } else {
+            reject(respConvert.validateError(msgConstant.core.validate_error));
+        }
+
     });
 }
+
+/**
+ * Un Ban employee by agent.
+ **/
+exports.unBanEmployee = function (req) {
+    return new Promise(function (resolve, reject) {
+
+        const { employeeId } = req.body
+
+        if (employeeId) {
+
+            (async () => {
+
+                const employeeTable = mysqlConnector.employee
+
+                await employeeTable.update(
+                    {
+                        status: 'active'
+                    },
+                    {
+                        where: { id: employeeId }
+                    }
+                )
+
+                //(type, ref, desc, userId, createBy) 
+                await utilLog.agentLog('unban', null, 'employee', employeeId, req.user.id)
+
+                resolve(respConvert.success(req.newTokenReturn));
+
+            })().catch(function (err) {
+                console.log('[error on catch] : ' + err)
+                reject(respConvert.systemError(err.message))
+            })
+
+        } else {
+            reject(respConvert.validateError(msgConstant.core.validate_error));
+        }
+
+    });
+}
+
+
+
 
 function setEmployeeLogs(listEmployeeLogs) {
     //find employee logs

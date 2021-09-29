@@ -421,23 +421,44 @@ paths:
           description: Invalid tag value
           content: {}
       x-swagger-router-controller: agentController
-  /player/banPlayer/{playerId}:
+  /player/banPlayer:
     post:
       tags:
         - agent
       summary: Ban player.
       description: Ban player.
-      operationId: banPlayer.
-      parameters:
-        - name: playerId
-          in: path
-          description: Id of agent.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      operationId: banPlayer
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /player/unBanPlayer:
+    post:
+      tags:
+        - agent
+      summary: Unban player.
+      operationId: unBanPlayer
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerId"
+        required: true
       responses:
         "200":
           description: successful operation

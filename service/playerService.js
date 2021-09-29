@@ -226,7 +226,7 @@ exports.getPlayerInfo = function (req) {
         where: {
           id: userData.id
         },
-        attributes: ['playerName'],
+        attributes: ['playerName', 'status'],
         raw: true
       });
 
@@ -985,6 +985,86 @@ exports.cancelPlayerPaymentRequest = function (req) {
             where: { id: id }
           }
         )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Ban player by agent.
+ **/
+exports.banPlayer = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { playerId } = req.body
+
+    if (playerId) {
+
+      (async () => {
+
+        const playerTable = mysqlConnector.player
+
+        await playerTable.update(
+          {
+            status: 'banned'
+          },
+          {
+            where: { id: playerId }
+          }
+        )
+
+        //(type, ref, desc, userId, createBy) 
+        await utilLog.agentLog('ban', null, 'player', playerId, req.user.id)
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Un Ban player by agent.
+ **/
+exports.unBanPlayer = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { playerId } = req.body
+
+    if (playerId) {
+
+      (async () => {
+
+        const playerTable = mysqlConnector.player
+
+        await playerTable.update(
+          {
+            status: 'active'
+          },
+          {
+            where: { id: playerId }
+          }
+        )
+
+        //(type, ref, desc, userId, createBy) 
+        await utilLog.agentLog('unban', null, 'player', playerId, req.user.id)
 
         resolve(respConvert.success(req.newTokenReturn));
 

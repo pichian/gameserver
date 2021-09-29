@@ -255,6 +255,34 @@ module.exports.cancelPlayerPaymentRequest = function cancelPlayerPaymentRequest(
   });
 };
 
+module.exports.banPlayer = function banPlayer(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.banPlayer(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.unBanPlayer = function unBanPlayer(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    playerService.unBanPlayer(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
 /************************Player Operation By Agent*************************/
 
 

@@ -284,7 +284,6 @@ exports.findAgentDetail = function (req) {
 
 /****
  * Agent payment request.
- * Also add log. (unfunished)
  **/
 exports.agentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
@@ -767,19 +766,6 @@ exports.approveAgentPaymentRequest = function (req) {
           }
         )
 
-        // console.log(findUpdateRecordData)
-        // const textDesc = 'Approved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
-        // let logsCreateBy = null;
-        // if (findUpdateRecordData.createRoleType.toLowerCase() == 'employee') {
-        //   logsCreateBy = findUpdateRecordData.createBy;
-        // } else if (findUpdateRecordData.createRoleType.toLowerCase() == 'player') {
-        //   logsCreateBy = req.user.id
-        // }
-
-        // //Agent log (unfinished)
-
-        // await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy)
-
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
@@ -808,7 +794,6 @@ exports.disapproveAgentPaymentRequest = function (req) {
       (async () => {
 
         const agentPaymentReq = mysqlConnector.agentPaymentReq
-        // const playerTable = mysqlConnector.player
 
         //update status of payment request
         await agentPaymentReq.update(
@@ -819,35 +804,6 @@ exports.disapproveAgentPaymentRequest = function (req) {
             where: { id: id }
           }
         )
-
-        // //Find record for player id 
-        // const playerPaymentData = await playerPaymentReqTable.findOne({
-        //   where: {
-        //     id: id
-        //   },
-        //   attributes: ['playerId', 'createRoleType', 'createBy'],
-        //   raw: true
-        // })
-
-        // //get player info
-        // const playerData = await playerTable.findOne({
-        //   where: {
-        //     id: playerPaymentData.playerId
-        //   },
-        //   attributes: ['username'],
-        //   raw: true
-        // })
-
-        // console.log(playerPaymentData)
-        // const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
-        // let logsCreateBy = null;
-        // if (playerPaymentData.createRoleType.toLowerCase() == 'employee') {
-        //   logsCreateBy = playerPaymentData.createBy;
-        // } else if (playerPaymentData.createRoleType.toLowerCase() == 'player') {
-        //   logsCreateBy = req.user.id
-        // }
-
-        // await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 
