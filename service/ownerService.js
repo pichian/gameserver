@@ -187,7 +187,6 @@ exports.listAgentPaymentRequestAll = function (req) {
         nest: true
       })
 
-      console.log(paymentRequestList)
       resolve(respConvert.successWithData(paymentRequestList));
 
     })().catch(function (err) {
