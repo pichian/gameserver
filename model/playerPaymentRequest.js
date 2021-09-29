@@ -43,6 +43,11 @@ module.exports = (sequelize, Sequelize) => {
             field: 'approved_datetime',
             type: Sequelize.DATE,
         },
+        agentRefCode: {
+            type: Sequelize.STRING,
+            field: 'agent_ref_code',
+            defaultValue: null
+        },
         createRoleType: {
             type: Sequelize.STRING,
             field: 'create_rtype'

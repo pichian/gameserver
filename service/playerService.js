@@ -278,7 +278,7 @@ exports.getPlayerWallet = function (req) {
 
 
 /**
- * Player payment request from main page
+ * Player payment request from main page amd agent page
  **/
 exports.playerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
@@ -291,6 +291,7 @@ exports.playerPaymentRequest = function (req) {
 
         const playerPaymentReqTable = mysqlConnector.playerPaymentReq
 
+        console.log(req.user)
         const requestCreate = await playerPaymentReqTable.create(
           {
             playerId: !playerId ? req.user.id : playerId,
@@ -301,7 +302,8 @@ exports.playerPaymentRequest = function (req) {
             paymentStatus: 'W',
             createBy: req.user.id,
             createDateTime: new Date(),
-            createRoleType: req.user.type
+            createRoleType: req.user.type,
+            agentRefCode: req.user.agentRefCode
           }
         )
 
