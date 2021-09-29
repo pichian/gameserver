@@ -32,7 +32,7 @@ exports.loginPlayer = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'playerName'],
+          attributes: ['id', 'username', 'password', 'playerName', 'agentRefCode'],
           raw: true
         });
 
@@ -67,6 +67,7 @@ exports.loginPlayer = function (body) {
               id: resPlayer.id,
               name: resPlayer.playerName,
               username: resPlayer.username,
+              agentRefCode: resPlayer.agentRefCode,
               type: 'Player'
             },
             process.env.JWT_TOKEN_SECRET_KEY,
@@ -291,7 +292,6 @@ exports.playerPaymentRequest = function (req) {
 
         const playerPaymentReqTable = mysqlConnector.playerPaymentReq
 
-        console.log(req.user)
         const requestCreate = await playerPaymentReqTable.create(
           {
             playerId: !playerId ? req.user.id : playerId,
@@ -820,6 +820,8 @@ exports.approvePlayerPaymentRequest = function (req) {
         } else {
           updateWalletQry.amount_coin = amount
         }
+
+        //update agent wallet 
 
         //update player wallet
         const playerWalletCollec = mongoConnector.api.collection('player_wallet')
