@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const employeeLog = sequelize.define("agentLog", {
+    const employeeLog = sequelize.define("employeeLog", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,

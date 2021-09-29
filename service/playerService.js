@@ -577,7 +577,7 @@ exports.listPlayerByAgentId = function (req) {
  * This table is in Player/Payment request list page.
  **/
 exports.listPlayerPaymentRequestAll = function (req) {
-  
+
   return new Promise(function (resolve, reject) {
     (async () => {
 
@@ -624,7 +624,7 @@ exports.listPlayerPaymentRequestAll = function (req) {
       console.log(employeeInfo);
       console.log(agentInfo);
 
-      arrayCreateId = stringUtils.pushCreateById(playerInfo,employeeInfo,agentInfo)
+      arrayCreateId = stringUtils.pushCreateById(playerInfo, employeeInfo, agentInfo)
 
       console.log(arrayCreateId);
       const paymentRequestList = await playerPaymentReqTable.findAll({
@@ -781,7 +781,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId','createBy','createRoleType','approved_by'],
+          attributes: ['playerId', 'createBy', 'createRoleType', 'approved_by'],
           raw: true
         })
 
@@ -790,7 +790,7 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: findUpdateRecordData.playerId
           },
-          attributes: ['walletId','username'],
+          attributes: ['walletId', 'username'],
           raw: true
         })
 
@@ -816,15 +816,15 @@ exports.approvePlayerPaymentRequest = function (req) {
 
         //
         console.log(findUpdateRecordData)
-        const textDesc = 'Approved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
-        let logsCreateBy = '';
-        if(findUpdateRecordData.createRoleType.toLowerCase()=='employee'){
+        const textDesc = 'Approved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
+        let logsCreateBy = null;
+        if (findUpdateRecordData.createRoleType.toLowerCase() == 'employee') {
           logsCreateBy = findUpdateRecordData.createBy;
-        }else if(findUpdateRecordData.createRoleType.toLowerCase()=='player'){
-          logsCreateBy= req.user.id
+        } else if (findUpdateRecordData.createRoleType.toLowerCase() == 'player') {
+          logsCreateBy = req.user.id
         }
 
-        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy) 
+        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -871,7 +871,7 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId','createRoleType','createBy'],
+          attributes: ['playerId', 'createRoleType', 'createBy'],
           raw: true
         })
 
@@ -883,17 +883,17 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           attributes: ['username'],
           raw: true
         })
-        
+
         console.log(playerPaymentData)
-        const textDesc = 'Disapproved '+stringUtils.getPaymentTypeText(paymentType)+' '+playerData.username
+        const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = '';
-        if(playerPaymentData.createRoleType.toLowerCase()=='employee'){
+        if (playerPaymentData.createRoleType.toLowerCase() == 'employee') {
           logsCreateBy = playerPaymentData.createBy;
-        }else if(playerPaymentData.createRoleType.toLowerCase()=='player'){
-          logsCreateBy= req.user.id
+        } else if (playerPaymentData.createRoleType.toLowerCase() == 'player') {
+          logsCreateBy = req.user.id
         }
 
-        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy) 
+        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 

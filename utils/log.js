@@ -1,4 +1,5 @@
 const mysqlConnector = require("../connector/mysqlConnector")
+const respConvert = require("../utils/responseConverter");
 
 exports.agentLog = function (type, ref, desc, userId, createBy) {
     return new Promise(function (resolve, reject) {
