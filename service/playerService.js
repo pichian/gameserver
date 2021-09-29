@@ -524,6 +524,7 @@ exports.listPlayerByAgentId = function (req) {
       const playerList = await playerTable.findAll({
         where: whereQry,
         attributes: ['id', 'playerName', 'phoneNumber', 'username', 'ranking', 'status', 'walletId'],
+        order: [['createDateTime', 'DESC']],
         raw: true
       })
 
@@ -587,6 +588,7 @@ exports.listPlayerPaymentRequestAll = function (req) {
 
       const paymentRequestList = await playerPaymentReqTable.findAll({
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        order: [['createDateTime', 'DESC']],
         include: [
           {
             model: promotionTable,
@@ -636,6 +638,7 @@ exports.paymentRequestListOfPlayer = function (req) {
             attributes: ['promotionName'],
           }
         ],
+        order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
       })

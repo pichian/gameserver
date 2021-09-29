@@ -451,6 +451,7 @@ exports.listAgentPaymentRequest = function (req) {
             attributes: ['promotionName'],
           }
         ],
+        order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
       })
