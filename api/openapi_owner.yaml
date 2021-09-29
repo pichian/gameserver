@@ -145,29 +145,75 @@ paths:
   #         description: Id not found
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/approvePlayerPayment:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Approve player payment.
-  #     description: Approve player payment by payment id.
-  #     operationId: approvePlayerPaymentRequest
-  #     security:
-  #       - bearerAuth: []
-  #     requestBody:
-  #       description: "Approve "
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/approvePaymentInfo"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Approve Complete.
-  #       "404":
-  #         description: Id not found
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  /owner/approveAgentPayment:
+    post:
+      tags:
+        - owner
+      summary: Approve agent payment.
+      description: Approve agent payment by payment id.
+      operationId: approveAgentPaymentRequest
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: "request by payment info"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: ownerController
+  /owner/disapproveAgentPayment:
+    post:
+      tags:
+        - owner
+      summary: Disapprove agent payment.
+      description: Disapprove agent payment by payment id.
+      operationId: disapproveAgentPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Get this detail from table "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: ownerController
+  /owner/cancelAgentPayment:
+    post:
+      tags:
+        - owner
+      summary: Cancel agent payment.
+      description: Cancel agent payment by payment id.
+      operationId: cancelAgentPaymentRequest
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: "request by payment info"
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: ownerController
   # /agent/agentDetail:
   #   post:
   #     tags:
@@ -343,33 +389,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: ownerController
-  # /player/paymentDetail:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Get a single payment detail by payment id.
-  #     description: Returns a single payment detail by payment id.
-  #     operationId: getPlayerPaymentDetailById
-  #     security:
-  #       - bearerAuth: []
-  #     requestBody:
-  #       description: Agent payment request insert data.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/paymentInfoId"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/paymentDetailModel"
-  #       "404":
-  #         description: Id not found
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  /agent/paymentDetail:
+    post:
+      tags:
+        - owner
+      summary: Get a single payment detail by payment id.
+      description: Returns a single payment detail by payment id.
+      operationId: getAgentPaymentDetailById
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Request by id of payment.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/paymentInfoId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentDetailModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: ownerController
   /agent/agentWallet:
     post:
       tags:
@@ -397,33 +443,33 @@ paths:
           description: Invalid tag value
           content: {}
       x-swagger-router-controller: ownerController
-  # /agent/agentInfo:
-  #   post:
-  #     tags:
-  #       - owner
-  #     summary: Finds agent rank, status, name by agent id.
-  #     operationId: findAgentInfo
-  #     # security:
-  #     #   - bearerAuth: []
-  #     requestBody:
-  #       description: Request by object of agent id.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/requestWithAgentId"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/agentInfo"
-  #               x-content-type: application/json
-  #       "400":
-  #         description: Invalid tag value
-  #         content: {}
-  #     x-swagger-router-controller: ownerController
+  /agent/agentInfo:
+    post:
+      tags:
+        - owner
+      summary: Finds status, name by agent id.
+      operationId: getAgentInfo
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Request by object of agent id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithAgentId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/agentInfo"
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: ownerController
   # /player/banPlayer/{playerId}:
   #   post:
   #     tags:

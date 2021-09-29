@@ -60,19 +60,15 @@ module.exports.findAgentWalletById = function findAgentWalletById(req, res, next
     });
 };
 
-// module.exports.findAgentInfo = function findAgentInfo(req, res, next) {
-//   middleWare.authToken(req).then(function () {
-//     playerService.findAgentInfo(req)
-//       .then(function (response) {
-//         utils.writeSuccess(res, response);
-//       })
-//       .catch(function (response) {
-//         utils.writeError(res, response);
-//       });
-//   }).catch(function (response) {
-//     utils.writeError(res, response);
-//   });
-// };
+module.exports.getAgentInfo = function getAgentInfo(req, res, next) {
+  agentService.getAgentInfo(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
 
 module.exports.agentPaymentRequestByOwner = function agentPaymentRequestByOwner(req, res, next) {
   agentService.agentPaymentRequestByOwner(req)
@@ -86,12 +82,53 @@ module.exports.agentPaymentRequestByOwner = function agentPaymentRequestByOwner(
 
 module.exports.paymentRequestListOfAgent = function paymentRequestListOfAgent(req, res, next) {
   agentService.paymentRequestListOfAgent(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+module.exports.getAgentPaymentDetailById = function getAgentPaymentDetailById(req, res, next) {
+  agentService.getAgentPaymentDetailById(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+
+module.exports.approveAgentPaymentRequest = function approveAgentPaymentRequest(req, res, next) {
+  agentService.approveAgentPaymentRequest(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
+};
+
+module.exports.disapproveAgentPaymentRequest = function disapproveAgentPaymentRequest(req, res, next) {
+    agentService.disapproveAgentPaymentRequest(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })
       .catch(function (response) {
         utils.writeError(res, response);
       });
+};
+
+module.exports.cancelAgentPaymentRequest = function cancelAgentPaymentRequest(req, res, next) {
+  agentService.cancelAgentPaymentRequest(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
 };
 
 /************************ Agent Operation By Owner*************************/

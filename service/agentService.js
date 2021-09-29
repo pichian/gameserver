@@ -476,6 +476,77 @@ exports.listAgentPaymentRequest = function (req) {
 /************************ Agent Operation By Owner*************************/
 
 /**
+ * Get Agent info include agent name, status, amount coin.
+ **/
+exports.getAgentInfo = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const { agentId } = req.body
+      const agentTable = mysqlConnector.agent
+      const playerTable = mysqlConnector.player
+
+      const agentInfo = await agentTable.findOne({
+        where: {
+          id: agentId
+        },
+        attributes: ['agentName', 'status', 'walletId', 'agentRefCode'],
+        raw: true
+      });
+
+      //find total player by agent
+      const totalPlayerOfThisAgent = await playerTable.count({
+        where: {
+          agentRefCode: agentInfo.agentRefCode
+        },
+        raw: true
+      })
+
+
+      //find total player credit by agent
+      const listOfPlayerWalletId = await playerTable.findAll({
+        where: {
+          agentRefCode: agentInfo.agentRefCode
+        },
+        attributes: ['walletId'],
+        raw: true
+      })
+
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+      const totalPlayerWalletSum = await playerWalletCollec.aggregate([
+        {
+          $match: {
+            _id: { $in: listOfPlayerWalletId.map((id) => ObjectId(id.walletId)) }
+
+          }
+        },
+        {
+          $group: { _id: 0, sum: { $sum: "$amount_coin" } },
+        },
+      ]).toArray()
+
+      console.log(totalPlayerOfThisAgent, totalPlayerWalletSum)
+
+
+
+      resolve(respConvert.successWithData({
+        agentName: agentInfo.agentName,
+        status: agentInfo.status,
+        totalPlayer: totalPlayerOfThisAgent,
+        totalPlayerCredit: totalPlayerWalletSum.length == 0 ? 0 : totalPlayerWalletSum[0].sum,
+        totalPromotionCredit: 0
+      }, req.newTokenReturn));
+
+    })().catch(function (err) {
+      console.log('[error on catch]: ' + err)
+      reject(respConvert.systemError(err.message))
+    })
+
+  });
+}
+
+
+/**
  * Get Agent wallet amount by agent Id.
  **/
 exports.findAgentWalletById = function (req) {
@@ -578,6 +649,7 @@ exports.paymentRequestListOfAgent = function (req) {
             attributes: ['promotionName'],
           }
         ],
+        order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
       })
@@ -592,93 +664,247 @@ exports.paymentRequestListOfAgent = function (req) {
   });
 }
 
+/**
+ * Get payment detail from page agent-detail payment request list table.
+ **/
+exports.getAgentPaymentDetailById = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const { paymentId } = req.body
+      const agentPaymentReq = mysqlConnector.agentPaymentReq;
+      const agentTable = mysqlConnector.agent
+
+      agentPaymentReq.belongsTo(agentTable, { foreignKey: 'agentId' });
+
+      const paymentDetail = await agentPaymentReq.findOne({
+        where: {
+          id: paymentId
+        },
+        attributes: ['id', 'createDateTime', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: agentTable,
+            attributes: ['agentName'],
+          }
+        ],
+        raw: true,
+        nest: true
+      })
+
+      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
+    })().catch(function (err) {
+      reject(respConvert.systemError(err.message))
+    })
+  });
+}
+
+
+/**
+ * Approve agent payment request by Owner.
+ **/
+exports.approveAgentPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    console.log(req.body)
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const agentPaymentReq = mysqlConnector.agentPaymentReq
+        const agentTable = mysqlConnector.agent
+
+        //Find record for player id 
+        const findUpdateRecordData = await agentPaymentReq.findOne({
+          where: {
+            id: id
+          },
+          attributes: ['agentId'],
+          raw: true
+        })
+
+        //get Agent wallet id for update wallet
+        const agentData = await agentTable.findOne({
+          where: {
+            id: findUpdateRecordData.agentId
+          },
+          attributes: ['walletId', 'username'],
+          raw: true
+        })
+
+        //check agent wallet amount
+        const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+
+        let updateAgentWalletQry = {}
+        if (paymentType == 'WD') {
+
+          updateAgentWalletQry.amount_coin = -Math.abs(amount)
+
+          const resAgentWalletAmount = await agentWalletCollec.findOne({
+            _id: ObjectId(agentData.walletId)
+          }, { projection: { _id: 0, amount_coin: 1 } })
+
+          //reject if agent wallet not enough for withdraw
+          if (resAgentWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.agent.credit_not_enough))
+        } else {
+          updateAgentWalletQry.amount_coin = amount
+        }
+
+        //Update agent wallet
+
+        await agentWalletCollec.updateOne({
+          _id: ObjectId(agentData.walletId)
+        },
+          { $inc: updateAgentWalletQry }
+        )
+
+        //update status of payment request
+        await agentPaymentReq.update(
+          {
+            approvedBy: 1,
+            // approvedBy: req.user.id, (authen system unfinished)
+            approveDateTime: new Date(),
+            paymentStatus: 'A'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        // console.log(findUpdateRecordData)
+        // const textDesc = 'Approved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
+        // let logsCreateBy = null;
+        // if (findUpdateRecordData.createRoleType.toLowerCase() == 'employee') {
+        //   logsCreateBy = findUpdateRecordData.createBy;
+        // } else if (findUpdateRecordData.createRoleType.toLowerCase() == 'player') {
+        //   logsCreateBy = req.user.id
+        // }
+
+        // //Agent log (unfinished)
+
+        // await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy)
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+
+/**
+ * Disapprove agent payment request by Owner .
+ **/
+exports.disapproveAgentPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const agentPaymentReq = mysqlConnector.agentPaymentReq
+        // const playerTable = mysqlConnector.player
+
+        //update status of payment request
+        await agentPaymentReq.update(
+          {
+            paymentStatus: 'D'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        // //Find record for player id 
+        // const playerPaymentData = await playerPaymentReqTable.findOne({
+        //   where: {
+        //     id: id
+        //   },
+        //   attributes: ['playerId', 'createRoleType', 'createBy'],
+        //   raw: true
+        // })
+
+        // //get player info
+        // const playerData = await playerTable.findOne({
+        //   where: {
+        //     id: playerPaymentData.playerId
+        //   },
+        //   attributes: ['username'],
+        //   raw: true
+        // })
+
+        // console.log(playerPaymentData)
+        // const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
+        // let logsCreateBy = null;
+        // if (playerPaymentData.createRoleType.toLowerCase() == 'employee') {
+        //   logsCreateBy = playerPaymentData.createBy;
+        // } else if (playerPaymentData.createRoleType.toLowerCase() == 'player') {
+        //   logsCreateBy = req.user.id
+        // }
+
+        // await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy)
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Cancel agent payment request by Owner .
+ **/
+exports.cancelAgentPaymentRequest = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const { id, paymentType, wayToPay, amount } = req.body
+
+    if (id && paymentType && wayToPay && amount) {
+
+      (async () => {
+
+        const agentPaymentReq = mysqlConnector.agentPaymentReq
+
+        //update status of payment request
+        await agentPaymentReq.update(
+          {
+            paymentStatus: 'C'
+          },
+          {
+            where: { id: id }
+          }
+        )
+
+        resolve(respConvert.success(req.newTokenReturn));
+
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
 /************************ Agent Operation By Owner*************************/
-
-
-
-
-
-
-
-
-
-/**
- * List agent payment request
- *
- * returns PaymentModel
- **/
-exports.listplayerPaymentRequest = function () {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-      "Status": "Status",
-      "agentId": 6,
-      "Amount": 1.4658129805029452,
-      "id": 0
-    };
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * Logs employee into the system
- *
- * body PlayerLoginInput ไว้ Login
- * returns inline_response_200
- **/
-exports.loginemployee = function (body) {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-      "token": "token"
-    };
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * Logs out current logged in user session
- *
- * no response value expected for this operation
- **/
-exports.logoutemployee = function () {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-/**
- * agent payment request
- *
- * body PaymentModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.playerAgentRequest = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-/**
- * update empoyee
- *
- * body PaymentModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.playerAgentRequestupdate = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
