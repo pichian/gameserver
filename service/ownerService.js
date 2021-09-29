@@ -20,7 +20,7 @@ exports.ownerAgentRegister = function (body) {
 
     const { agentName, email, phoneNumber, username, password, description, status, agentRefCode } = body
 
-    if (agentName && email && phoneNumber && username && password && description || description == "" && status && agentRefCode || agentRefCode == "" || !agentRefCode) {
+    if (agentName && email && phoneNumber && username && password && description || description == "" && status && agentRefCode) {
 
       (async () => {
         const agentTable = mysqlConnector.agent
