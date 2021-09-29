@@ -25,13 +25,14 @@ exports.validateError = function (newToken) {
     }
 }
 
-exports.businessError = function (messageObj) {
+exports.businessError = function (messageObj, newToken) {
     const respCode = messageObj.responseCode
     const respMessage = messageObj.responseMessage
 
     return {
         responseCode: respCode,
-        responseMessage: respMessage
+        responseMessage: respMessage,
+        newToken: newToken
     }
 }
 

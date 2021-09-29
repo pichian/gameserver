@@ -329,13 +329,23 @@ exports.getPlayerPaymentDetailById = function (req) {
       const { paymentId } = req.body
 
       const playerPaymentReqTable = mysqlConnector.playerPaymentReq;
+      const playerTable = mysqlConnector.player
+
+      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
 
       const paymentDetail = await playerPaymentReqTable.findOne({
         where: {
           id: paymentId
         },
         attributes: ['id', 'createDateTime', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
-        raw: true
+        include: [
+          {
+            model: playerTable,
+            attributes: ['playerName'],
+          }
+        ],
+        raw: true,
+        nest: true
       })
 
       resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
@@ -760,7 +770,7 @@ exports.findPlayerInfo = function (req) {
 }
 
 /**
- * Approve player payment request by Agent .
+ * Approve player payment request by Agent or Employee .
  **/
 exports.approvePlayerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
@@ -794,6 +804,29 @@ exports.approvePlayerPaymentRequest = function (req) {
           raw: true
         })
 
+        let updateWalletQry = {}
+        if (paymentType == 'WD') {
+          //check player wallet amount
+          const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+          const resPlayerWalletAmount = await playerWalletCollec.findOne({
+            _id: ObjectId(playerData.walletId)
+          }, { projection: { _id: 0, amount_coin: 1 } })
+
+          //reject if player wallet not enough for withdraw
+          if (resPlayerWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.player.credit_not_enough))
+          updateWalletQry.amount_coin = -Math.abs(amount)
+        } else {
+          updateWalletQry.amount_coin = amount
+        }
+
+        //update player wallet
+        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+        const resCreatedWallet = await playerWalletCollec.updateOne({
+          _id: ObjectId(playerData.walletId)
+        },
+          { $inc: updateWalletQry }
+        )
+
         //update status of payment request
         await playerPaymentReqTable.update(
           {
@@ -806,15 +839,6 @@ exports.approvePlayerPaymentRequest = function (req) {
           }
         )
 
-        //update player wallet
-        const playerWalletCollec = mongoConnector.api.collection('player_wallet')
-        const resCreatedWallet = await playerWalletCollec.updateOne({
-          _id: ObjectId(playerData.walletId)
-        },
-          { $inc: { amount_coin: paymentType == 'WD' ? -Math.abs(amount) : amount } }
-        )
-
-        //
         console.log(findUpdateRecordData)
         const textDesc = 'Approved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = null;
@@ -823,6 +847,8 @@ exports.approvePlayerPaymentRequest = function (req) {
         } else if (findUpdateRecordData.createRoleType.toLowerCase() == 'player') {
           logsCreateBy = req.user.id
         }
+
+        //Agent log (unfinished)
 
         await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy)
 
@@ -886,7 +912,7 @@ exports.disapprovePlayerPaymentRequest = function (req) {
 
         console.log(playerPaymentData)
         const textDesc = 'Disapproved ' + stringUtils.getPaymentTypeText(paymentType) + ' ' + playerData.username
-        let logsCreateBy = '';
+        let logsCreateBy = null;
         if (playerPaymentData.createRoleType.toLowerCase() == 'employee') {
           logsCreateBy = playerPaymentData.createBy;
         } else if (playerPaymentData.createRoleType.toLowerCase() == 'player') {

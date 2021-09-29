@@ -24,7 +24,7 @@ module.exports.owner = {
 
 module.exports.player = {
 	duplicate_player: { responseCode: "LTR-2301", responseMessage: "Player Name หรือ Username มีอยู่แล้วในระบบ" },
-	msg2: { responseCode: "LTR-2302", responseMessage: "example message2" },
+	credit_not_enough: { responseCode: "LTR-2302", responseMessage: "Player credit not enough for withdraw" },
 	msg3: { responseCode: "LTR-2303", responseMessage: "example message3" }
 };
 
