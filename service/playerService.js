@@ -787,6 +787,7 @@ exports.approvePlayerPaymentRequest = function (req) {
 
         const playerPaymentReqTable = mysqlConnector.playerPaymentReq
         const playerTable = mysqlConnector.player
+        const agentTable = mysqlConnector.agent
 
         //Find record for player id 
         const findUpdateRecordData = await playerPaymentReqTable.findOne({
@@ -802,11 +803,19 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: findUpdateRecordData.playerId
           },
+          attributes: ['walletId', 'username', 'agentRefCode'],
+          raw: true
+        })
+
+        const agentData = await agentTable.findOne({
+          where: {
+            agentRefCode: playerData.agentRefCode
+          },
           attributes: ['walletId', 'username'],
           raw: true
         })
 
-        let updateWalletQry = {}
+        let updatePlayerWalletQry = {}, updateAgentWalletQry = {}
         if (paymentType == 'WD') {
           //check player wallet amount
           const playerWalletCollec = mongoConnector.api.collection('player_wallet')
@@ -816,19 +825,36 @@ exports.approvePlayerPaymentRequest = function (req) {
 
           //reject if player wallet not enough for withdraw
           if (resPlayerWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.player.credit_not_enough))
-          updateWalletQry.amount_coin = -Math.abs(amount)
-        } else {
-          updateWalletQry.amount_coin = amount
-        }
 
-        //update agent wallet 
+          updatePlayerWalletQry.amount_coin = -Math.abs(amount)
+        } else {
+          //check Agent wallet amount
+          const agentWallerCollec = mongoConnector.api.collection('agent_wallet')
+          const resAgentWalletAmount = await agentWallerCollec.findOne({
+            _id: ObjectId(agentData.walletId)
+          }, { projection: { _id: 0, amount_coin: 1 } })
+
+          //reject if Agent wallet not enough for withdraw
+          if (resAgentWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.agent.credit_not_enough))
+
+          updateAgentWalletQry.amount_coin = -Math.abs(amount)
+          updatePlayerWalletQry.amount_coin = amount
+
+          //update agent wallet
+          await agentWallerCollec.updateOne({
+            _id: ObjectId(agentData.walletId)
+          },
+            { $inc: updateAgentWalletQry }
+          )
+
+        }
 
         //update player wallet
         const playerWalletCollec = mongoConnector.api.collection('player_wallet')
-        const resCreatedWallet = await playerWalletCollec.updateOne({
+        await playerWalletCollec.updateOne({
           _id: ObjectId(playerData.walletId)
         },
-          { $inc: updateWalletQry }
+          { $inc: updatePlayerWalletQry }
         )
 
         //update status of payment request
