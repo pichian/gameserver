@@ -122,7 +122,7 @@ exports.getEmployeeDetail = function (req) {
                 where: {
                     id: empId
                 },
-                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
+                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate', 'status'],
                 raw: true
             })
 
