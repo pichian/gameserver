@@ -21,9 +21,7 @@ exports.loginOwner = function (body) {
       (async () => {
 
         const ownerTable = mysqlConnector.owner;
-        //     const employeeTable = mysqlConnector.employee
         const sessionOwner = mysqlConnector.sessionOwner;
-        //     const sessionEmployeeTable = mysqlConnector.sessionEmployee
 
         const resOwner = await ownerTable.findOne({
           where: {
@@ -33,32 +31,18 @@ exports.loginOwner = function (body) {
           raw: true
         });
 
-        console.log(resOwner)
-        //     const resEmp = await employeeTable.findOne({
-        //       where: {
-        //         username: username,
-        //       },
-        //       attributes: ['id', 'username', 'password', 'firstname', 'lastname', 'agentRefCode'],
-        //       raw: true
-        //     });
-
-        // if (resAgent === null && resEmp === null) {
-        if (resOwner === null) {
-          return reject(respConvert.businessError(msgConstant.core.login_failed))
-        }
-
         // if username and password of Owner is true
         if (resOwner !== null) {
           if (await bcrypt.compare(password, resOwner.password)) {
             const findSessionOwner = await sessionOwner.findOne({
               where: {
-                agentId: resOwner.id,
+                ownerId: resOwner.id,
                 status: 'Y'
               },
               raw: true
             });
 
-            //if this Agent is already logged in system.
+            //if this Owner is already logged in system.
             if (findSessionOwner) {
               // update status of old session and token to 'N' that mean
               // this token is not valid now.
@@ -70,22 +54,23 @@ exports.loginOwner = function (body) {
               })
             }
 
-            let token;
+            let token
             if (resOwner) {
               token = jwt.sign(
                 {
                   id: resOwner.id,
-                  name: resOwner.agentName,
+                  name: resOwner.displayName,
                   username: resOwner.username,
-                  type: 'Agent',
-                  agentRefCode: resOwner.agentRefCode
+                  rtype: resOwner.rtype,
+                  type: resOwner.rtype == 'owner' ? 'Owner' : 'Manager',
+                  userRefCode: resOwner.userRefCode
                 },
                 process.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
               );
 
               const addTokenToSession = await sessionOwner.create({
-                agentId: resOwner.id,
+                ownerId: resOwner.id,
                 token: token,
                 status: 'Y',
                 createDateTime: new Date()
@@ -96,63 +81,9 @@ exports.loginOwner = function (body) {
           } else {
             return reject(respConvert.businessError(msgConstant.core.login_failed))
           }
-
+        } else {
+          return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
-
-
-        //     // if username and password of Employee is true
-        //     if (resEmp !== null) {
-        //       if (await bcrypt.compare(password, resEmp.password)) {
-        //         const findSessionEmployee = await sessionEmployeeTable.findOne({
-        //           where: {
-        //             employeeId: resEmp.id,
-        //             status: 'Y'
-        //           },
-        //           raw: true
-        //         });
-
-        //         //if this Employee is already logged in system.
-        //         if (findSessionEmployee) {
-        //           // update status of old session and token to 'N' that mean
-        //           // this token is not valid now.
-        //           const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
-        //             where: {
-        //               id: findSessionEmployee.id,
-        //               employeeId: findSessionEmployee.employeeId
-        //             }
-        //           })
-        //         }
-
-        //         let token;
-
-        //         if (resEmp) {
-        //           token = jwt.sign(
-        //             {
-        //               id: resEmp.id,
-        //               username: resEmp.username,
-        //               firstname: resEmp.firstname,
-        //               lastname: resEmp.lastname,
-        //               type: 'Employee',
-        //               agentRefCode: resEmp.agentRefCode
-        //             },
-        //             process.env.JWT_TOKEN_SECRET_KEY,
-        //             { expiresIn: '30m' }
-        //           );
-
-        //           const addTokenToSession = await sessionEmployeeTable.create({
-        //             employeeId: resEmp.id,
-        //             token: token,
-        //             status: 'Y',
-        //             createDateTime: new Date()
-        //           });
-        //         }
-
-        //         resolve(respConvert.successWithToken(token));
-        //       } else {
-        //         return reject(respConvert.businessError(msgConstant.core.login_failed))
-        //       }
-        //     }
-        resolve()
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
         reject(respConvert.systemError(err.message))
