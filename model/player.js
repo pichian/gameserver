@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    return sequelize.define("player", {
+    const player = sequelize.define("player", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -84,5 +84,7 @@ module.exports = (sequelize, Sequelize) => {
             timestamps: false,
 
         }
-    )
+    );
+
+    return player;
 };
