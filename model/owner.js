@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const owner = sequelize.define("owner", {
+    return sequelize.define("owner", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -81,8 +81,6 @@ module.exports = (sequelize, Sequelize) => {
 
         }
     );
-
-    return owner;
 };
 
 

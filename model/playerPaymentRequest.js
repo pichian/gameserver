@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const playerPaymentRequestModel = sequelize.define("playerPaymentRequest", {
+    return sequelize.define("playerPaymentRequest", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -75,7 +75,6 @@ module.exports = (sequelize, Sequelize) => {
 
         }
     );
-    return playerPaymentRequestModel;
 };
 
 

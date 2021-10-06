@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const employeeLog = sequelize.define("employeeLog", {
+    return sequelize.define("employeeLog", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -40,8 +40,6 @@ module.exports = (sequelize, Sequelize) => {
 
         }
     );
-
-    return employeeLog;
 };
 
 

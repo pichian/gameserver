@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const SessionAgentModel = sequelize.define("SessionAgentModel", {
+    return sequelize.define("SessionAgentModel", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -29,8 +29,6 @@ module.exports = (sequelize, Sequelize) => {
 
         }
     );
-
-    return SessionAgentModel;
 };
 
 

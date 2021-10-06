@@ -599,44 +599,6 @@ exports.listPlayerPaymentRequestAll = function (req) {
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
       playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
 
-      const agentTable = mysqlConnector.agent
-      const employeeTable = mysqlConnector.employee
-
-      var arrayCreateId = [];
-
-      //get payment request with player
-      const playerInfo = await playerTable.findAll({
-        where: {
-          agentRefCode: req.user.agentRefCode
-        },
-        attributes: ['id', 'username', 'agentRefCode'],
-        raw: true
-      });
-
-      //get payment request with employee
-      // const employeeInfo = await employeeTable.findAll({
-      //   where: {
-      //     agentRefCode: req.user.agentRefCode
-      //   },
-      //   attributes: ['id', 'username', 'agentRefCode'],
-      //   raw: true
-      // });
-
-      // //get payment request with agent
-      // const agentInfo = await agentTable.findOne({
-      //   where: {
-      //     agentRefCode: req.user.agentRefCode
-      //   },
-      //   attributes: ['id', 'agentName', 'agentRefCode'],
-      //   raw: true
-      // });
-
-      // console.log(playerInfo);
-      // console.log(employeeInfo);
-      // console.log(agentInfo);
-
-      // arrayCreateId = stringUtils.pushCreateById(playerInfo, employeeInfo, agentInfo)
-
       console.log(req.user.agentRefCode);
       const paymentRequestList = await playerPaymentReqTable.findAll({
         where: {

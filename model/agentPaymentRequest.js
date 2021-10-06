@@ -1,5 +1,5 @@
 module.exports = (sequelize, Sequelize) => {
-    const agentPaymentRequestModel = sequelize.define("agentPaymentRequest", {
+    return sequelize.define("agentPaymentRequest", {
         id: {
             field: 'id',
             type: Sequelize.INTEGER,
@@ -78,7 +78,6 @@ module.exports = (sequelize, Sequelize) => {
 
         }
     );
-    return agentPaymentRequestModel;
 };
 
 
