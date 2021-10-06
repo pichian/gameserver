@@ -318,6 +318,7 @@ exports.listAgentPaymentRequestAll = function (req) {
             attributes: ['id', 'agentName'],
           }
         ],
+        order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
       })
