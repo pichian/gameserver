@@ -1017,7 +1017,9 @@ exports.banPlayer = function (req) {
 
         await playerTable.update(
           {
-            status: 'banned'
+            status: 'banned',
+            updateBy: req.user.id,
+            updateDateTime: new Date()
           },
           {
             where: { id: playerId }
@@ -1057,7 +1059,9 @@ exports.unBanPlayer = function (req) {
 
         await playerTable.update(
           {
-            status: 'active'
+            status: 'active',
+            updateBy: req.user.id,
+            updateDateTime: new Date()
           },
           {
             where: { id: playerId }

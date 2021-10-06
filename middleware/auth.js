@@ -123,6 +123,7 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
 }
 
 async function checkTokenValidHandler(decodedTokenData, token) {
+    // console.log(decodedTokenData, token)
     if (decodedTokenData.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const tokenValid = await sessionPlayerTable.findOne({

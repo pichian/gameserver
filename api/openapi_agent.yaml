@@ -576,47 +576,70 @@ paths:
           description: Id not found
           content: {}
       x-swagger-router-controller: agentController
-  /employee/changeEmployeeStatus/{employeeId}:
+  /employee/banEmployee:
     post:
       tags:
         - agent
-      summary: Change employee Ban/UnBan.
-      description: Ban/Unban.
-      operationId: changeEmployeeStatus
-      parameters:
-        - name: employeeId
-          in: path
-          description: Id of employee.
-          required: true
-          style: simple
-          explode: false
-          schema:
-            type: integer
-            format: int64
+      summary: Ban employee.
+      description: Ban employee.
+      operationId: banEmployee
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request employee Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithEmployeeId"
+        required: true
       responses:
         "200":
-          description: change status successful
-        "404":
-          description: Id not found
+          description: successful operation
+        "400":
+          description: Invalid tag value
           content: {}
       x-swagger-router-controller: agentController
-  /employee/resetPassword/{employeeId}:
+  /employee/unBanEmployee:
+    post:
+      tags:
+        - agent
+      summary: Unban employee.
+      operationId: unBanEmployee
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request employee Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithEmployeeId"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /employee/changePassword:
     post:
       tags:
         - agent
       summary: Reset employee password..
       description: Get old and new password and check.
       operationId: resetEmployeePassword
+      security:
+        - bearerAuth: []
       requestBody:
-        description: old/new password data.
+        description: employee id and new password data.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/resetPasswordModel"
+              $ref: "#/components/schemas/resetPasswordRequest"
         required: true
       responses:
         "200":
-          description: change status successful
+          description: change successful
       x-swagger-router-controller: agentController
   /employee/employeeLog/{employeeId}:
     post:
@@ -1189,15 +1212,15 @@ components:
           number: "555"
           amount: 10
           status: "1"
-    resetPasswordModel:
+    resetPasswordRequest:
       type: object
       properties:
-        oldPassword:
-          type: string
+        employeeId:
+          type: integer
         newPassword:
           type: string
       example:
-        oldPassword: "123456789"
+        employeeId: 1
         newPassword: "987654321"
     promotionCreateModel:
       type: object
@@ -1316,6 +1339,13 @@ components:
           type: integer
       example:
         playerId: 1
+    requestWithEmployeeId:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+      example:
+        employeeId: 1
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

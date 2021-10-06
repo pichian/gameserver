@@ -352,15 +352,48 @@ module.exports.getEmployeeInfo = function getEmployeeInfo(req, res, next) {
   });
 };
 
-// module.exports.updateempoyeeDetail = function updateempoyeeDetail(req, res, next, body) {
-//   agentService.updateempoyeeDetail(body)
-//     .then(function (response) {
-//       utils.writeJson(res, response);
-//     })
-//     .catch(function (response) {
-//       utils.writeJson(res, response);
-//     });
-// };
+module.exports.banEmployee = function banEmployee(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    employeeService.banEmployee(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.unBanEmployee = function unBanEmployee(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    employeeService.unBanEmployee(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.resetEmployeePassword = function resetEmployeePassword(req, res, next, body) {
+  middleWare.authToken(req).then(function () {
+    employeeService.resetEmployeePassword(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
 /************************Employee Operation By Agent*************************/
 
 

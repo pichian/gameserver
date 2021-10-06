@@ -232,9 +232,7 @@ exports.unBanEmployee = function (req) {
         const { employeeId } = req.body
 
         if (employeeId) {
-
             (async () => {
-
                 const employeeTable = mysqlConnector.employee
 
                 await employeeTable.update(
@@ -248,6 +246,50 @@ exports.unBanEmployee = function (req) {
 
                 //(type, ref, desc, userId, createBy) 
                 await utilLog.agentLog('unban', null, 'employee', employeeId, req.user.id)
+
+                resolve(respConvert.success(req.newTokenReturn));
+
+            })().catch(function (err) {
+                console.log('[error on catch] : ' + err)
+                reject(respConvert.systemError(err.message))
+            })
+
+        } else {
+            reject(respConvert.validateError(msgConstant.core.validate_error));
+        }
+
+    });
+}
+
+
+/**
+ * Change employee password by Agent.
+ **/
+exports.resetEmployeePassword = function (req) {
+    return new Promise(function (resolve, reject) {
+
+        const { employeeId, newPassword } = req.body
+
+        if (employeeId && newPassword) {
+
+            (async () => {
+
+                const employeeTable = mysqlConnector.employee
+
+                //Encrypt user password
+                const encryptedPassword = await bcrypt.hash(newPassword, 10);
+
+                await employeeTable.update(
+                    {
+                        password: encryptedPassword
+                    },
+                    {
+                        where: { id: employeeId }
+                    }
+                )
+
+                //(type, ref, desc, userId, createBy) 
+                await utilLog.agentLog('changePassword', null, 'employee', employeeId, req.user.id)
 
                 resolve(respConvert.success(req.newTokenReturn));
 

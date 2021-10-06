@@ -17,6 +17,11 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             field: 'status'
         },
+        createDateTime: {
+            field: 'create_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW
+        },
     },
         {
             tableName: 'session_agent',

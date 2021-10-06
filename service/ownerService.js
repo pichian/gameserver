@@ -9,6 +9,207 @@ const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const util = require("../utils/log")
 
+/**
+ * Logged in owner into the system
+ **/
+exports.loginOwner = function (body) {
+  return new Promise(function (resolve, reject) {
+    const { username, password } = body
+
+    console.log(username, password)
+    if (username && password && body !== 'undefined') {
+      (async () => {
+
+        const ownerTable = mysqlConnector.owner;
+        //     const employeeTable = mysqlConnector.employee
+        const sessionOwner = mysqlConnector.sessionOwner;
+        //     const sessionEmployeeTable = mysqlConnector.sessionEmployee
+
+        const resOwner = await ownerTable.findOne({
+          where: {
+            username: username,
+          },
+          attributes: ['id', 'username', 'password', 'displayName', 'firstname', 'lastname', 'userRefCode', 'rtype'],
+          raw: true
+        });
+
+        console.log(resOwner)
+        //     const resEmp = await employeeTable.findOne({
+        //       where: {
+        //         username: username,
+        //       },
+        //       attributes: ['id', 'username', 'password', 'firstname', 'lastname', 'agentRefCode'],
+        //       raw: true
+        //     });
+
+        // if (resAgent === null && resEmp === null) {
+        if (resOwner === null) {
+          return reject(respConvert.businessError(msgConstant.core.login_failed))
+        }
+
+        // if username and password of Owner is true
+        if (resOwner !== null) {
+          if (await bcrypt.compare(password, resOwner.password)) {
+            const findSessionOwner = await sessionOwner.findOne({
+              where: {
+                agentId: resOwner.id,
+                status: 'Y'
+              },
+              raw: true
+            });
+
+            //if this Agent is already logged in system.
+            if (findSessionOwner) {
+              // update status of old session and token to 'N' that mean
+              // this token is not valid now.
+              const updateSessionStatus = sessionOwner.update({ status: "N" }, {
+                where: {
+                  id: findSessionOwner.id,
+                  ownerId: findSessionOwner.ownerId
+                }
+              })
+            }
+
+            let token;
+            if (resOwner) {
+              token = jwt.sign(
+                {
+                  id: resOwner.id,
+                  name: resOwner.agentName,
+                  username: resOwner.username,
+                  type: 'Agent',
+                  agentRefCode: resOwner.agentRefCode
+                },
+                process.env.JWT_TOKEN_SECRET_KEY,
+                { expiresIn: '30m' }
+              );
+
+              const addTokenToSession = await sessionOwner.create({
+                agentId: resOwner.id,
+                token: token,
+                status: 'Y',
+                createDateTime: new Date()
+              });
+            }
+
+            resolve(respConvert.successWithToken(token));
+          } else {
+            return reject(respConvert.businessError(msgConstant.core.login_failed))
+          }
+
+        }
+
+
+        //     // if username and password of Employee is true
+        //     if (resEmp !== null) {
+        //       if (await bcrypt.compare(password, resEmp.password)) {
+        //         const findSessionEmployee = await sessionEmployeeTable.findOne({
+        //           where: {
+        //             employeeId: resEmp.id,
+        //             status: 'Y'
+        //           },
+        //           raw: true
+        //         });
+
+        //         //if this Employee is already logged in system.
+        //         if (findSessionEmployee) {
+        //           // update status of old session and token to 'N' that mean
+        //           // this token is not valid now.
+        //           const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
+        //             where: {
+        //               id: findSessionEmployee.id,
+        //               employeeId: findSessionEmployee.employeeId
+        //             }
+        //           })
+        //         }
+
+        //         let token;
+
+        //         if (resEmp) {
+        //           token = jwt.sign(
+        //             {
+        //               id: resEmp.id,
+        //               username: resEmp.username,
+        //               firstname: resEmp.firstname,
+        //               lastname: resEmp.lastname,
+        //               type: 'Employee',
+        //               agentRefCode: resEmp.agentRefCode
+        //             },
+        //             process.env.JWT_TOKEN_SECRET_KEY,
+        //             { expiresIn: '30m' }
+        //           );
+
+        //           const addTokenToSession = await sessionEmployeeTable.create({
+        //             employeeId: resEmp.id,
+        //             token: token,
+        //             status: 'Y',
+        //             createDateTime: new Date()
+        //           });
+        //         }
+
+        //         resolve(respConvert.successWithToken(token));
+        //       } else {
+        //         return reject(respConvert.businessError(msgConstant.core.login_failed))
+        //       }
+        //     }
+        resolve()
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+
+    } else {
+      reject(respConvert.validateError(msgConstant.core.validate_error));
+    }
+
+  });
+}
+
+/**
+ * Logged out agent from system and session.
+ **/
+exports.logoutOwner = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const token = req.headers['authorization'].split(" ")[1];
+
+    // if (token) {
+    //   (async () => {
+
+    //     const decoded = jwt.decode(token);
+
+    //     if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
+
+    //     if (decoded.type == 'Agent') {
+    //       const sessionAgentTable = mysqlConnector.sessionAgent
+    //       const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
+    //         where: {
+    //           agentId: decoded.id,
+    //           token: token,
+    //         }
+    //       });
+    //     } else {
+    //       const sessionEmployeeTable = mysqlConnector.sessionEmployee
+    //       const updateEmployeeSessionLogout = await sessionEmployeeTable.update({ status: 'N' }, {
+    //         where: {
+    //           employeeId: decoded.id,
+    //           token: token,
+    //         }
+    //       });
+    //     }
+
+    //     resolve(respConvert.success());
+
+    //   })().catch(function (err) {
+    //     console.log('[error on catch] : ' + err)
+    //     reject(respConvert.systemError(err.message))
+    //   })
+    // } else {
+    //   reject(respConvert.businessError(msgConstant.core.invalid_token));
+    // }
+
+  });
+}
 
 
 /**
@@ -33,6 +234,9 @@ exports.ownerAgentRegister = function (body) {
               },
               {
                 username: username
+              },
+              {
+                agentRefCode: agentRefCode
               }
             ]
           }
@@ -199,389 +403,64 @@ exports.listAgentPaymentRequestAll = function (req) {
 
 
 
-//console.log(process.env)
 /**
- * agent payment request
- *
- * body PaymentModel Pet object that needs to be added to the store
- * no response value expected for this operation
+ * Owner Register for testing purpose only
  **/
-exports.agentPaymentRequest = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-/**
- * update empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.agentmpoyee = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-/**
- * payment agent detail
- * Returns a single pet
- *
- * agentPaymentId Long ID of pet to return
- * returns PlayerModel
- **/
-exports.approveagentpayment = function (agentPaymentId) {
-
-  return new Promise(function (resolve, reject) {
-    (async () => {
-
-      const payment = dbAgent.Payment;
-      const paymentlist = await payment.findAll({
-        where: {
-          id: {
-            [Op.eq]: agentPaymentId
-          }
-        }
-      });
-
-
-
-      const paymentupdate = await payment.update({ status: 1 }, {
-        where: {
-          id: {
-            [Op.eq]: agentPaymentId
-          }
-        }
-      })
-
-
-      //console.log(paymentlist);
-
-      if (paymentupdate[0] === 1) {
-        updatewalletagent(() => { resolve({ "detail": "ok" }) }, paymentlist[0]);
-        //run().catch(console.dir,resolve({"detail" : "ok"}));
-      } else {
-        resolve({ "detail": "not ok" });
-      }
-
-    })();
-
-  });
-}
-
-
-/**
- * Finds wallet player by token key
- * Finds wallet player detail by token key.
- *
- * returns List
- **/
-exports.findById = function () {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = [{
-      "amountCoin": 6.027456183070403,
-      "coinList": [{
-        "key": ""
-      }, {
-        "key": ""
-      }],
-      "userid": 0
-    }, {
-      "amountCoin": 6.027456183070403,
-      "coinList": [{
-        "key": ""
-      }, {
-        "key": ""
-      }],
-      "userid": 0
-    }];
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * payment detail
- * Returns a single pet
- *
- * paymentId Long ID of pet to return
- * returns PlayerModel
- **/
-exports.getagentById = function (paymentId) {
-  return new Promise(function (resolve, reject) {
-    const payment = dbAgent.Payment;
-    (async () => {
-      const paymentlist = await payment.findOne({
-        where: {
-          id: {
-            [Op.eq]: paymentId
-          }
-        }
-      });
-      console.log(paymentlist);
-      resolve(paymentlist);
-
-    })();
-  });
-}
-
-
-/**
- * payment player detail
- * Returns a single pet
- *
- * paymentId Long ID of pet to return
- * returns PaymentModel
- **/
-exports.getplayerById = function (paymentId) {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-      "Status": "Status",
-      "agentId": 6,
-      "Amount": 1.4658129805029452,
-      "id": 0
-    };
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * List agent payment request
- *
- * no response value expected for this operation
- **/
-exports.listagentPaymentRequest = function () {
-  return new Promise(function (resolve, reject) {
-    const payment = dbAgent.Payment;
-    (async () => {
-      const paymentlist = await payment.findAll({
-        where: {
-          user_id: {
-            [Op.eq]: 1
-          }
-        }
-      });
-      console.log(paymentlist);
-      resolve(paymentlist);
-
-    })();
-  });
-}
-
-/**
- * List Player
- *
- * returns PlayerModel
- **/
-exports.listPlayer = function () {
-  console.log("fdsfgggggg");
+exports.ownerRegister = function (body) {
   return new Promise(function (resolve, reject) {
 
-    const player = dbPlayer.Player;
-    (async () => {
-      const playerlist = await player.findAll({
-        // where: {
-        //   id: {
-        //     [Op.eq]: paymentId
-        //   }
-        // }
-      });
-      //console.log(playerlist);
-      resolve(playerlist);
+    const { ownerName, email, phoneNumber, username, password, description, status } = body
 
-    })();
-
-  });
-}
-
-/**
- * List agent payment request
- *
- * returns PaymentModel
- **/
-exports.listplayerPaymentRequest = function () {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = {
-      "Status": "Status",
-      "agentId": 6,
-      "Amount": 1.4658129805029452,
-      "id": 0
-    };
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
- * Logs user into the system
- *
- * body PlayerLoginInput ไว้ Login
- * returns inline_response_200
- **/
-exports.loginowner = function (body) {
-  return new Promise(function (resolve, reject) {
-
-    console.log(body.username);
-
-    if (body.username !== undefined && body.password !== undefined) {
-
-      const Player = dbOwner.Owner;
-      const SessionPlayer = dbOwner.SessionOwner;
+    if (ownerName && email && phoneNumber && username && password && description || description == "" && status) {
 
       (async () => {
+        const ownerTable = mysqlConnector.owner
 
-
-        const PlayerFindusername = await Player.findOne({
+        const checkDuplucatedUsername = await ownerTable.findOne({
           where: {
-            username: body.username,
-            //password: body.password,
+            [Op.or]: [
+              {
+                ownerName: ownerName,
+              },
+              {
+                username: username
+              },
+            ]
           }
         });
 
-        console.log(body.password);
-
-        //if(PlayerFindusername)
-        //console.log(await bcrypt.compare(body.password, PlayerFindusername.toJSON().password));
-
-        if (PlayerFindusername && await bcrypt.compare(body.password, PlayerFindusername.toJSON().password)) {
-
-          const PlayerFindusernameJSON = PlayerFindusername.toJSON();
-
-          const SessionPlayerFindid = await SessionPlayer.findOne({
-            where: {
-              OwnerId: PlayerFindusernameJSON.id,
-            }
-          });
-
-          if (SessionPlayerFindid !== null) {
-
-            delete PlayerFindusernameJSON.password
-            const token = jwt.sign(
-              PlayerFindusernameJSON,
-              'shhhhh'
-            );
-            // add token
-
-            const addtoken = await SessionPlayer.update(
-              {
-                token: token,
-              },
-              {
-                where: {
-                  OwnerId: PlayerFindusernameJSON.id
-                },
-              }
-            );
-
-            if (addtoken[0] == 1) {
-              resolve({
-                token: token,
-              });
-            } else {
-              reject({
-                code: 500,
-                message: 'can not update token !!!'
-              });
-            }
-
-
-
-          }
-
-          if (SessionPlayerFindid === null) {
-
-            delete PlayerFindusernameJSON.password
-            const token = jwt.sign(
-              PlayerFindusernameJSON,
-              'shhhhh'
-            );
-            // add token
-            const addtoken = await SessionPlayer.create({
-              OwnerId: PlayerFindusernameJSON.id,
-              token: token,
-            });
-
-            resolve({
-              token: addtoken.toJSON().token,
-            });
-
-          }
-
-
-        } else {
-
-          reject({
-            code: 500,
-            message: 'Username ไม่ถูกต้อง'
-          });
-
+        //if not duplicate this will be 'null' value
+        if (checkDuplucatedUsername) {
+          return reject(respConvert.businessError(msgConstant.owner.duplicate_user))
         }
 
+        //Encrypt user password
+        const encryptedPassword = await bcrypt.hash(password, 10);
 
-      })();
+        const resCreateOwner = await ownerTable.create({
+          ownerName: ownerName,
+          username: username,
+          password: encryptedPassword,
+          email: email,
+          phoneNumber: phoneNumber,
+          description: description,
+          status: status,
+          createBy: 1,
+          createDateTime: new Date(),
+          updateBy: 1,
+          updateDateTime: new Date(),
+        });
 
+        resolve(respConvert.success());
 
-      // var examples = {};
-      // examples['application/json'] = {
-      //   "token": "token"
-      // };
-      // if (Object.keys(examples).length > 0) {
-      //   resolve(examples[Object.keys(examples)[0]]);
-      // } else {
-      //   resolve();
-      // }
-
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
 
     } else {
-
-      reject({
-        code: 500,
-        message: 'Username ไม่ถูกต้อง'
-      });
-
-      //throw new Error('username and password not found')
-
+      reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
-
-
   });
 }
-
-
-/**
- * Logs out current logged in user session
- *
- * no response value expected for this operation
- **/
-exports.logoutowner = function () {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-exports.createagent = function () {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-

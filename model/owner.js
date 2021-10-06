@@ -1,53 +1,88 @@
 module.exports = (sequelize, Sequelize) => {
-    const OwnerModel = sequelize.define("OwnerModel", {
+    const owner = sequelize.define("owner", {
         id: {
-            field: 'Owner_ID',
+            field: 'id',
             type: Sequelize.INTEGER,
             primaryKey: true,
             autoIncrement: true,
         },
-        username: {
+        userRefCode: {
             type: Sequelize.STRING,
-            field: 'Owner_UserName'
+            field: 'user_ref_code'
+        },
+        roleType: {
+            type: Sequelize.STRING,
+            field: 'rtype'
+        },
+        displayName: {
+            type: Sequelize.STRING,
+            field: 'display_name'
         },
         firstname: {
             type: Sequelize.STRING,
-            field: 'Owner_FirstName'
+            field: 'firstname'
         },
         lastname: {
             type: Sequelize.STRING,
-            field: 'Owner_LastName'
+            field: 'lastname'
         },
-        email: {
+        username: {
             type: Sequelize.STRING,
-            field: 'Owner_Email'
+            field: 'username'
         },
         password: {
             type: Sequelize.STRING,
-            field: 'Owner_Password'
+            field: 'password'
         },
-        phone: {
+        email: {
             type: Sequelize.STRING,
-            field: 'Owner_Phone'
+            field: 'email'
         },
-        userStatus: {
-            type: Sequelize.BOOLEAN,
-            field: 'Owner_UserStatus'
-        },
-        refCodeAgent: {
+        phoneNumber: {
             type: Sequelize.STRING,
-            field: 'Owner_RefCodeAgent'
+            field: 'phone'
         },
-
+        description: {
+            type: Sequelize.STRING,
+            field: 'description'
+        },
+        status: {
+            type: Sequelize.STRING,
+            field: 'status'
+        },
+        createBy: {
+            type: Sequelize.INTEGER,
+            field: 'create_by',
+            allowNull: true,
+            defaultValue: null
+        },
+        createDateTime: {
+            field: 'create_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false,
+        },
+        updateBy: {
+            type: Sequelize.INTEGER,
+            field: 'update_by',
+            allowNull: true,
+            defaultValue: null
+        },
+        updateDateTime: {
+            field: 'update_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            allowNull: false
+        }
     },
         {
-            tableName: 'Owner',
+            tableName: 'tbm_owner_info',
             timestamps: false,
 
         }
     );
 
-    return OwnerModel;
+    return owner;
 };
 
 

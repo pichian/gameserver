@@ -43,103 +43,115 @@ exports.loginAgent = function (body) {
           raw: true
         });
 
-        if (!resAgent && !resEmp) {
+        if (resAgent === null && resEmp === null) {
           return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
 
-        let findSessionAgent;
         // if username and password of Agent is true
-        if (resAgent && await bcrypt.compare(password, resAgent.password)) {
-          findSessionAgent = await sessionAgentTable.findOne({
-            where: {
-              agentId: resAgent.id,
-              status: 'Y'
-            },
-            raw: true
-          });
+        if (resAgent !== null) {
+          if (await bcrypt.compare(password, resAgent.password)) {
+            const findSessionAgent = await sessionAgentTable.findOne({
+              where: {
+                agentId: resAgent.id,
+                status: 'Y'
+              },
+              raw: true
+            });
+
+            //if this Agent is already logged in system.
+            if (findSessionAgent) {
+              // update status of old session and token to 'N' that mean
+              // this token is not valid now.
+              const updateSessionStatus = sessionAgentTable.update({ status: "N" }, {
+                where: {
+                  id: findSessionAgent.id,
+                  agentId: findSessionAgent.agentId
+                }
+              })
+            }
+
+            let token;
+            if (resAgent) {
+              token = jwt.sign(
+                {
+                  id: resAgent.id,
+                  name: resAgent.agentName,
+                  username: resAgent.username,
+                  type: 'Agent',
+                  agentRefCode: resAgent.agentRefCode
+                },
+                process.env.JWT_TOKEN_SECRET_KEY,
+                { expiresIn: '30m' }
+              );
+
+              const addTokenToSession = await sessionAgentTable.create({
+                agentId: resAgent.id,
+                token: token,
+                status: 'Y',
+                createDateTime: new Date()
+              });
+            }
+
+            resolve(respConvert.successWithToken(token));
+          } else {
+            return reject(respConvert.businessError(msgConstant.core.login_failed))
+          }
+
         }
 
-        let findSessionEmployee;
+
         // if username and password of Employee is true
-        if (resEmp && await bcrypt.compare(password, resEmp.password)) {
-          findSessionEmployee = await sessionEmployeeTable.findOne({
-            where: {
-              employeeId: resEmp.id,
-              status: 'Y'
-            },
-            raw: true
-          });
-        }
-        // else {
-        //   return reject(respConvert.businessError(msgConstant.core.login_failed))
-        // }
+        if (resEmp !== null) {
+          if (await bcrypt.compare(password, resEmp.password)) {
+            const findSessionEmployee = await sessionEmployeeTable.findOne({
+              where: {
+                employeeId: resEmp.id,
+                status: 'Y'
+              },
+              raw: true
+            });
 
-        //if this Agent is already logged in system.
-        if (findSessionAgent) {
-          // update status of old session and token to 'N' that mean
-          // this token is not valid now.
-          const updateSessionStatus = sessionAgentTable.update({ status: "N" }, {
-            where: {
-              id: findSessionAgent.id,
-              agentId: findSessionAgent.agentId
+            //if this Employee is already logged in system.
+            if (findSessionEmployee) {
+              // update status of old session and token to 'N' that mean
+              // this token is not valid now.
+              const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
+                where: {
+                  id: findSessionEmployee.id,
+                  employeeId: findSessionEmployee.employeeId
+                }
+              })
             }
-          })
-        }
 
-        //if this Employee is already logged in system.
-        if (findSessionEmployee) {
-          // update status of old session and token to 'N' that mean
-          // this token is not valid now.
-          const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
-            where: {
-              id: findSessionEmployee.id,
-              employeeId: findSessionEmployee.employeeId
+            let token;
+
+            if (resEmp) {
+              token = jwt.sign(
+                {
+                  id: resEmp.id,
+                  username: resEmp.username,
+                  firstname: resEmp.firstname,
+                  lastname: resEmp.lastname,
+                  type: 'Employee',
+                  agentRefCode: resEmp.agentRefCode
+                },
+                process.env.JWT_TOKEN_SECRET_KEY,
+                { expiresIn: '30m' }
+              );
+
+              const addTokenToSession = await sessionEmployeeTable.create({
+                employeeId: resEmp.id,
+                token: token,
+                status: 'Y',
+                createDateTime: new Date()
+              });
             }
-          })
+
+            resolve(respConvert.successWithToken(token));
+          } else {
+            return reject(respConvert.businessError(msgConstant.core.login_failed))
+          }
         }
-
-        let token;
-        if (resAgent) {
-          token = jwt.sign(
-            {
-              id: resAgent.id,
-              name: resAgent.agentName,
-              username: resAgent.username,
-              type: 'Agent',
-              agentRefCode: resAgent.agentRefCode
-            },
-            process.env.JWT_TOKEN_SECRET_KEY,
-            { expiresIn: '30m' }
-          );
-
-          const addTokenToSession = await sessionAgentTable.create({
-            agentId: resAgent.id,
-            token: token,
-            status: 'Y'
-          });
-        }
-        if (resEmp) {
-          token = jwt.sign(
-            {
-              id: resEmp.id,
-              username: resEmp.username,
-              firstname: resEmp.firstname,
-              lastname: resEmp.lastname,
-              type: 'Employee',
-              agentRefCode: resEmp.agentRefCode
-            },
-            process.env.JWT_TOKEN_SECRET_KEY,
-            { expiresIn: '30m' }
-          );
-
-          const addTokenToSession = await sessionEmployeeTable.create({
-            employeeId: resEmp.id,
-            token: token,
-            status: 'Y'
-          });
-        }
-
-        resolve(respConvert.successWithToken(token));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)

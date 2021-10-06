@@ -15,7 +15,7 @@ externalDocs:
 servers:
   # - url: http://localhost:8080/v2
   #   description: สำหรับ Production server (ไว้ Generate)
-  - url: http://localhost:62/v2
+  - url: http://localhost:63/v2
     description: สำหรับ Dev server (เครื่องตัวเอง Player)
   # - url: http://128.199.216.219:61/V2/
   #   description: สำหรับ Test play server
@@ -26,54 +26,54 @@ servers:
 tags:
   - name: owner
 paths:
-  # /agent/login:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Logged in agent user into system.
-  #     operationId: loginAgent
-  #     requestBody:
-  #       description: for agent login
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/agentLoginInput"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: successful login
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/login_success_response"
-  #       "400":
-  #         description: Invalid username/password
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/login_fail_response"
-  #     x-swagger-router-controller: agentController
-  # /agent/logout:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Loggged out current logged in user session.
-  #     operationId: logoutAgent
-  #     requestBody:
-  #       description: token for clear session
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/requestWithToken"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: successful logout
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/apiResponse"
-  #     x-swagger-router-controller: agentController
+  /owner/login:
+    post:
+      tags:
+        - owner
+      summary: Logged in owner user into system.
+      operationId: loginOwner
+      requestBody:
+        description: for owner login
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ownerLoginInput"
+        required: true
+      responses:
+        "200":
+          description: successful login
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/login_success_response"
+        "400":
+          description: Invalid username/password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/login_fail_response"
+      x-swagger-router-controller: ownerController
+  /owner/logout:
+    post:
+      tags:
+        - owner
+      summary: Loggged out current logged in user session.
+      operationId: logoutOwner
+      requestBody:
+        description: token for clear session
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithToken"
+        required: true
+      responses:
+        "200":
+          description: successful logout
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/apiResponse"
+      x-swagger-router-controller: ownerController
   # /agent/paymentRequest:
   #   post:
   #     tags:
@@ -781,6 +781,28 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/SuccessResponse"
   #     x-swagger-router-controller: agentController
+  /owner/ownerRegister:
+    post:
+      tags:
+        - owner
+      summary: Owner register.
+      operationId: ownerRegister
+      # security:
+      #   - bearerAuth: []
+      requestBody:
+        description: Register Owner This for testing purpose only.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ownerRegisterRequest"
+        required: true
+      responses:
+        "200":
+          description: Insert Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: ownerController
 components:
   schemas:
     SuccessResponse:
@@ -888,6 +910,33 @@ components:
           agentRefCode: "",
           status: "active",
         }
+    ownerRegisterRequest:
+      type: object
+      properties:
+        ownerName:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        phoneNumber:
+          type: string
+        email:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+      example:
+        {
+          ownerName: "owner01",
+          email: "test@test.com",
+          phoneNumber: "0000000000",
+          username: "owner01",
+          password: "123456789",
+          description: "desc..",
+          status: "active",
+        }
     employeeRegisterModel:
       type: object
       properties:
@@ -924,7 +973,7 @@ components:
           workBrginDate: "23-Sep-2021 01:07:15",
           status: "active",
         }
-    agentLoginInput:
+    ownerLoginInput:
       type: object
       properties:
         username:
