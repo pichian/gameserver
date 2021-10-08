@@ -1,13 +1,9 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("SessionAgentModel", {
-        id: {
-            field: 'id',
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-        },
-        agentId: {
-            type: Sequelize.INTEGER,
-            field: 'agent_id'
+        agentCode: {
+            type: Sequelize.STRING,
+            field: 'agent_code',
+            primaryKey: true
         },
         token: {
             type: Sequelize.STRING,

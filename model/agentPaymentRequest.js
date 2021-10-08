@@ -6,9 +6,9 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        agentId: {
-            type: Sequelize.INTEGER,
-            field: 'agent_id'
+        agentCode: {
+            type: Sequelize.STRING,
+            field: 'agent_code'
         },
         paymentType: {
             type: Sequelize.STRING,
@@ -48,7 +48,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'create_rtype'
         },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by',
             allowNull: true,
             defaultValue: null
@@ -60,7 +60,7 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
         },
         updateBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'update_by',
             allowNull: true,
             defaultValue: null

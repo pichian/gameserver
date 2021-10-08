@@ -1,14 +1,9 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("owner", {
-        id: {
-            field: 'id',
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
         userRefCode: {
             type: Sequelize.STRING,
-            field: 'user_ref_code'
+            field: 'user_ref_code',
+            primaryKey: true
         },
         roleType: {
             type: Sequelize.STRING,

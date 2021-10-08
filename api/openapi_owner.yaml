@@ -241,8 +241,8 @@ paths:
         - owner
       summary: Owner agent register.
       operationId: ownerAgentRegister
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       requestBody:
         description: Register new Agent by Owner.
         content:
@@ -895,8 +895,6 @@ components:
           type: string
         description:
           type: string
-        agentRefCode:
-          type: string
         status:
           type: string
       example:
@@ -907,7 +905,6 @@ components:
           username: "AgentXX",
           password: "123456789",
           description: "desc..",
-          agentRefCode: "",
           status: "active",
         }
     ownerRegisterRequest:

@@ -6,7 +6,7 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
         },
         userId: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'user_id'
         },
         logType: {
@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'description'
         },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by',
             allowNull: true,
             defaultValue: null

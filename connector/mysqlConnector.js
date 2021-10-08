@@ -27,4 +27,6 @@ db.sessionEmployee = require('../model/sessionEmployee')(sequelizeConnector, Seq
 db.owner = require("../model/owner")(sequelizeConnector, Sequelize);
 db.sessionOwner = require("../model/sessionOwner")(sequelizeConnector, Sequelize)
 
+db.sequence = require("../model/sequence")(sequelizeConnector, Sequelize)
+
 module.exports = db;

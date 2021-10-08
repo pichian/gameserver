@@ -18,6 +18,7 @@ exports.authToken = function (req) {
 
             //if it not expired.
             const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECRET_KEY)
+
             //check if it not valid on session
             const isNotValidToken = await checkTokenValidHandler(decoded, token)
             if (isNotValidToken) return reject(respConvert.businessError(msgConstant.core.session_timeout))
@@ -29,7 +30,7 @@ exports.authToken = function (req) {
                     name: decoded.name,
                     username: decoded.username,
                     type: decoded.type,
-                    agentRefCode: decoded.agentRefCode
+                    userRefCode: decoded.userRefCode
                 },
                 process.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
@@ -47,7 +48,7 @@ exports.authToken = function (req) {
             resolve()
 
         })().catch(function (err) {
-            console.log('[error on catch] : ' + err.message)
+            console.log('[error on catch in auth] : ' + err.message)
 
             //if expired or other error
             if (err.message == 'jwt expired') {
@@ -64,6 +65,7 @@ exports.authToken = function (req) {
 }
 
 function updateUserSessionHandler(decodedToken, newToken, oldToken) {
+    console.log('update ' + JSON.stringify(decodedToken))
     if (decodedToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const updatePlayerSession = sessionPlayerTable.update({ token: newToken }, {
@@ -76,7 +78,7 @@ function updateUserSessionHandler(decodedToken, newToken, oldToken) {
         const sessionAgentTable = mysqlConnector.sessionAgent
         const removeAgentSession = sessionAgentTable.update({ token: newToken }, {
             where: {
-                agentId: decodedToken.id,
+                agentCode: decodedToken.userRefCode,
                 status: 'Y'
             },
         });
@@ -88,11 +90,20 @@ function updateUserSessionHandler(decodedToken, newToken, oldToken) {
                 status: 'Y'
             },
         });
+    } else {
+        const sessionOwnerTable = mysqlConnector.sessionOwner
+        const removeOwnerSession = sessionOwnerTable.update({ token: newToken }, {
+            where: {
+                ownerCode: decodedToken.userRefCode,
+                status: 'Y'
+            },
+        });
     }
     return
 }
 
 function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
+    console.log(decodedExpiredToken)
     if (decodedExpiredToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const removePlayerSession = sessionPlayerTable.update({ status: 'N' }, {
@@ -105,7 +116,7 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
         const sessionAgentTable = mysqlConnector.sessionAgent
         const removeAgentSession = sessionAgentTable.update({ status: 'N' }, {
             where: {
-                agentId: decodedExpiredToken.id,
+                agentCode: decodedExpiredToken.userRefCode,
                 token: expiredToken
             }
         });
@@ -118,12 +129,20 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
                 token: expiredToken
             }
         });
+    } else {
+        const sessionOwnerTable = mysqlConnector.sessionOwner
+        const removeOwnerSession = sessionOwnerTable.update({ status: 'N' }, {
+            where: {
+                ownerCode: decodedExpiredToken.userRefCode,
+                token: expiredToken
+            }
+        });
     }
     return
 }
 
 async function checkTokenValidHandler(decodedTokenData, token) {
-    // console.log(decodedTokenData, token)
+    console.log('valid ' + JSON.stringify(decodedTokenData))
     if (decodedTokenData.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const tokenValid = await sessionPlayerTable.findOne({
@@ -139,7 +158,7 @@ async function checkTokenValidHandler(decodedTokenData, token) {
         const sessionAgentTable = mysqlConnector.sessionAgent
         const tokenValid = await sessionAgentTable.findOne({
             where: {
-                agentId: decodedTokenData.id,
+                agentCode: decodedTokenData.userRefCode,
                 token: token,
                 status: 'N'
             },
@@ -157,7 +176,17 @@ async function checkTokenValidHandler(decodedTokenData, token) {
             raw: true
         });
         return tokenValid !== null ? true : false
+    } else {
+        const sessionOwnerTable = mysqlConnector.sessionOwner
+        const tokenValid = await sessionOwnerTable.findOne({
+            where: {
+                ownerCode: decodedTokenData.userRefCode,
+                token: token,
+                status: 'N'
+            },
+            raw: true
+        });
+        return tokenValid !== null ? true : false
     }
-    return
 }
 

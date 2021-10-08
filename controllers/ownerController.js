@@ -28,13 +28,17 @@ module.exports.logoutOwner = function logoutOwner(req, res, next) {
 };
 
 module.exports.ownerAgentRegister = function ownerAgentRegister(req, res, next, body) {
-  ownerService.ownerAgentRegister(body)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    ownerService.ownerAgentRegister(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 module.exports.listAgentByOwnerId = function listAgentByOwnerId(req, res, next) {
@@ -132,13 +136,13 @@ module.exports.approveAgentPaymentRequest = function approveAgentPaymentRequest(
 };
 
 module.exports.disapproveAgentPaymentRequest = function disapproveAgentPaymentRequest(req, res, next) {
-    agentService.disapproveAgentPaymentRequest(req)
-      .then(function (response) {
-        utils.writeSuccess(res, response);
-      })
-      .catch(function (response) {
-        utils.writeError(res, response);
-      });
+  agentService.disapproveAgentPaymentRequest(req)
+    .then(function (response) {
+      utils.writeSuccess(res, response);
+    })
+    .catch(function (response) {
+      utils.writeError(res, response);
+    });
 };
 
 module.exports.cancelAgentPaymentRequest = function cancelAgentPaymentRequest(req, res, next) {

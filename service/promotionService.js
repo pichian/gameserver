@@ -57,9 +57,9 @@ exports.listPromotionByAgentId = function (req) {
             const promotionTable = mysqlConnector.promotion
 
             const promotionList = await promotionTable.findAll({
-                where: {
-                    create_by: req.user.id
-                },
+                // where: {
+                //     create_by: req.user.id
+                // },
                 attributes: ['id', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
                 raw: true
             });

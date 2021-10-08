@@ -1,13 +1,9 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("sessionOwner", {
-        id: {
-            field: 'id',
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-        },
-        ownerId: {
-            type: Sequelize.INTEGER,
-            field: 'owner_id'
+        ownerCode: {
+            type: Sequelize.STRING,
+            field: 'owner_code',
+            primaryKey: true
         },
         token: {
             type: Sequelize.STRING,

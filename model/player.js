@@ -1,16 +1,11 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("player", {
-        id: {
-            field: 'id',
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
-        },
         playerRefCode: {
             type: Sequelize.STRING,
             field: 'player_ref_code',
             allowNull: true,
-            defaultValue: null
+            defaultValue: null,
+            primaryKey: true
         },
         playerName: {
             type: Sequelize.STRING,
@@ -55,7 +50,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'status'
         },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by',
             allowNull: true,
             defaultValue: null
@@ -67,7 +62,7 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
         },
         updateBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'update_by',
             allowNull: true,
             defaultValue: null

@@ -1,5 +1,5 @@
 'use strict';
-const { Op } = require("sequelize");
+const { Op, Sequelize } = require("sequelize");
 const { ObjectId } = require('mongodb');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -8,6 +8,7 @@ const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const util = require("../utils/log")
+const strUtil = require("../utils/String")
 
 /**
  * Logged in owner into the system
@@ -27,20 +28,23 @@ exports.loginOwner = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'displayName', 'firstname', 'lastname', 'userRefCode', 'rtype'],
+          attributes: ['username', 'password', 'displayName', 'firstname', 'lastname', 'userRefCode', 'rtype'],
           raw: true
         });
 
         // if username and password of Owner is true
         if (resOwner !== null) {
           if (await bcrypt.compare(password, resOwner.password)) {
+
             const findSessionOwner = await sessionOwner.findOne({
               where: {
-                ownerId: resOwner.id,
+                ownerCode: resOwner.userRefCode,
                 status: 'Y'
               },
               raw: true
             });
+
+
 
             //if this Owner is already logged in system.
             if (findSessionOwner) {
@@ -48,8 +52,7 @@ exports.loginOwner = function (body) {
               // this token is not valid now.
               const updateSessionStatus = sessionOwner.update({ status: "N" }, {
                 where: {
-                  id: findSessionOwner.id,
-                  ownerId: findSessionOwner.ownerId
+                  ownerCode: findSessionOwner.ownerCode
                 }
               })
             }
@@ -58,7 +61,6 @@ exports.loginOwner = function (body) {
             if (resOwner) {
               token = jwt.sign(
                 {
-                  id: resOwner.id,
                   name: resOwner.displayName,
                   username: resOwner.username,
                   rtype: resOwner.rtype,
@@ -69,8 +71,10 @@ exports.loginOwner = function (body) {
                 { expiresIn: '30m' }
               );
 
+              console.log('this call' + JSON.stringify(resOwner))
+
               const addTokenToSession = await sessionOwner.create({
-                ownerId: resOwner.id,
+                ownerCode: resOwner.userRefCode,
                 token: token,
                 status: 'Y',
                 createDateTime: new Date()
@@ -147,15 +151,17 @@ exports.logoutOwner = function (req) {
  * owner register Agent (log system unfinished)
  *
  **/
-exports.ownerAgentRegister = function (body) {
+exports.ownerAgentRegister = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { agentName, email, phoneNumber, username, password, description, status, agentRefCode } = body
+    const { agentName, email, phoneNumber, username, password, description, status } = req.body
 
-    if (agentName && email && phoneNumber && username && password && description || description == "" && status && agentRefCode) {
+    if (agentName && email && phoneNumber && username && password && description || description == "" && status) {
 
       (async () => {
         const agentTable = mysqlConnector.agent
+        const sequenceRefCodeTable = mysqlConnector.sequence
+        const sequenceNow = await sequenceRefCodeTable.max('refCode')
 
         const checkDuplucatedUsername = await agentTable.findOne({
           where: {
@@ -165,9 +171,6 @@ exports.ownerAgentRegister = function (body) {
               },
               {
                 username: username
-              },
-              {
-                agentRefCode: agentRefCode
               }
             ]
           }
@@ -182,24 +185,29 @@ exports.ownerAgentRegister = function (body) {
         const encryptedPassword = await bcrypt.hash(password, 10);
 
         const resCretedAgent = await agentTable.create({
+          agentRefCode: 'ag' + strUtil.paddingNumberWithDate(sequenceNow, 5),
           agentName: agentName,
           username: username,
           password: encryptedPassword,
           email: email,
           phoneNumber: phoneNumber,
           description: description,
-          agentRefCode: agentRefCode,
+          ownerRefCode: req.user.userRefCode,
+          createRoleType: req.user.type,
           status: status,
-          createBy: 1,
+          createBy: req.user.userRefCode,
           createDateTime: new Date(),
-          updateBy: 1,
+          updateBy: req.user.userRefCode,
           updateDateTime: new Date(),
         });
+
+        //update sequence
+        await sequenceRefCodeTable.increment('refCode', { by: 1, where: { refCode: sequenceNow } });
 
         // create agent wallet on mongo
         const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
         const resCreatedWallet = await agentWalletCollec.insertOne({
-          agent_id: resCretedAgent.id,
+          agent_code: resCretedAgent.agentRefCode,
           amount_coin: 0,
         })
 
@@ -209,7 +217,7 @@ exports.ownerAgentRegister = function (body) {
             walletId: resCreatedWallet.insertedId.toString()
           },
           {
-            where: { id: resCretedAgent.id }
+            where: { agentRefCode: resCretedAgent.agentRefCode }
           })
 
         resolve(respConvert.success());
