@@ -313,6 +313,7 @@ exports.agentPaymentRequest = function (req) {
           amount: amount,
           promotionRefId: promotionId === 0 || promotionId === 'default' ? null : promotionId,
           paymentStatus: 'W',
+          createRoleType: req.user.type,
           createBy: req.user.userRefCode,
           createDateTime: new Date(),
           updateBy: req.user.userRefCode,

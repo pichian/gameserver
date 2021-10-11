@@ -927,6 +927,15 @@ exports.disapprovePlayerPaymentRequest = function (req) {
         )
 
         //Find record for player id 
+        const findUpdateRecordData = await playerPaymentReqTable.findOne({
+          where: {
+            id: id
+          },
+          attributes: ['playerRefCode', 'createBy', 'createRoleType', 'approved_by'],
+          raw: true
+        })
+
+        //Find record for player id 
         const playerPaymentData = await playerPaymentReqTable.findOne({
           where: {
             id: id
