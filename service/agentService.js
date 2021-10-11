@@ -376,7 +376,7 @@ exports.listAgentPaymentRequest = function (req) {
 
       const paymentRequestList = await agentPaymentReqTable.findAll({
         where: {
-          createBy: req.user.userRefCode
+          agentRefCode: req.user.userRefCode
         },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         include: [
