@@ -9,7 +9,8 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
 const utilLog = require("../utils/log")
 const strUtil = require("../utils/String")
-const commUtil = require("../utils/common")
+const commUtil = require("../utils/common");
+const employee = require('../model/employee');
 
 /***************** Service by Player **************/
 
@@ -551,17 +552,25 @@ exports.agentPlayerRegister = function (req) {
  **/
 exports.listPlayerByAgentId = function (req) {
   return new Promise(function (resolve, reject) {
-
-    const playerTable = mysqlConnector.player;
-
     (async () => {
+
+      const playerTable = mysqlConnector.player;
+      const employeeTable = mysqlConnector.employee
 
       //check user type for where Query
       let whereQry = {}
       if (req.user.type.toLowerCase() == 'agent') {
         whereQry.agentRefCode = req.user.userRefCode;
       } else if (req.user.type.toLowerCase() == 'employee') {
-        whereQry.createBy = req.user.userRefCode;
+        const agentRefCodeOfEmployee = await employeeTable.findOne({
+          where: {
+            employeeRefCode: req.user.userRefCode
+          },
+          attributes: ['agentRefCode'],
+          raw: true
+        })
+
+        whereQry.agentRefCode = agentRefCodeOfEmployee.agentRefCode;
       } else {
         console.log('other role type')
       }
