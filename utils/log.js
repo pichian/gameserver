@@ -24,14 +24,14 @@ exports.agentLog = function (type, ref, desc, userId, createBy) {
     })
 }
 
-exports.employeeLog = function (playerId, logType, logReference, description, createBy) {
+exports.employeeLog = function (playerCode, logType, logReference, description, createBy) {
     return new Promise(function (resolve, reject) {
         (async () => {
 
             const employeeLogTable = mysqlConnector.employeeLog
 
             const logCreate = await employeeLogTable.create({
-                playerId: playerId,
+                playerCode: playerCode,
                 logType: logType,
                 logReference: logReference,
                 description: description,

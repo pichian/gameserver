@@ -879,7 +879,7 @@ exports.approvePlayerPaymentRequest = function (req) {
         const textDesc = 'Approved ' + strUtil.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = null;
         if (req.user.type.toLowerCase() == 'employee') {
-          logsCreateBy = findUpdateRecordData.createBy;
+          logsCreateBy = req.user.userRefCode;
           await utilLog.employeeLog(findUpdateRecordData.playerRefCode, 'pay', id, textDesc, logsCreateBy)
         } else if (req.user.type.toLowerCase() == 'agent') {
           logsCreateBy = req.user.userRefCode
