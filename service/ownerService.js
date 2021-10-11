@@ -9,6 +9,7 @@ const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const util = require("../utils/log")
 const strUtil = require("../utils/String")
+const commUtil = require("../utils/common")
 
 /**
  * Logged in owner into the system
@@ -63,7 +64,6 @@ exports.loginOwner = function (body) {
                 {
                   name: resOwner.displayName,
                   username: resOwner.username,
-                  rtype: resOwner.rtype,
                   type: resOwner.rtype == 'owner' ? 'Owner' : 'Manager',
                   userRefCode: resOwner.userRefCode
                 },
@@ -108,40 +108,30 @@ exports.logoutOwner = function (req) {
 
     const token = req.headers['authorization'].split(" ")[1];
 
-    // if (token) {
-    //   (async () => {
+    if (token) {
+      (async () => {
 
-    //     const decoded = jwt.decode(token);
+        const decoded = jwt.decode(token);
 
-    //     if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
+        if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
-    //     if (decoded.type == 'Agent') {
-    //       const sessionAgentTable = mysqlConnector.sessionAgent
-    //       const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
-    //         where: {
-    //           agentId: decoded.id,
-    //           token: token,
-    //         }
-    //       });
-    //     } else {
-    //       const sessionEmployeeTable = mysqlConnector.sessionEmployee
-    //       const updateEmployeeSessionLogout = await sessionEmployeeTable.update({ status: 'N' }, {
-    //         where: {
-    //           employeeId: decoded.id,
-    //           token: token,
-    //         }
-    //       });
-    //     }
+        const sessionOwner = mysqlConnector.sessionOwner
+        const updateAgentSessionLogout = await sessionOwner.update({ status: 'N' }, {
+          where: {
+            ownerCode: decoded.userRefCode,
+            token: token,
+          }
+        });
 
-    //     resolve(respConvert.success());
+        resolve(respConvert.success());
 
-    //   })().catch(function (err) {
-    //     console.log('[error on catch] : ' + err)
-    //     reject(respConvert.systemError(err.message))
-    //   })
-    // } else {
-    //   reject(respConvert.businessError(msgConstant.core.invalid_token));
-    // }
+      })().catch(function (err) {
+        console.log('[error on catch] : ' + err)
+        reject(respConvert.systemError(err.message))
+      })
+    } else {
+      reject(respConvert.businessError(msgConstant.core.invalid_token));
+    }
 
   });
 }
@@ -160,8 +150,7 @@ exports.ownerAgentRegister = function (req) {
 
       (async () => {
         const agentTable = mysqlConnector.agent
-        const sequenceRefCodeTable = mysqlConnector.sequence
-        const sequenceNow = await sequenceRefCodeTable.max('refCode')
+        const sequenceNow = await commUtil.getRefCodeSequence()
 
         const checkDuplucatedUsername = await agentTable.findOne({
           where: {
@@ -202,7 +191,7 @@ exports.ownerAgentRegister = function (req) {
         });
 
         //update sequence
-        await sequenceRefCodeTable.increment('refCode', { by: 1, where: { refCode: sequenceNow } });
+        await commUtil.updateRefCodeSequence()
 
         // create agent wallet on mongo
         const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
@@ -245,12 +234,10 @@ exports.listAgentByOwnerId = function (req) {
 
     (async () => {
       const agentList = await agentTable.findAll({
-        // where: {
-        //   createBy: {
-        //     [Op.eq]: req.user.id
-        //   }
-        // },
-        attributes: ['id', 'agentName', 'phoneNumber', 'email', 'username', 'ranking', 'status', 'walletId'],
+        where: {
+          ownerRefCode: req.user.userRefCode
+        },
+        attributes: ['agentRefCode', 'agentName', 'phoneNumber', 'email', 'username', 'ranking', 'status', 'walletId'],
         raw: true
       })
 
@@ -277,7 +264,7 @@ exports.listAgentByOwnerId = function (req) {
           return acc;
         },
           {
-            id: agent._id,
+            agentRefCode: agent.agentRefCode,
             playerName: agent.agentName,
             email: agent.email,
             phoneNumber: agent.phoneNumber,
@@ -288,7 +275,7 @@ exports.listAgentByOwnerId = function (req) {
           })
       })
 
-      resolve(respConvert.successWithData(returnDataMatchedCredit))
+      resolve(respConvert.successWithData(returnDataMatchedCredit, req.newTokenReturn));
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
@@ -312,7 +299,7 @@ exports.listAgentPaymentRequestAll = function (req) {
       const agentTable = mysqlConnector.agent
 
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
-      agentPaymentReqTable.belongsTo(agentTable, { foreignKey: 'agentId' });
+      agentPaymentReqTable.belongsTo(agentTable, { foreignKey: 'agentRefCode' });
 
       const paymentRequestList = await agentPaymentReqTable.findAll({
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
@@ -323,7 +310,7 @@ exports.listAgentPaymentRequestAll = function (req) {
           },
           {
             model: agentTable,
-            attributes: ['id', 'agentName'],
+            attributes: ['agentRefCode', 'agentName'],
           }
         ],
         order: [['createDateTime', 'DESC']],
@@ -331,7 +318,9 @@ exports.listAgentPaymentRequestAll = function (req) {
         nest: true
       })
 
-      resolve(respConvert.successWithData(paymentRequestList));
+      console.log(paymentRequestList)
+
+      resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)

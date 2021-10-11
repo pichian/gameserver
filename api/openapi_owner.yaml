@@ -152,8 +152,8 @@ paths:
       summary: Approve agent payment.
       description: Approve agent payment by payment id.
       operationId: approveAgentPaymentRequest
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       requestBody:
         description: "request by payment info"
         content:
@@ -261,10 +261,10 @@ paths:
     post:
       tags:
         - owner
-      summary: List of Agent by onwe id..
+      summary: List of Agent by owner id..
       operationId: listAgentByOwnerId
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -285,8 +285,8 @@ paths:
         - owner
       summary: List agent payment request list all.
       operationId: listAgentPaymentRequestAll
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -301,28 +301,28 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: ownerController
-  # /agent/player/playerList:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: List of player.
-  #     operationId: listPlayerByAgentId
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/playerListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
+  /owner/player/playerList:
+    post:
+      tags:
+        - owner
+      summary: List of player.
+      operationId: listPlayer
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/playerListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
   /owner/agent/paymentRequest:
     post:
       tags:
@@ -373,8 +373,8 @@ paths:
         - owner
       summary: Payment request list of agent. When go to agent detail page.
       operationId: paymentRequestListOfAgent
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: successful operation
@@ -396,8 +396,8 @@ paths:
       summary: Get a single payment detail by payment id.
       description: Returns a single payment detail by payment id.
       operationId: getAgentPaymentDetailById
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       requestBody:
         description: Request by id of payment.
         content:
@@ -422,8 +422,8 @@ paths:
         - owner
       summary: Finds agent wallet amount by agent id.
       operationId: findAgentWalletById
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       requestBody:
         description: Request by object of agent id.
         content:
@@ -449,8 +449,8 @@ paths:
         - owner
       summary: Finds status, name by agent id.
       operationId: getAgentInfo
-      # security:
-      #   - bearerAuth: []
+      security:
+        - bearerAuth: []
       requestBody:
         description: Request by object of agent id.
         content:
@@ -536,28 +536,28 @@ paths:
   #         description: Invalid input
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/employee/employeeList:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: List of employee by agent id.
-  #     operationId: listEmployeeByAgentId
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/employeeListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
+  /owner/employee/employeeList:
+    post:
+      tags:
+        - owner
+      summary: List of employee
+      operationId: listEmployee
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/employeeListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
   # /agent/employee/employeeDetail:
   #   post:
   #     tags:

@@ -4,6 +4,8 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const utilLog = require("../utils/log")
+const strUtil = require("../utils/String")
+const commUtil = require("../utils/common")
 
 /**
  * Register Employee
@@ -16,6 +18,7 @@ exports.agentEmployeeRegister = function (req) {
         if (title && firstname && lastname && email || email == '' && phoneNumber || phoneNumber == '' && username && password && description || description == '' && workBeginDate && status) {
             (async () => {
                 const employeeTable = mysqlConnector.employee
+                const sequenceNow = await commUtil.getRefCodeSequence()
 
                 const checkDuplucatedUsername = await employeeTable.findOne({
                     where: {
@@ -31,23 +34,14 @@ exports.agentEmployeeRegister = function (req) {
                 });
 
                 //if not duplicate this will be 'null' value
-                if (checkDuplucatedUsername) return reject(respConvert.businessError(msgConstant.agent.duplicate_user))
+                if (checkDuplucatedUsername) return reject(respConvert.businessError(msgConstant.employee.duplicate_employee))
 
                 //Encrypt user password
                 const encryptedPassword = await bcrypt.hash(password, 10);
 
-                const agentTable = mysqlConnector.agent
-
-                const agentInfo = await agentTable.findOne({
-                    where: {
-                        id: req.user.id
-                    },
-                    attributes: ['agentName', 'agentRefCode'],
-                    raw: true
-                });
-
                 const employeeCreated = await employeeTable.create({
-                    agentRefCode: agentInfo.agentRefCode,
+                    employeeRefCode: 'emp' + strUtil.paddingNumberWithDate(sequenceNow, 5),
+                    agentRefCode: req.user.userRefCode,
                     title: title,
                     firstname: firstname,
                     lastname: lastname,
@@ -58,14 +52,18 @@ exports.agentEmployeeRegister = function (req) {
                     description: description,
                     workBeginDate: workBeginDate,
                     status: status,
-                    createBy: req.user.id,
+                    createRoleType: req.user.type,
+                    createBy: req.user.userRefCode,
                     createDateTime: new Date(),
-                    updateBy: req.user.id,
+                    updateBy: req.user.userRefCode,
                     updateDateTime: new Date(),
                 });
 
+                //update sequence
+                await commUtil.updateRefCodeSequence()
+
                 //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('register', null, 'employee', employeeCreated.id, req.user.id)
+                await utilLog.agentLog('register', null, 'employee', employeeCreated.id, req.user.userRefCode)
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -82,7 +80,7 @@ exports.agentEmployeeRegister = function (req) {
 
 
 /**
- * List employee
+ * List employee bya agent id.
  **/
 exports.listEmployeeByAgentId = function (req) {
     return new Promise(function (resolve, reject) {
@@ -92,10 +90,10 @@ exports.listEmployeeByAgentId = function (req) {
             const employeeList = await employeeTable.findAll({
                 where: {
                     createBy: {
-                        [Op.eq]: req.user.id
+                        [Op.eq]: req.user.userRefCode
                     }
                 },
-                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'email', 'username', 'status'],
+                attributes: ['employeeRefCode', 'title', 'firstname', 'lastname', 'phoneNumber', 'email', 'username', 'status'],
                 raw: true
             })
             resolve(respConvert.successWithData(employeeList, req.newTokenReturn))
@@ -114,15 +112,15 @@ exports.getEmployeeDetail = function (req) {
     return new Promise(function (resolve, reject) {
         (async () => {
 
-            const { empId } = req.body
+            const { employeeRefCode } = req.body
             const employeeTable = mysqlConnector.employee;
             const employeeLogTable = mysqlConnector.employeeLog
 
             const employeeInfo = await employeeTable.findOne({
                 where: {
-                    id: empId
+                    employeeRefCode: employeeRefCode
                 },
-                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate', 'status'],
+                attributes: ['employeeRefCode', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate', 'status'],
                 raw: true
             })
 
@@ -130,7 +128,7 @@ exports.getEmployeeDetail = function (req) {
             //find total player credit by agent
             const listEmployeeLogs = await employeeLogTable.findAll({
                 where: {
-                    createBy: empId
+                    createBy: employeeRefCode
                 },
                 attributes: ['id', 'description', 'createDateTime'],
                 raw: true
@@ -141,6 +139,7 @@ exports.getEmployeeDetail = function (req) {
             resolve(respConvert.successWithData(employeeInfo, req.newTokenReturn))
 
         })().catch(function (err) {
+            console.log('[error on catchss] : ' + err)
             reject(respConvert.systemError(err.message))
         })
     });
@@ -158,16 +157,16 @@ exports.getEmployeeInfo = function (req) {
 
             const employeeInfo = await employeeTable.findOne({
                 where: {
-                    id: req.user.id
+                    employeeRefCode: req.user.userRefCode
                 },
-                attributes: ['id', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
+                attributes: ['employeeRefCode', 'title', 'firstname', 'lastname', 'phoneNumber', 'workBeginDate'],
                 raw: true
             })
 
             //find employee log
             const listEmployeeLogs = await employeeLogTable.findAll({
                 where: {
-                    createBy: req.user.id
+                    createBy: req.user.userRefCode
                 },
                 attributes: ['id', 'description', 'createDateTime'],
                 raw: true
@@ -189,9 +188,9 @@ exports.getEmployeeInfo = function (req) {
 exports.banEmployee = function (req) {
     return new Promise(function (resolve, reject) {
 
-        const { employeeId } = req.body
+        const { employeeRefCode } = req.body
 
-        if (employeeId) {
+        if (employeeRefCode) {
 
             (async () => {
 
@@ -202,12 +201,12 @@ exports.banEmployee = function (req) {
                         status: 'banned'
                     },
                     {
-                        where: { id: employeeId }
+                        where: { employeeRefCode: employeeRefCode }
                     }
                 )
 
                 //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('ban', null, 'employee', employeeId, req.user.id)
+                await utilLog.agentLog('ban', null, 'employee', employeeRefCode, req.user.userRefCode)
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -229,9 +228,9 @@ exports.banEmployee = function (req) {
 exports.unBanEmployee = function (req) {
     return new Promise(function (resolve, reject) {
 
-        const { employeeId } = req.body
+        const { employeeRefCode } = req.body
 
-        if (employeeId) {
+        if (employeeRefCode) {
             (async () => {
                 const employeeTable = mysqlConnector.employee
 
@@ -240,12 +239,12 @@ exports.unBanEmployee = function (req) {
                         status: 'active'
                     },
                     {
-                        where: { id: employeeId }
+                        where: { employeeRefCode: employeeRefCode }
                     }
                 )
 
                 //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('unban', null, 'employee', employeeId, req.user.id)
+                await utilLog.agentLog('unban', null, 'employee', employeeRefCode, req.user.userRefCode)
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -268,9 +267,9 @@ exports.unBanEmployee = function (req) {
 exports.resetEmployeePassword = function (req) {
     return new Promise(function (resolve, reject) {
 
-        const { employeeId, newPassword } = req.body
+        const { employeeRefCode, newPassword } = req.body
 
-        if (employeeId && newPassword) {
+        if (employeeRefCode && newPassword) {
 
             (async () => {
 
@@ -284,12 +283,12 @@ exports.resetEmployeePassword = function (req) {
                         password: encryptedPassword
                     },
                     {
-                        where: { id: employeeId }
+                        where: { employeeRefCode: employeeRefCode }
                     }
                 )
 
                 //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('changePassword', null, 'employee', employeeId, req.user.id)
+                await utilLog.agentLog('changePassword', null, 'employee', employeeRefCode, req.user.userRefCode)
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -305,19 +304,44 @@ exports.resetEmployeePassword = function (req) {
     });
 }
 
+/**
+ * List employee for owner.
+ **/
+ exports.listEmployee = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+            const employeeTable = mysqlConnector.employee;
+
+            const employeeList = await employeeTable.findAll({
+                // where: {
+                //     createBy: {
+                //         [Op.eq]: req.user.userRefCode
+                //     }
+                // },
+                attributes: ['employeeRefCode', 'title', 'firstname', 'lastname', 'phoneNumber', 'email', 'username', 'status'],
+                raw: true
+            })
+            resolve(respConvert.successWithData(employeeList, req.newTokenReturn))
+        })().catch(function (err) {
+            reject(respConvert.systemError(err.message))
+        })
+
+    });
+}
 
 
 
 function setEmployeeLogs(listEmployeeLogs) {
     //find employee logs
     let employeeLogs = []
-    listEmployeeLogs.forEach(element => {
-        let logObj = {}
-        logObj._id = element.id;
-        logObj.dateTime = element.createDateTime;
-        logObj.action = element.description;
-        employeeLogs.push(logObj)
-    });
-
+    if (listEmployeeLogs.length > 0) {
+        listEmployeeLogs.forEach(element => {
+            let logObj = {}
+            logObj._id = element.id;
+            logObj.dateTime = element.createDateTime;
+            logObj.action = element.description;
+            employeeLogs.push(logObj)
+        });
+    }
     return employeeLogs;
 }

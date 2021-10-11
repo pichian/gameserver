@@ -1,9 +1,11 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("EmployeeModel", {
-        id: {
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
+        employeeRefCode: {
+            type: Sequelize.STRING,
+            field: 'employee_ref_code',
+            allowNull: true,
+            defaultValue: null,
+            primaryKey: true
         },
         agentRefCode: {
             type: Sequelize.STRING,
@@ -51,8 +53,12 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             field: 'status'
         },
+        createRoleType: {
+            type: Sequelize.STRING,
+            field: 'create_rtype'
+        },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by'
         },
         createDateTime: {
@@ -62,7 +68,7 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false,
         },
         updateBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'update_by'
         },
         updateDateTime: {

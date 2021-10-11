@@ -49,6 +49,10 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.STRING,
             field: 'status'
         },
+        createRoleType: {
+            type: Sequelize.STRING,
+            field: 'create_rtype'
+        },
         createBy: {
             type: Sequelize.STRING,
             field: 'create_by',

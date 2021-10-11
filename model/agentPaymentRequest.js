@@ -6,9 +6,9 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        agentCode: {
+        agentRefCode: {
             type: Sequelize.STRING,
-            field: 'agent_code'
+            field: 'agent_ref_code'
         },
         paymentType: {
             type: Sequelize.STRING,
@@ -35,7 +35,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'remark',
         },
         approvedBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'approved_by',
             defaultValue: null
         },

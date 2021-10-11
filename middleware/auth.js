@@ -30,7 +30,8 @@ exports.authToken = function (req) {
                     name: decoded.name,
                     username: decoded.username,
                     type: decoded.type,
-                    userRefCode: decoded.userRefCode
+                    userRefCode: decoded.userRefCode,
+                    agentRefCode: decoded.agentRefCode
                 },
                 process.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
@@ -65,12 +66,11 @@ exports.authToken = function (req) {
 }
 
 function updateUserSessionHandler(decodedToken, newToken, oldToken) {
-    console.log('update ' + JSON.stringify(decodedToken))
     if (decodedToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const updatePlayerSession = sessionPlayerTable.update({ token: newToken }, {
             where: {
-                playerId: decodedToken.id,
+                playerCode: decodedToken.userRefCode,
                 status: 'Y'
             },
         });
@@ -86,7 +86,7 @@ function updateUserSessionHandler(decodedToken, newToken, oldToken) {
         const sessionEmployeeTable = mysqlConnector.sessionEmployee
         const removeEmployeeSession = sessionEmployeeTable.update({ token: newToken }, {
             where: {
-                employeeId: decodedToken.id,
+                employeeCode: decodedToken.userRefCode,
                 status: 'Y'
             },
         });
@@ -103,12 +103,11 @@ function updateUserSessionHandler(decodedToken, newToken, oldToken) {
 }
 
 function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
-    console.log(decodedExpiredToken)
     if (decodedExpiredToken.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const removePlayerSession = sessionPlayerTable.update({ status: 'N' }, {
             where: {
-                playerId: decodedExpiredToken.id,
+                playerId: decodedExpiredToken.userRefCode,
                 token: expiredToken
             },
         });
@@ -125,7 +124,7 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
         const sessionEmployeeTable = mysqlConnector.sessionEmployee
         const removeEmployeeSession = sessionEmployeeTable.update({ status: 'N' }, {
             where: {
-                employeeId: decodedExpiredToken.id,
+                employeeCode: decodedExpiredToken.userRefCode,
                 token: expiredToken
             }
         });
@@ -142,12 +141,11 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
 }
 
 async function checkTokenValidHandler(decodedTokenData, token) {
-    console.log('valid ' + JSON.stringify(decodedTokenData))
     if (decodedTokenData.type == 'Player') {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const tokenValid = await sessionPlayerTable.findOne({
             where: {
-                playerId: decodedTokenData.id,
+                playerCode: decodedTokenData.userRefCode,
                 token: token,
                 status: 'N'
             },
@@ -169,7 +167,7 @@ async function checkTokenValidHandler(decodedTokenData, token) {
         const sessionEmployeeTable = mysqlConnector.sessionEmployee
         const tokenValid = await sessionEmployeeTable.findOne({
             where: {
-                employeeId: decodedTokenData.id,
+                employeeCode: decodedTokenData.userRefCode,
                 token: token,
                 status: 'N'
             },

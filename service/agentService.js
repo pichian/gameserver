@@ -38,15 +38,16 @@ exports.loginAgent = function (body) {
         const resEmp = await employeeTable.findOne({
           where: {
             username: username,
+            status: 'active'
           },
-          attributes: ['username', 'password', 'firstname', 'lastname', 'agentRefCode'],
+          attributes: ['username', 'password', 'firstname', 'lastname', 'employeeRefCode'],
           raw: true
         });
 
         if (resAgent === null && resEmp === null) {
           return reject(respConvert.businessError(msgConstant.core.login_failed))
         }
-        console.log('resAgent ' + resAgent)
+
         // if username and password of Agent is true
         if (resAgent !== null) {
           if (await bcrypt.compare(password, resAgent.password)) {
@@ -58,7 +59,6 @@ exports.loginAgent = function (body) {
               raw: true
             });
 
-            console.log('findSessionAgent ' + JSON.stringify(findSessionAgent))
             //if this Agent is already logged in system.
             if (findSessionAgent) {
               // update status of old session and token to 'N' that mean
@@ -98,59 +98,58 @@ exports.loginAgent = function (body) {
 
         }
 
+        console.log('resEmp', resEmp)
+        // if username and password of Employee is true
+        if (resEmp !== null) {
+          if (await bcrypt.compare(password, resEmp.password)) {
+            const findSessionEmployee = await sessionEmployeeTable.findOne({
+              where: {
+                employeeCode: resEmp.employeeRefCode,
+                status: 'Y'
+              },
+              raw: true
+            });
 
-        // // if username and password of Employee is true
-        // if (resEmp !== null) {
-        //   if (await bcrypt.compare(password, resEmp.password)) {
-        //     const findSessionEmployee = await sessionEmployeeTable.findOne({
-        //       where: {
-        //         employeeId: resEmp.id,
-        //         status: 'Y'
-        //       },
-        //       raw: true
-        //     });
+            //if this Employee is already logged in system.
+            if (findSessionEmployee) {
+              // update status of old session and token to 'N' that mean
+              // this token is not valid now.
+              const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
+                where: {
+                  employeeCode: findSessionEmployee.employeeCode
+                }
+              })
+            }
 
-        //     //if this Employee is already logged in system.
-        //     if (findSessionEmployee) {
-        //       // update status of old session and token to 'N' that mean
-        //       // this token is not valid now.
-        //       const updateSessionStatus = sessionEmployeeTable.update({ status: "N" }, {
-        //         where: {
-        //           id: findSessionEmployee.id,
-        //           employeeId: findSessionEmployee.employeeId
-        //         }
-        //       })
-        //     }
+            let token;
 
-        //     let token;
+            if (resEmp) {
+              token = jwt.sign(
+                {
+                  employeeCode: resEmp.employeeRefCode,
+                  username: resEmp.username,
+                  firstname: resEmp.firstname,
+                  lastname: resEmp.lastname,
+                  type: 'Employee',
+                  userRefCode: resEmp.employeeRefCode
+                },
+                process.env.JWT_TOKEN_SECRET_KEY,
+                { expiresIn: '30m' }
+              );
 
-        //     if (resEmp) {
-        //       token = jwt.sign(
-        //         {
-        //           id: resEmp.id,
-        //           username: resEmp.username,
-        //           firstname: resEmp.firstname,
-        //           lastname: resEmp.lastname,
-        //           type: 'Employee',
-        //           userRefCode: resEmp.agentRefCode
-        //         },
-        //         process.env.JWT_TOKEN_SECRET_KEY,
-        //         { expiresIn: '30m' }
-        //       );
+              const addTokenToSession = await sessionEmployeeTable.create({
+                employeeCode: resEmp.employeeRefCode,
+                token: token,
+                status: 'Y',
+                createDateTime: new Date()
+              });
+            }
 
-        //       const addTokenToSession = await sessionEmployeeTable.create({
-        //         employeeId: resEmp.id,
-        //         token: token,
-        //         status: 'Y',
-        //         createDateTime: new Date()
-        //       });
-        //     }
-
-        //     resolve(respConvert.successWithToken(token));
-        //   } else {
-        //     return reject(respConvert.businessError(msgConstant.core.login_failed))
-        //   }
-        // }
+            resolve(respConvert.successWithToken(token));
+          } else {
+            return reject(respConvert.businessError(msgConstant.core.login_failed))
+          }
+        }
 
       })().catch(function (err) {
         console.log('[error on catchhhh] : ' + err)
@@ -183,7 +182,7 @@ exports.logoutAgent = function (req) {
           const sessionAgentTable = mysqlConnector.sessionAgent
           const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
             where: {
-              agentId: decoded.id,
+              agentCode: decoded.userRefCode,
               token: token,
             }
           });
@@ -191,7 +190,7 @@ exports.logoutAgent = function (req) {
           const sessionEmployeeTable = mysqlConnector.sessionEmployee
           const updateEmployeeSessionLogout = await sessionEmployeeTable.update({ status: 'N' }, {
             where: {
-              employeeId: decoded.id,
+              employeeCode: decoded.userRefCode,
               token: token,
             }
           });
@@ -261,7 +260,6 @@ exports.findAgentDetail = function (req) {
         {
           $match: {
             _id: { $in: listOfPlayerWalletId.map((id) => ObjectId(id.walletId)) }
-
           }
         },
         {
@@ -274,6 +272,7 @@ exports.findAgentDetail = function (req) {
       //!!!Warning. Some data of this resolve still mock data!!!!
       resolve(respConvert.successWithData({
         agentName: agentInfo.agentName,
+        agentRefCode: agentInfo.agentRefCode,
         amountCoin: agentWalletAmount.amount_coin,
         totalPlayer: totalPlayerOfThisAgent,
         totalPlayerCredit: totalPlayerWalletSum.length == 0 ? 0 : totalPlayerWalletSum[0].sum,
@@ -308,7 +307,7 @@ exports.agentPaymentRequest = function (req) {
         const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
 
         const paymentReqCreated = await agentPaymentReqTable.create({
-          agentCode: req.user.userRefCode,
+          agentRefCode: req.user.userRefCode,
           paymentType: paymentType,
           wayToPay: wayToPay,
           amount: amount,
@@ -340,56 +339,6 @@ exports.agentPaymentRequest = function (req) {
 
 
 /**
- * update empoyee
- *
- * body PlayerModel Pet object that needs to be added to the store
- * no response value expected for this operation
- **/
-exports.agentmpoyee = function (body) {
-  return new Promise(function (resolve, reject) {
-    resolve();
-  });
-}
-
-
-
-
-/**
- * Finds wallet player by token key
- * Finds wallet player detail by token key.
- *
- * returns List
- **/
-exports.findById = function () {
-  return new Promise(function (resolve, reject) {
-    var examples = {};
-    examples['application/json'] = [{
-      "amountCoin": 6.027456183070403,
-      "coinList": [{
-        "key": ""
-      }, {
-        "key": ""
-      }],
-      "userid": 0
-    }, {
-      "amountCoin": 6.027456183070403,
-      "coinList": [{
-        "key": ""
-      }, {
-        "key": ""
-      }],
-      "userid": 0
-    }];
-    if (Object.keys(examples).length > 0) {
-      resolve(examples[Object.keys(examples)[0]]);
-    } else {
-      resolve();
-    }
-  });
-}
-
-
-/**
  * Get payment detail from page agent-detail payment request list table.
  **/
 exports.getPaymentDetailById = function (req) {
@@ -415,34 +364,8 @@ exports.getPaymentDetailById = function (req) {
   });
 }
 
-
-/**
- * payment player detail
- * Returns a single pet
- *
- * paymentId Long ID of pet to return
- * returns PaymentModel
- **/
-exports.getplayerById = function (paymentId) {
-  return new Promise(function (resolve, reject) {
-    const payment = dbPlayer.Payment;
-    (async () => {
-      const paymentlist = await payment.findOne({
-        where: {
-          id: {
-            [Op.eq]: paymentId
-          }
-        }
-      });
-      resolve(paymentlist);
-    })();
-  });
-}
-
-
 /**
  * List payment request by agent Id.
- *
  **/
 exports.listAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
@@ -493,13 +416,13 @@ exports.getAgentInfo = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { agentId } = req.body
+      const { agentRefCode } = req.body
       const agentTable = mysqlConnector.agent
       const playerTable = mysqlConnector.player
 
       const agentInfo = await agentTable.findOne({
         where: {
-          id: agentId
+          agentRefCode: agentRefCode
         },
         attributes: ['agentName', 'status', 'walletId', 'agentRefCode'],
         raw: true
@@ -559,14 +482,14 @@ exports.getAgentInfo = function (req) {
 exports.findAgentWalletById = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { agentId } = req.body
+    const { agentRefCode } = req.body
 
     const agentTable = mysqlConnector.agent;
 
     (async () => {
       const agentWalletId = await agentTable.findOne({
         where: {
-          id: agentId
+          agentRefCode: agentRefCode
         },
         attributes: ['walletId'],
         raw: true
@@ -577,7 +500,7 @@ exports.findAgentWalletById = function (req) {
         _id: ObjectId(agentWalletId.walletId)
       }, { projection: { _id: 0, amount_coin: 1 } })
 
-      resolve(respConvert.successWithData(agentWalletAmount))
+      resolve(respConvert.successWithData(agentWalletAmount, req.newTokenReturn))
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
       reject(new Error(err.message));
@@ -638,7 +561,7 @@ exports.paymentRequestListOfAgent = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { agentId } = req.body
+      const { agentRefCode } = req.body
 
       const agentPaymentReqTable = mysqlConnector.agentPaymentReq
       const promotionTable = mysqlConnector.promotion
@@ -647,7 +570,7 @@ exports.paymentRequestListOfAgent = function (req) {
 
       const paymentRequestListOfAgent = await agentPaymentReqTable.findAll({
         where: {
-          agentId: agentId
+          agentRefCode: agentRefCode
         },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         include: [
@@ -661,7 +584,7 @@ exports.paymentRequestListOfAgent = function (req) {
         nest: true
       })
 
-      resolve(respConvert.successWithData(paymentRequestListOfAgent));
+      resolve(respConvert.successWithData(paymentRequestListOfAgent, req.newTokenReturn));
 
     })().catch(function (err) {
       console.log('[error on catch] : ' + err)
@@ -682,7 +605,7 @@ exports.getAgentPaymentDetailById = function (req) {
       const agentPaymentReq = mysqlConnector.agentPaymentReq;
       const agentTable = mysqlConnector.agent
 
-      agentPaymentReq.belongsTo(agentTable, { foreignKey: 'agentId' });
+      agentPaymentReq.belongsTo(agentTable, { foreignKey: 'agentRefCode' });
 
       const paymentDetail = await agentPaymentReq.findOne({
         where: {
@@ -722,19 +645,19 @@ exports.approveAgentPaymentRequest = function (req) {
         const agentPaymentReq = mysqlConnector.agentPaymentReq
         const agentTable = mysqlConnector.agent
 
-        //Find record for player id 
+        //Find record for agent ref code 
         const findUpdateRecordData = await agentPaymentReq.findOne({
           where: {
             id: id
           },
-          attributes: ['agentId'],
+          attributes: ['agentRefCode'],
           raw: true
         })
 
         //get Agent wallet id for update wallet
         const agentData = await agentTable.findOne({
           where: {
-            id: findUpdateRecordData.agentId
+            agentRefCode: findUpdateRecordData.agentRefCode
           },
           attributes: ['walletId', 'username'],
           raw: true
@@ -770,7 +693,7 @@ exports.approveAgentPaymentRequest = function (req) {
         await agentPaymentReq.update(
           {
             approvedBy: 1,
-            // approvedBy: req.user.id, (authen system unfinished)
+            approvedBy: req.user.userRefCode,
             approveDateTime: new Date(),
             paymentStatus: 'A'
           },

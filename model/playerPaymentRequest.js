@@ -6,9 +6,9 @@ module.exports = (sequelize, Sequelize) => {
             primaryKey: true,
             autoIncrement: true,
         },
-        playerId: {
-            type: Sequelize.INTEGER,
-            field: 'player_id'
+        playerRefCode: {
+            type: Sequelize.STRING,
+            field: 'player_ref_code'
         },
         paymentType: {
             type: Sequelize.STRING,
@@ -53,7 +53,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'create_rtype'
         },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by',
         },
         createDateTime: {
@@ -61,7 +61,7 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.DATE,
         },
         updateBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'update_by',
         },
         updateDateTime: {

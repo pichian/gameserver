@@ -1,13 +1,9 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("SessionPlayerModel", {
-        id: {
-            field: 'id',
+        playerCode: {
             type: Sequelize.INTEGER,
-            primaryKey: true,
-        },
-        playerId: {
-            type: Sequelize.INTEGER,
-            field: 'player_id'
+            field: 'player_code',
+            primaryKey: true
         },
         token: {
             type: Sequelize.STRING,
@@ -16,8 +12,12 @@ module.exports = (sequelize, Sequelize) => {
         status: {
             type: Sequelize.STRING,
             field: 'status',
+        },
+        createDateTime: {
+            field: 'create_datetime',
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW
         }
-
     },
         {
             tableName: 'session_player',

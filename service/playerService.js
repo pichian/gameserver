@@ -9,6 +9,7 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
 const utilLog = require("../utils/log")
 const strUtil = require("../utils/String")
+const commUtil = require("../utils/common")
 
 /***************** Service by Player **************/
 
@@ -32,7 +33,7 @@ exports.loginPlayer = function (body) {
           where: {
             username: username,
           },
-          attributes: ['id', 'username', 'password', 'playerName', 'agentRefCode'],
+          attributes: ['username', 'password', 'playerName', 'playerRefCode', 'agentRefCode'],
           raw: true
         });
 
@@ -44,7 +45,7 @@ exports.loginPlayer = function (body) {
 
           const findSessionPlayer = await sessionPlayerTable.findOne({
             where: {
-              playerId: resPlayer.id,
+              playerCode: resPlayer.playerRefCode,
               status: 'Y'
             },
             raw: true
@@ -56,18 +57,18 @@ exports.loginPlayer = function (body) {
             // this token is not valid now.
             const updateSessionStatus = sessionPlayerTable.update({ status: "N" }, {
               where: {
-                id: findSessionPlayer.id,
-                playerId: findSessionPlayer.playerId
+                playerCode: findSessionPlayer.playerCode
               }
             })
           }
 
+          console.log('resplayer', resPlayer)
           const token = jwt.sign(
             {
-              id: resPlayer.id,
               name: resPlayer.playerName,
               username: resPlayer.username,
-              userRefCode: resPlayer.agentRefCode,
+              userRefCode: resPlayer.playerRefCode,
+              agentRefCode: resPlayer.agentRefCode,
               type: 'Player'
             },
             process.env.JWT_TOKEN_SECRET_KEY,
@@ -75,7 +76,7 @@ exports.loginPlayer = function (body) {
           );
 
           const addTokenToSession = await sessionPlayerTable.create({
-            playerId: resPlayer.id,
+            playerCode: resPlayer.playerRefCode,
             token: token,
             status: 'Y'
           });
@@ -87,7 +88,7 @@ exports.loginPlayer = function (body) {
         }
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
+        console.log('[error on catchddd] : ' + err)
         reject(respConvert.systemError(err.message))
       })
     } else {
@@ -116,7 +117,7 @@ exports.logoutPlayer = function (req) {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const updatePlayerSessionLogout = await sessionPlayerTable.update({ status: 'N' }, {
           where: {
-            playerId: decoded.id,
+            playerCode: decoded.userRefCode,
             token: token,
           }
         });
@@ -224,7 +225,7 @@ exports.getPlayerInfo = function (req) {
 
       const playerInfo = await playerTable.findOne({
         where: {
-          id: userData.id
+          playerRefCode: userData.userRefCode
         },
         attributes: ['playerName', 'status'],
         raw: true
@@ -255,7 +256,7 @@ exports.getPlayerWallet = function (req) {
 
       const playerInfo = await playerTable.findOne({
         where: {
-          id: userData.id
+          playerRefCode: userData.userRefCode
         },
         attributes: ['walletId'],
         raw: true
@@ -284,26 +285,61 @@ exports.getPlayerWallet = function (req) {
 exports.playerPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, amount, playerId, promotionId } = req.body
+    const { paymentType, wayToPay, amount, playerRefCode, promotionId } = req.body
 
     if (paymentType && wayToPay && amount) {
 
       (async () => {
 
         const playerPaymentReqTable = mysqlConnector.playerPaymentReq
+        const employeeTable = mysqlConnector.employee
+        const playerTable = mysqlConnector.player
+        console.log('req user', req.user)
+
+        //check type of user that register player
+        let agentRefCode = null
+        if (req.user.type.toLowerCase() == 'agent') {
+          agentRefCode = req.user.userRefCode
+        } else if (req.user.type.toLowerCase() == 'employee') {
+          //find employee agent ref code
+          const employeeData = await employeeTable.findOne({
+            where: {
+              employeeRefCode: req.user.userRefCode
+            },
+            attributes: ['agentRefCode'],
+            raw: true
+          })
+          agentRefCode = employeeData.agentRefCode
+        }
+        else if (req.user.type.toLowerCase() == 'player') {
+          //find employee agent ref code
+          const playerData = await playerTable.findOne({
+            where: {
+              playerRefCode: req.user.userRefCode
+            },
+            attributes: ['agentRefCode'],
+            raw: true
+          })
+          agentRefCode = playerData.agentRefCode
+        } else {
+          console.log('other Role created')
+        }
+
 
         const requestCreate = await playerPaymentReqTable.create(
           {
-            playerId: !playerId ? req.user.id : playerId,
+            playerRefCode: !playerRefCode ? req.user.userRefCode : playerRefCode,
             paymentType: paymentType,
             wayToPay: wayToPay,
             amount: amount,
             promotionRefId: !promotionId ? null : promotionId,
             paymentStatus: 'W',
-            createBy: req.user.id,
+            createBy: req.user.userRefCode,
             createDateTime: new Date(),
+            updateBy: req.user.userRefCode,
+            updateDateTime: new Date(),
             createRoleType: req.user.type,
-            agentRefCode: req.user.agentRefCode
+            agentRefCode: agentRefCode
           }
         )
 
@@ -333,7 +369,7 @@ exports.getPlayerPaymentDetailById = function (req) {
       const playerPaymentReqTable = mysqlConnector.playerPaymentReq;
       const playerTable = mysqlConnector.player
 
-      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
+      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerRefCode' });
 
       const paymentDetail = await playerPaymentReqTable.findOne({
         where: {
@@ -368,7 +404,7 @@ exports.listPlayerPaymentRequest = function (req) {
 
       const paymentReqList = await playerPaymentReqTable.findAll({
         where: {
-          player_id: req.user.id
+          playerRefCode: req.user.userRefCode
         },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus', 'createDateTime'],
         order: [['createDateTime', 'DESC']],
@@ -409,8 +445,8 @@ exports.agentPlayerRegister = function (req) {
       (async () => {
 
         const playerTable = mysqlConnector.player
-        const sequenceRefCodeTable = mysqlConnector.sequence
-        const sequenceNow = await sequenceRefCodeTable.max('refCode')
+        const employeeTable = mysqlConnector.employee
+        const sequenceNow = await commUtil.getRefCodeSequence()
 
         const checkDuplucatedUsername = await playerTable.findOne({
           where: {
@@ -430,6 +466,24 @@ exports.agentPlayerRegister = function (req) {
           reject(respConvert.businessError(msgConstant.agent.duplicate_user))
         }
 
+        //check type of user that register player
+        let agentRefCode = null
+        if (req.user.type.toLowerCase() == 'agent') {
+          agentRefCode = req.user.userRefCode
+        } else if (req.user.type.toLowerCase() == 'employee') {
+          //find employee agent ref code
+          const employeeData = await employeeTable.findOne({
+            where: {
+              employeeRefCode: req.user.userRefCode
+            },
+            attributes: ['agentRefCode'],
+            raw: true
+          })
+          agentRefCode = employeeData.agentRefCode
+        } else {
+          console.log('other Role created')
+        }
+
         //Encrypt user password
         const encryptedPassword = await bcrypt.hash(password, 10);
 
@@ -441,13 +495,16 @@ exports.agentPlayerRegister = function (req) {
           phoneNumber: phoneNumber,
           description: description,
           status: status,
-          agentRefCode: req.user.userRefCode,
+          createRoleType: req.user.type,
+          agentRefCode: agentRefCode,
           createBy: req.user.userRefCode,
           createDateTime: new Date(),
           updateBy: req.user.userRefCode,
           updateDateTime: new Date(),
         });
 
+        //update sequence
+        await commUtil.updateRefCodeSequence()
 
         // create player wallet on mongo
         const playerWalletCollec = mongoConnector.api.collection('player_wallet')
@@ -490,49 +547,17 @@ exports.listPlayerByAgentId = function (req) {
   return new Promise(function (resolve, reject) {
 
     const playerTable = mysqlConnector.player;
-    const agentTable = mysqlConnector.agent;
-    const employeeTable = mysqlConnector.employee;
 
     (async () => {
 
-
-      const rtype = req.user.type;
-      const userRefCode = req.user.userRefCode;
-
+      //check user type for where Query
       let whereQry = {}
-
-      if (rtype.toLowerCase() == 'agent') {
-        console.log('agentagentagentagent')
-        const agentInfo = await agentTable.findOne({
-          where: {
-            agentRefCode: userRefCode
-          },
-          attributes: ['agentName', 'agentRefCode'],
-          raw: true
-        });
-
-        whereQry = {
-          agentRefCode: {
-            [Op.eq]: agentInfo.agentRefCode
-          }
-        }
-      } else if (rtype.toLowerCase() == 'employee') {
-        console.log('employeeemployeeemployee')
-        const employeeInfo = await employeeTable.findOne({
-          where: {
-            agentRefCode: agentRefCode
-          },
-          attributes: ['username', 'agentRefCode'],
-          raw: true
-        });
-
-        whereQry = {
-          agentRefCode: {
-            [Op.eq]: employeeInfo.agentRefCode
-          }
-        }
+      if (req.user.type.toLowerCase() == 'agent') {
+        whereQry.agentRefCode = req.user.userRefCode;
+      } else if (req.user.type.toLowerCase() == 'employee') {
+        whereQry.createBy = req.user.userRefCode;
       } else {
-        console.log('other')
+        console.log('other role type')
       }
 
       const playerList = await playerTable.findAll({
@@ -599,13 +624,12 @@ exports.listPlayerPaymentRequestAll = function (req) {
       const playerTable = mysqlConnector.player
 
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
-      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerId' });
+      playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerRefCode' });
 
-      console.log(req.user.agentRefCode);
       const paymentRequestList = await playerPaymentReqTable.findAll({
-        where: {
-          agentRefCode: req.user.agentRefCode
-        },
+        // where: {
+        //   agentRefCode: req.user.userRefCode
+        // },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         order: [['createDateTime', 'DESC']],
         include: [
@@ -615,14 +639,13 @@ exports.listPlayerPaymentRequestAll = function (req) {
           },
           {
             model: playerTable,
-            attributes: ['id', 'playerName'],
+            attributes: ['playerName', 'playerRefCode'],
           }
         ],
         raw: true,
         nest: true
       })
 
-      console.log(paymentRequestList.length);
       resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
 
     })().catch(function (err) {
@@ -640,7 +663,9 @@ exports.paymentRequestListOfPlayer = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { playerId } = req.body
+      const { playerRefCode } = req.body
+
+      console.log(req.body)
 
       const playerPaymentReqTable = mysqlConnector.playerPaymentReq
       const promotionTable = mysqlConnector.promotion
@@ -649,7 +674,7 @@ exports.paymentRequestListOfPlayer = function (req) {
 
       const paymentRequestListOfPlayer = await playerPaymentReqTable.findAll({
         where: {
-          playerId: playerId
+          playerRefCode: playerRefCode
         },
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         include: [
@@ -757,16 +782,16 @@ exports.approvePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId', 'createBy', 'createRoleType', 'approved_by'],
+          attributes: ['playerRefCode', 'createBy', 'createRoleType', 'approved_by'],
           raw: true
         })
 
         //get player wallet id for update wallet
         const playerData = await playerTable.findOne({
           where: {
-            id: findUpdateRecordData.playerId
+            playerRefCode: findUpdateRecordData.playerRefCode
           },
-          attributes: ['walletId', 'username', 'agentRefCode'],
+          attributes: ['walletId', 'username', 'agentRefCode', 'playerRefCode'],
           raw: true
         })
 
@@ -777,6 +802,8 @@ exports.approvePlayerPaymentRequest = function (req) {
           attributes: ['walletId', 'username'],
           raw: true
         })
+
+        console.log(playerData, agentData)
 
         let updatePlayerWalletQry = {}, updateAgentWalletQry = {}
         if (paymentType == 'WD') {
@@ -823,8 +850,10 @@ exports.approvePlayerPaymentRequest = function (req) {
         //update status of payment request
         await playerPaymentReqTable.update(
           {
-            approvedBy: req.user.id,
+            approvedBy: req.user.userRefCode,
             approveDateTime: new Date(),
+            updateBy: req.user.userRefCode,
+            updateDateTime: new Date(),
             paymentStatus: 'A'
           },
           {
@@ -832,18 +861,15 @@ exports.approvePlayerPaymentRequest = function (req) {
           }
         )
 
-        console.log(findUpdateRecordData)
         const textDesc = 'Approved ' + strUtil.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = null;
-        if (findUpdateRecordData.createRoleType.toLowerCase() == 'employee') {
+        if (req.user.type.toLowerCase() == 'employee') {
           logsCreateBy = findUpdateRecordData.createBy;
-        } else if (findUpdateRecordData.createRoleType.toLowerCase() == 'player') {
-          logsCreateBy = req.user.id
+          await utilLog.employeeLog(findUpdateRecordData.playerRefCode, 'pay', id, textDesc, logsCreateBy)
+        } else if (req.user.type.toLowerCase() == 'agent') {
+          logsCreateBy = req.user.userRefCode
+          await utilLog.agentLog('pay', id, textDesc, findUpdateRecordData.playerRefCode, logsCreateBy)
         }
-
-        //Agent log (unfinished)
-
-        await utilLog.employeeLog(findUpdateRecordData.playerId, 'pay', id, textDesc, logsCreateBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -890,29 +916,29 @@ exports.disapprovePlayerPaymentRequest = function (req) {
           where: {
             id: id
           },
-          attributes: ['playerId', 'createRoleType', 'createBy'],
+          attributes: ['playerRefCode', 'createRoleType', 'createBy'],
           raw: true
         })
 
         //get player info
         const playerData = await playerTable.findOne({
           where: {
-            id: playerPaymentData.playerId
+            playerRefCode: playerPaymentData.playerRefCode
           },
           attributes: ['username'],
           raw: true
         })
 
         console.log(playerPaymentData)
-        const textDesc = 'Disapproved ' + strUtil.getPaymentTypeText(paymentType) + ' ' + playerData.username
+        const textDesc = 'Approved ' + strUtil.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = null;
-        if (playerPaymentData.createRoleType.toLowerCase() == 'employee') {
-          logsCreateBy = playerPaymentData.createBy;
-        } else if (playerPaymentData.createRoleType.toLowerCase() == 'player') {
-          logsCreateBy = req.user.id
+        if (req.user.type.toLowerCase() == 'employee') {
+          logsCreateBy = findUpdateRecordData.createBy;
+          await utilLog.employeeLog(findUpdateRecordData.playerRefCode, 'pay', id, textDesc, logsCreateBy)
+        } else if (req.user.type.toLowerCase() == 'agent') {
+          logsCreateBy = req.user.userRefCode
+          await utilLog.agentLog('pay', id, textDesc, findUpdateRecordData.playerRefCode, logsCreateBy)
         }
-
-        await utilLog.employeeLog(playerPaymentData.playerId, 'pay', id, textDesc, logsCreateBy)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -972,9 +998,9 @@ exports.cancelPlayerPaymentRequest = function (req) {
 exports.banPlayer = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { playerId } = req.body
+    const { playerRefCode } = req.body
 
-    if (playerId) {
+    if (playerRefCode) {
 
       (async () => {
 
@@ -983,16 +1009,16 @@ exports.banPlayer = function (req) {
         await playerTable.update(
           {
             status: 'banned',
-            updateBy: req.user.id,
+            updateBy: req.user.userRefCode,
             updateDateTime: new Date()
           },
           {
-            where: { id: playerId }
+            where: { playerRefCode: playerRefCode }
           }
         )
 
         //(type, ref, desc, userId, createBy) 
-        await utilLog.agentLog('ban', null, 'player', playerId, req.user.id)
+        await utilLog.agentLog('ban', null, 'player', playerRefCode, req.user.userRefCode)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -1014,9 +1040,9 @@ exports.banPlayer = function (req) {
 exports.unBanPlayer = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { playerId } = req.body
+    const { playerRefCode } = req.body
 
-    if (playerId) {
+    if (playerRefCode) {
 
       (async () => {
 
@@ -1025,16 +1051,16 @@ exports.unBanPlayer = function (req) {
         await playerTable.update(
           {
             status: 'active',
-            updateBy: req.user.id,
+            updateBy: req.user.userRefCode,
             updateDateTime: new Date()
           },
           {
-            where: { id: playerId }
+            where: { playerRefCode: playerRefCode }
           }
         )
 
         //(type, ref, desc, userId, createBy) 
-        await utilLog.agentLog('unban', null, 'player', playerId, req.user.id)
+        await utilLog.agentLog('unban', null, 'player', playerRefCode, req.user.userRefCode)
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -1046,6 +1072,65 @@ exports.unBanPlayer = function (req) {
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
+
+  });
+}
+
+/**
+ * List Player by owner.
+ *
+ **/
+exports.listPlayer = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const playerTable = mysqlConnector.player;
+
+    (async () => {
+
+      const playerList = await playerTable.findAll({
+        attributes: ['playerRefCode', 'playerName', 'phoneNumber', 'username', 'ranking', 'status', 'walletId'],
+        order: [['createDateTime', 'DESC']],
+        raw: true
+      })
+
+      const listOfPlayerWalletId = playerList.map((player) => ObjectId(player.walletId))
+
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+      const resultOfPlayerWalletAmount = await playerWalletCollec.aggregate([
+        {
+          $match: {
+            _id: { $in: listOfPlayerWalletId }
+          }
+        },
+      ]).toArray()
+
+      const returnDataMatchedCredit = playerList.map((player) => {
+        return resultOfPlayerWalletAmount.reduce((acc, curr) => {
+          if (player.walletId === curr._id.toString()) {
+            return {
+              ...player,
+              credit: parseFloat(curr.amount_coin),
+            };
+          }
+          return acc;
+        },
+          {
+            playerRefCode: player.playerRefCode,
+            playerName: player.playerName,
+            phoneNumber: player.phoneNumber,
+            username: player.username,
+            ranking: player,
+            status: player.status,
+            walletId: player.walletId
+          })
+      })
+
+      resolve(respConvert.successWithData(returnDataMatchedCredit, req.newTokenReturn))
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
 
   });
 }

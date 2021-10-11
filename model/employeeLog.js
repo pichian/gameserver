@@ -5,9 +5,9 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.INTEGER,
             primaryKey: true,
         },
-        playerId: {
-            type: Sequelize.INTEGER,
-            field: 'player_id'
+        playerCode: {
+            type: Sequelize.STRING,
+            field: 'player_code'
         },
         logType: {
             type: Sequelize.STRING,
@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
             field: 'description'
         },
         createBy: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             field: 'create_by',
             allowNull: true,
             defaultValue: null

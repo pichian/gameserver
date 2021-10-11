@@ -28,7 +28,7 @@ module.exports.player = {
 };
 
 module.exports.employee = {
-	msg1: { responseCode: "LTR-3101", responseMessage: "example message1" },
+	duplicate_employee: { responseCode: "LTR-3101", responseMessage: "Email or Username is already in use." },
 	msg2: { responseCode: "LTR-3102", responseMessage: "example message2" },
 	msg3: { responseCode: "LTR-3103", responseMessage: "example message3" }
 };
