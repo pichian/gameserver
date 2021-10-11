@@ -113,13 +113,17 @@ module.exports.getAgentInfo = function getAgentInfo(req, res, next) {
 };
 
 module.exports.agentPaymentRequestByOwner = function agentPaymentRequestByOwner(req, res, next) {
-  agentService.agentPaymentRequestByOwner(req)
-    .then(function (response) {
-      utils.writeSuccess(res, response);
-    })
-    .catch(function (response) {
-      utils.writeError(res, response);
-    });
+  middleWare.authToken(req).then(function () {
+    agentService.agentPaymentRequestByOwner(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
 };
 
 module.exports.paymentRequestListOfAgent = function paymentRequestListOfAgent(req, res, next) {

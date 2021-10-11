@@ -148,6 +148,7 @@ exports.registerPlayer = function (req) {
       (async () => {
 
         const playerTable = mysqlConnector.player
+        const sequenceNow = await commUtil.getRefCodeSequence()
 
         //Check duplicate player name and username
         const duplicatedPlayer = await playerTable.findOne({
@@ -173,18 +174,20 @@ exports.registerPlayer = function (req) {
 
         //Register Player 
         const resCreatedPlayer = await playerTable.create({
+          playerRefCode: 'py' + strUtil.paddingNumberWithDate(sequenceNow, 5),
           playerName: playerName,
           username: username,
           password: encryptedPassword,
           phoneNumber: phoneNumber,
           agentRefCode: agentRefCode,
+          createRoleType: 'Player',
           status: 'active'
         });
 
         // create player wallet on mongo
         const playerWalletCollec = mongoConnector.api.collection('player_wallet')
         const resCreatedWallet = await playerWalletCollec.insertOne({
-          player_id: resCreatedPlayer.id,
+          playerRefCode: resCreatedPlayer.playerRefCode,
           amount_coin: 0,
         })
 
@@ -194,8 +197,11 @@ exports.registerPlayer = function (req) {
             walletId: resCreatedWallet.insertedId.toString()
           },
           {
-            where: { id: resCreatedPlayer.id }
+            where: { playerRefCode: resCreatedPlayer.playerRefCode }
           })
+
+        //update sequence
+        await commUtil.updateRefCodeSequence()
 
         resolve(respConvert.success());
 

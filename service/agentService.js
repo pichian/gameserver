@@ -516,7 +516,7 @@ exports.findAgentWalletById = function (req) {
 exports.agentPaymentRequestByOwner = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, amount, agentId, promotionId } = req.body
+    const { paymentType, wayToPay, amount, agentRefCode, promotionId } = req.body
 
     if (paymentType && wayToPay && amount) {
 
@@ -524,19 +524,19 @@ exports.agentPaymentRequestByOwner = function (req) {
 
         const agentPaymentReqTable = mysqlConnector.agentPaymentReq
 
+        console.log(req.user)
+
         const requestCreate = await agentPaymentReqTable.create(
           {
-            agentId: !agentId ? req.user.id : agentId,
+            agentRefCode: agentRefCode,
             paymentType: paymentType,
             wayToPay: wayToPay,
             amount: amount,
             promotionRefId: !promotionId ? null : promotionId,
             paymentStatus: 'W',
-            // createBy: req.user.id,
-            createBy: null,
+            createBy: req.user.userRefCode,
             createDateTime: new Date(),
-            // createRoleType: req.user.type
-            createRoleType: null
+            createRoleType: req.user.type,
           }
         )
 

@@ -51,7 +51,8 @@ module.exports = (sequelize, Sequelize) => {
         },
         createRoleType: {
             type: Sequelize.STRING,
-            field: 'create_rtype'
+            field: 'create_rtype',
+            defaultValue: null
         },
         createBy: {
             type: Sequelize.STRING,
