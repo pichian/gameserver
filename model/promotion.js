@@ -1,10 +1,11 @@
 module.exports = (sequelize, Sequelize) => {
     return sequelize.define("promotion", {
-        id: {
-            field: 'id',
-            type: Sequelize.INTEGER,
-            primaryKey: true,
-            autoIncrement: true,
+        promotionCode: {
+            type: Sequelize.STRING,
+            field: 'promotion_code',
+            allowNull: true,
+            defaultValue: null,
+            primaryKey: true
         },
         promotionName: {
             type: Sequelize.STRING,
@@ -25,11 +26,13 @@ module.exports = (sequelize, Sequelize) => {
         dateStart: {
             field: 'start_datetime',
             type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
             allowNull: false,
         },
         dateStop: {
             field: 'end_datetime',
             type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
             allowNull: false,
         },
         status: {
@@ -39,6 +42,11 @@ module.exports = (sequelize, Sequelize) => {
         description: {
             type: Sequelize.STRING,
             field: 'description'
+        },
+        createRoleType: {
+            type: Sequelize.STRING,
+            field: 'create_rtype',
+            defaultValue: null
         },
         createBy: {
             type: Sequelize.INTEGER,

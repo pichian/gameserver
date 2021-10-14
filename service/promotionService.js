@@ -2,7 +2,8 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
 const utilLog = require('../utils/log')
-
+const commUtil = require('../utils/common')
+const strUtil = require("../utils/String")
 
 /**
  * Create Promotion by Agent.
@@ -16,24 +17,32 @@ exports.promotionCreate = function (req) {
 
             (async () => {
                 const promotionTable = mysqlConnector.promotion
+                const sequenceNow = await commUtil.getPromotionCodeSequence()
 
                 await promotionTable.create({
+                    promotionCode: 'prm' + strUtil.paddingNumber(sequenceNow, 3),
                     promotionName: promotionName,
                     promotionType: promotionType,
                     rateType: rateType,
                     rateAmount: rateAmount,
-                    dateStart: dateStart,
-                    dateStop: dateStop,
+                    dateStart: new Date(dateStart),
+                    dateStop: new Date(dateStop),
                     status: status,
                     description: description,
-                    createBy: req.user.id,
+                    createRoleType: req.user.type,
+                    createBy: req.user.userRefCode,
                     createDateTime: new Date(),
-                    updateBy: req.user.id,
+                    updateBy: req.user.userRefCode,
                     updateDateTime: new Date(),
                 });
 
-                //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('create', null, 'promotion', promotionTable.id, req.user.id)
+                //update sequence
+                await commUtil.updatePromotionCodeSequence()
+
+                if (req.user.type.toLowerCase() == 'agent') {
+                    //(type, ref, desc, userId, createBy) 
+                    await utilLog.agentLog('create', null, 'promotion', promotionTable.id, req.user.id)
+                }
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -49,7 +58,55 @@ exports.promotionCreate = function (req) {
 }
 
 /**
- * List Promotion
+ * Update Promotion by Agent.
+ **/
+exports.promotionUpdate = function (req) {
+    return new Promise(function (resolve, reject) {
+
+        const { promotionCode, promotionName, promotionType, rateType, rateAmount, dateStart, dateStop, status, description } = req.body
+
+        if (promotionCode, promotionName && promotionType && rateType && rateAmount && dateStart && dateStop && status && description || description == '') {
+
+            (async () => {
+
+
+                const promotionTable = mysqlConnector.promotion
+
+                await promotionTable.update({
+                    promotionName: promotionName,
+                    promotionType: promotionType,
+                    rateType: rateType,
+                    rateAmount: rateAmount,
+                    dateStart: dateStart,
+                    dateStop: dateStop,
+                    status: status,
+                    description: description,
+                    updateBy: req.user.userRefCode,
+                    updateDateTime: new Date(),
+                }, {
+                    where: { promotionCode: promotionCode }
+                });
+
+                if (req.user.type.toLowerCase() == 'agent') {
+                    //(type, ref, desc, userId, createBy) 
+                    await utilLog.agentLog('create', null, 'promotion', promotionTable.id, req.user.id)
+                }
+
+                resolve(respConvert.success(req.newTokenReturn));
+
+            })().catch(function (err) {
+                console.log('[error on catch] : ' + err)
+                reject(respConvert.systemError(err.message))
+            })
+        } else {
+            reject(respConvert.validateError(msgConstant.core.validate_error));
+        }
+
+    });
+}
+
+/**
+ * List Promotion by agent
  **/
 exports.listPromotionByAgentId = function (req) {
     return new Promise(function (resolve, reject) {
@@ -60,7 +117,7 @@ exports.listPromotionByAgentId = function (req) {
                 // where: {
                 //     create_by: req.user.id
                 // },
-                attributes: ['id', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
+                attributes: ['promotionCode', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
                 raw: true
             });
 
@@ -80,14 +137,14 @@ exports.getPromotionDetailById = function (req) {
     return new Promise(function (resolve, reject) {
         (async () => {
 
-            const { promotionId } = req.body
+            const { promotionCode } = req.body
             const promotionTable = mysqlConnector.promotion;
 
             const promotionInfo = await promotionTable.findOne({
                 where: {
-                    id: promotionId
+                    promotionCode: promotionCode
                 },
-                attributes: ['id', 'dateStart', 'dateStop', 'promotionName',
+                attributes: ['promotionCode', 'dateStart', 'dateStop', 'promotionName',
                     'promotionType', 'rateType', 'rateAmount', 'status', 'description'],
                 raw: true
             })
@@ -100,3 +157,54 @@ exports.getPromotionDetailById = function (req) {
     });
 }
 
+
+/**
+ * Stop promotion .
+ **/
+exports.promotionStop = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+
+            const { promotionCode } = req.body
+            const promotionTable = mysqlConnector.promotion;
+
+            const promotionUpdateStatus = await promotionTable.update(
+                { status: 'inactive' },
+                {
+                    where: {
+                        promotionCode: promotionCode
+                    }
+                })
+
+            resolve(respConvert.success(req.newTokenReturn));
+
+        })().catch(function (err) {
+            console.log('[error on catch] : ' + err)
+            reject(respConvert.systemError(err.message))
+        })
+
+
+    });
+}
+
+/**
+ * List Promotion all by owner
+ **/
+exports.listPromotionAll = function (req) {
+    return new Promise(function (resolve, reject) {
+        (async () => {
+            const promotionTable = mysqlConnector.promotion
+
+            const promotionList = await promotionTable.findAll({
+                attributes: ['promotionCode', 'dateStart', 'dateStop', 'promotionName', 'promotionType', 'rateType', 'rateAmount'],
+                raw: true
+            });
+
+            resolve(respConvert.successWithData(promotionList, req.newTokenReturn));
+
+        })().catch(function (err) {
+            console.log('[error on catch] : ' + err)
+            reject(respConvert.systemError(err.message))
+        })
+    });
+}

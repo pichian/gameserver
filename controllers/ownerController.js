@@ -6,6 +6,7 @@ const ownerService = require('../service/ownerService');
 const agentService = require('../service/agentService')
 const employeeService = require('../service/employeeService')
 const playerService = require('../service/playerService')
+const promotionService = require('../service/promotionService')
 
 /************************ Main Operation of Owner*************************/
 
@@ -245,3 +246,77 @@ module.exports.listPlayer = function listPlayer(req, res, next) {
     utils.writeError(res, response);
   });
 };
+
+
+/************************Promotion Operation By Agent*************************/
+module.exports.promotionCreate = function promotionCreate(req, res, next, body) {
+  middleWare.authToken(req).then(function () {
+    promotionService.promotionCreate(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.promotionUpdate = function promotionUpdate(req, res, next, body) {
+  middleWare.authToken(req).then(function () {
+    promotionService.promotionUpdate(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.promotionStop = function promotionStop(req, res, next, body) {
+  middleWare.authToken(req).then(function () {
+    promotionService.promotionStop(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.listPromotionAll = function listPromotionAll(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    promotionService.listPromotionAll(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.getPromotionDetailById = function getPromotionDetailById(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    promotionService.getPromotionDetailById(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+}
+
+/************************Promotion Operation By Agent*************************/

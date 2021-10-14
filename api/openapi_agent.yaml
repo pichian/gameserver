@@ -386,7 +386,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithPlayerId"
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
         required: true
       responses:
         "200":
@@ -435,7 +435,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithPlayerId"
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
         required: true
       responses:
         "200":
@@ -457,7 +457,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithPlayerId"
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
         required: true
       responses:
         "200":
@@ -590,7 +590,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithEmployeeId"
+              $ref: "#/components/schemas/requestWithEmployeeeRefCode"
         required: true
       responses:
         "200":
@@ -612,7 +612,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithEmployeeId"
+              $ref: "#/components/schemas/requestWithEmployeeeRefCode"
         required: true
       responses:
         "200":
@@ -735,18 +735,40 @@ paths:
           description: Id not found
           content: {}
       x-swagger-router-controller: agentController
-  /promotion/promotionUpdate:
+  /agent/promotion/promotionUpdate:
     post:
       tags:
         - agent
       summary: Promotion update.
       operationId: promotionUpdate
+      security:
+        - bearerAuth: []
       requestBody:
         description: update data.
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/promotionCreateModel"
+        required: true
+      responses:
+        "200":
+          description: Update Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: agentController
+  /agent/promotion/promotionStop:
+    post:
+      tags:
+        - agent
+      summary: Promotion stop.
+      operationId: promotionStop
+      requestBody:
+        description: Stop Promotuion by id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/promotionRequestModel"
         required: true
       responses:
         "200":
@@ -1222,6 +1244,12 @@ components:
       example:
         employeeId: 1
         newPassword: "987654321"
+    promotionRequestModel:
+      type: object
+      properties:
+        promotionCode:
+          type: string
+      example: { promotionCode: "prm001" }
     promotionCreateModel:
       type: object
       properties:
@@ -1332,20 +1360,19 @@ components:
           type: string
       example:
         token: yourExampleToken
-    requestWithPlayerId:
+    requestWithPlayerRefCode:
       type: object
       properties:
-        playerId:
-          type: integer
-      example:
-        playerId: 1
-    requestWithEmployeeId:
+        playerRefCode:
+          type: string
+      example: { playerRefCode :"py000001" }
+    requestWithEmployeeeRefCode:
       type: object
       properties:
-        employeeId:
-          type: integer
+        employeeRefCode:
+          type: string
       example:
-        employeeId: 1
+        employeeRefCode: "emp0015156135646"
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

@@ -33,6 +33,7 @@ exports.loginPlayer = function (body) {
         const resPlayer = await playerTable.findOne({
           where: {
             username: username,
+            status: 'active'
           },
           attributes: ['username', 'password', 'playerName', 'playerRefCode', 'agentRefCode'],
           raw: true
@@ -63,7 +64,6 @@ exports.loginPlayer = function (body) {
             })
           }
 
-          console.log('resplayer', resPlayer)
           const token = jwt.sign(
             {
               name: resPlayer.playerName,
@@ -957,7 +957,7 @@ exports.disapprovePlayerPaymentRequest = function (req) {
         const textDesc = 'Approved ' + strUtil.getPaymentTypeText(paymentType) + ' ' + playerData.username
         let logsCreateBy = null;
         if (req.user.type.toLowerCase() == 'employee') {
-          logsCreateBy = findUpdateRecordData.createBy;
+          logsCreateBy = req.user.userRefCode;
           await utilLog.employeeLog(findUpdateRecordData.playerRefCode, 'pay', id, textDesc, logsCreateBy)
         } else if (req.user.type.toLowerCase() == 'agent') {
           logsCreateBy = req.user.userRefCode
@@ -1029,6 +1029,7 @@ exports.banPlayer = function (req) {
       (async () => {
 
         const playerTable = mysqlConnector.player
+        const sessionPlayer = mysqlConnector.sessionPlayer
 
         await playerTable.update(
           {
@@ -1041,8 +1042,24 @@ exports.banPlayer = function (req) {
           }
         )
 
-        //(type, ref, desc, userId, createBy) 
-        await utilLog.agentLog('ban', null, 'player', playerRefCode, req.user.userRefCode)
+        await sessionPlayer.update({
+          status: 'N'
+        }, {
+          where: { playerCode: playerRefCode }
+        })
+
+        const playerData = await playerTable.findOne({
+          where: { playerRefCode: playerRefCode },
+          raw: true,
+          attributes: ['playerName']
+        })
+
+        if (req.user.type.toLowerCase() == "agent") {
+          //(type, ref, desc, userId, createBy) 
+          await utilLog.agentLog('ban', null, 'player', playerData.playerName, req.user.userRefCode)
+        } else if (req.user.type.toLowerCase() == "employee") {
+          await utilLog.employeeLog(playerRefCode, 'ban', null, 'Ban player ' + playerData.playerName, req.user.userRefCode)
+        }
 
         resolve(respConvert.success(req.newTokenReturn));
 
@@ -1083,8 +1100,18 @@ exports.unBanPlayer = function (req) {
           }
         )
 
-        //(type, ref, desc, userId, createBy) 
-        await utilLog.agentLog('unban', null, 'player', playerRefCode, req.user.userRefCode)
+        const playerData = await playerTable.findOne({
+          where: { playerRefCode: playerRefCode },
+          raw: true,
+          attributes: ['playerName']
+        })
+
+        if (req.user.type.toLowerCase() == "agent") {
+          //(type, ref, desc, userId, createBy) 
+          await utilLog.agentLog('unban', null, 'player', playerData.playerName, req.user.userRefCode)
+        } else if (req.user.type.toLowerCase() == "employee") {
+          await utilLog.employeeLog(playerRefCode, 'unban', null, 'Unban player ' + playerData.playerName, req.user.userRefCode)
+        }
 
         resolve(respConvert.success(req.newTokenReturn));
 

@@ -9,6 +9,10 @@ exports.getPaymentTypeText = function (paymentType) {
     }
 }
 
+exports.paddingNumber = function (number, maxLength) {
+    return number.toString().padStart(maxLength, 0);
+}
+
 exports.paddingNumberWithDate = function (number, maxLength) {
     var d = new Date();
     month = "" + (d.getMonth() + 1).toString().padStart(2, '0')

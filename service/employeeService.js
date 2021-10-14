@@ -131,6 +131,7 @@ exports.getEmployeeDetail = function (req) {
                     createBy: employeeRefCode
                 },
                 attributes: ['id', 'description', 'createDateTime'],
+                order: [['createDateTime', 'DESC']],
                 raw: true
             })
 
@@ -195,6 +196,7 @@ exports.banEmployee = function (req) {
             (async () => {
 
                 const employeeTable = mysqlConnector.employee
+                const sessionEmployee = mysqlConnector.sessionEmployee
 
                 await employeeTable.update(
                     {
@@ -205,8 +207,12 @@ exports.banEmployee = function (req) {
                     }
                 )
 
-                //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('ban', null, 'employee', employeeRefCode, req.user.userRefCode)
+                await sessionEmployee.update({ status: 'N' }, { where: { employeeCode: employeeRefCode } })
+
+                if (req.user.type != 'Owner' || req.user.type !== 'Manager') {
+                    //(type, ref, desc, userId, createBy) 
+                    await utilLog.agentLog('ban', null, 'employee', employeeRefCode, req.user.userRefCode)
+                }
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -243,8 +249,10 @@ exports.unBanEmployee = function (req) {
                     }
                 )
 
-                //(type, ref, desc, userId, createBy) 
-                await utilLog.agentLog('unban', null, 'employee', employeeRefCode, req.user.userRefCode)
+                if (req.user.type != 'Owner' || req.user.type !== 'Manager') {
+                    //(type, ref, desc, userId, createBy) 
+                    await utilLog.agentLog('ban', null, 'employee', employeeRefCode, req.user.userRefCode)
+                }
 
                 resolve(respConvert.success(req.newTokenReturn));
 
@@ -307,7 +315,7 @@ exports.resetEmployeePassword = function (req) {
 /**
  * List employee for owner.
  **/
- exports.listEmployee = function (req) {
+exports.listEmployee = function (req) {
     return new Promise(function (resolve, reject) {
         (async () => {
             const employeeTable = mysqlConnector.employee;

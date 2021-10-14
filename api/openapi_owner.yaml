@@ -429,7 +429,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithAgentId"
+              $ref: "#/components/schemas/requestWithAgentRefCode"
         required: true
       responses:
         "200":
@@ -456,7 +456,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/requestWithAgentId"
+              $ref: "#/components/schemas/requestWithAgentRefCode"
         required: true
       responses:
         "200":
@@ -470,6 +470,26 @@ paths:
           description: Invalid tag value
           content: {}
       x-swagger-router-controller: ownerController
+  /employee/changePassword:
+    post:
+      tags:
+        - owner
+      summary: Reset employee password..
+      description: Get old and new password and check.
+      operationId: resetEmployeePassword
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: employee id and new password data.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/resetPasswordRequest"
+        required: true
+      responses:
+        "200":
+          description: change successful
+      x-swagger-router-controller: agentController
   # /player/banPlayer/{playerId}:
   #   post:
   #     tags:
@@ -558,32 +578,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/emptyResponse"
       x-swagger-router-controller: ownerController
-  # /agent/employee/employeeDetail:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Single Employee detail.
-  #     description: Returns a single employee detail.
-  #     operationId: getEmployeeDetail
-  #     security:
-  #       - bearerAuth: []
-  #     requestBody:
-  #       description: send employee id with body.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/employeeInfo"
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/employeeRegisterModel"
-  #       "404":
-  #         description: Id not found
-  #         content: {}
-  #     x-swagger-router-controller: agentController
+  /owner/employee/employeeDetail:
+    post:
+      tags:
+        - owner
+      summary: Single Employee detail.
+      description: Returns a single employee detail.
+      operationId: getEmployeeDetail
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: send employee id with body.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/employeeInfo"
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/employeeRegisterModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
+  /employee/banEmployee:
+    post:
+      tags:
+        - owner
+      summary: Ban employee.
+      description: Ban employee.
+      operationId: banEmployee
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request employee ref cdoe.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithEmployeeeRefCode"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /employee/unBanEmployee:
+    post:
+      tags:
+        - agent
+      summary: Unban employee.
+      operationId: unBanEmployee
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request employee ref code.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithEmployeeeRefCode"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
   # /employee/employeeInfo:
   #   post:
   #     tags:
@@ -676,125 +741,20 @@ paths:
   #             schema:
   #               $ref: "#/components/schemas/emptyResponse"
   #     x-swagger-router-controller: agentController
-  # /agent/promotion/promotionCreate:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Promotion create by agent.
-  #     operationId: promotionCreate
-  #     security:
-  #       - bearerAuth: []
-  #     requestBody:
-  #       description: create new promotion by agent.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/promotionCreateModel"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Insert Complete.
-  #       "405":
-  #         description: Invalid input
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/promotion/promotionList:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: List of promotion by agent id.
-  #     operationId: listPromotionByAgentId
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/promotionListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
-  # /agent/promotion/promotionDetail:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Get single promotion detail.
-  #     description: Returns a single promotion detail by promotionId id.
-  #     operationId: getPromotionDetailById
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/promotionDetailModel"
-  #       "404":
-  #         description: Id not found
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /promotion/promotionUpdate:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Promotion update.
-  #     operationId: promotionUpdate
-  #     requestBody:
-  #       description: update data.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/promotionCreateModel"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Update Complete.
-  #       "405":
-  #         description: Invalid input
-  #         content: {}
-  #     x-swagger-router-controller: agentController
-  # /agent/register:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: Create agent for login test.
-  #     operationId: registerAgent
-  #     requestBody:
-  #       description: Create agent for login test.
-  #       content:
-  #         application/json:
-  #           schema:
-  #             $ref: "#/components/schemas/agentRegisterRequest"
-  #       required: true
-  #     responses:
-  #       "200":
-  #         description: Insert Complete.
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/SuccessResponse"
-  #     x-swagger-router-controller: agentController
-  /owner/ownerRegister:
+  /owner/promotion/promotionCreate:
     post:
       tags:
         - owner
-      summary: Owner register.
-      operationId: ownerRegister
-      # security:
-      #   - bearerAuth: []
+      summary: Promotion create by owner.
+      operationId: promotionCreate
+      security:
+        - bearerAuth: []
       requestBody:
-        description: Register Owner This for testing purpose only.
+        description: create new promotion by owner.
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ownerRegisterRequest"
+              $ref: "#/components/schemas/promotionCreateModel"
         required: true
       responses:
         "200":
@@ -803,6 +763,297 @@ paths:
           description: Invalid input
           content: {}
       x-swagger-router-controller: ownerController
+  /owner/promotion/promotionListAll:
+    post:
+      tags:
+        - owner
+      summary: List of promotion.
+      operationId: listPromotionAll
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/promotionListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
+  /owner/promotion/promotionDetail:
+    post:
+      tags:
+        - owner
+      summary: Get single promotion detail.
+      description: Returns a single promotion detail by promotionId id.
+      operationId: getPromotionDetailById
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/promotionDetailModel"
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: ownerController
+  /owner/promotion/promotionUpdate:
+    post:
+      tags:
+        - owner
+      summary: Promotion update.
+      operationId: promotionUpdate
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: update data.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/promotionCreateModel"
+        required: true
+      responses:
+        "200":
+          description: Update Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: ownerController
+  /owner/promotion/promotionStop:
+    post:
+      tags:
+        - onwer
+      summary: Promotion stop.
+      operationId: promotionStop
+      requestBody:
+        description: Stop Promotuion by id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/promotionRequestModel"
+        required: true
+      responses:
+        "200":
+          description: Update Complete.
+        "405":
+          description: Invalid input
+          content: {}
+      x-swagger-router-controller: ownerController
+  /player/playerInfo:
+    post:
+      tags:
+        - owner
+      summary: Finds player rank and status by player id.
+      description: Finds player rank and status.
+      operationId: findPlayerInfo
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/playerRank"
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /player/playerWallet:
+    post:
+      tags:
+        - owner
+      summary: Finds player wallet amount by player id.
+      description: Finds player wallet.
+      operationId: findPlayerWalletById
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player Id.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/playerWallet"
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /player/paymentRequestListOfPlayer:
+    post:
+      tags:
+        - owner
+      summary: Payment request list of player. Return all data
+      operationId: paymentRequestListOfPlayer
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/paymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: agentController
+  /agent/promotion/promotionList:
+    post:
+      tags:
+        - owner
+      summary: List of promotion by agent id.
+      operationId: listPromotionByAgentId
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/promotionListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: agentController
+  /player/banPlayer:
+    post:
+      tags:
+        - owner
+      summary: Ban player.
+      description: Ban player.
+      operationId: banPlayer
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player refCode.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /player/unBanPlayer:
+    post:
+      tags:
+        - onwer
+      summary: Unban player.
+      operationId: unBanPlayer
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: Request player refCode.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/requestWithPlayerRefCode"
+        required: true
+      responses:
+        "200":
+          description: successful operation
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: agentController
+  /owner/approvePlayerPayment:
+    post:
+      tags:
+        - owner
+      summary: Approve player payment.
+      description: Approve player payment by payment ref code.
+      operationId: approvePlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Approve "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
+  /owner/disapprovePlayerPayment:
+    post:
+      tags:
+        - owner
+      summary: Disapprove player payment.
+      description: Disapprove player payment by payment refCode.
+      operationId: disapprovePlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Get this detail from table "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
+  /agent/cancelPlayerPayment:
+    post:
+      tags:
+        - owner
+      summary: Cancel player payment.
+      description: Cancel player payment by payment refCode.
+      operationId: cancelPlayerPaymentRequest
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Approve "
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/approvePaymentInfo"
+        required: true
+      responses:
+        "200":
+          description: Approve Complete.
+        "404":
+          description: Id not found
+          content: {}
+      x-swagger-router-controller: agentController
 components:
   schemas:
     SuccessResponse:
@@ -1407,13 +1658,49 @@ components:
           type: string
       example:
         token: yourExampleToken
-    requestWithAgentId:
+    requestWithAgentRefCode:
       type: object
       properties:
-        agentId:
-          type: integer
+        agentRefCode:
+          type: string
       example:
-        agentId: 1
+        agentId: "ag00156161056418"
+    requestWithEmployeeeRefCode:
+      type: object
+      properties:
+        employeeRefCode:
+          type: string
+      example:
+        employeeRefCode: 1
+    resetPasswordRequest:
+      type: object
+      properties:
+        employeeId:
+          type: integer
+        newPassword:
+          type: string
+      example:
+        employeeId: 1
+        newPassword: "987654321"
+    playerRank:
+      type: object
+      properties:
+        rank:
+          type: number
+    playerWallet:
+      type: object
+      properties:
+        amount:
+          type: number
+    requestWithPlayerRefCode:
+      type: object
+      example: { playerRefCode: "py000001" }
+    promotionRequestModel:
+      type: object
+      properties:
+        promotionCode:
+          type: string
+      example: { promotionCode: "prm001" }
   securitySchemes:
     bearerAuth: # arbitrary name for the security scheme
       type: http

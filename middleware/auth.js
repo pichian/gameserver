@@ -21,7 +21,7 @@ exports.authToken = function (req) {
 
             //check if it not valid on session
             const isNotValidToken = await checkTokenValidHandler(decoded, token)
-            if (isNotValidToken) return reject(respConvert.businessError(msgConstant.core.session_timeout))
+            if (isNotValidToken == true) return reject(respConvert.businessError(msgConstant.core.session_timeout))
 
             //always generate new token if not expired and still valid.
             const generatedNewToken = jwt.sign(
@@ -55,11 +55,9 @@ exports.authToken = function (req) {
             if (err.message == 'jwt expired') {
                 const decodedExpiredToken = jwt.decode(token);
                 removeUserSessionHandler(decodedExpiredToken, token)
-                return reject(respConvert.businessError(msgConstant.core.token_expire))
+                return reject(respConvert.businessError(msgConstant.core.session_timeout))
             }
-
-            console.log('malform case ' + token)
-            reject(respConvert.systemError(err.message))
+            return reject(respConvert.businessError(msgConstant.core.session_timeout))
         })
     });
 
@@ -107,7 +105,7 @@ function removeUserSessionHandler(decodedExpiredToken, expiredToken) {
         const sessionPlayerTable = mysqlConnector.sessionPlayer
         const removePlayerSession = sessionPlayerTable.update({ status: 'N' }, {
             where: {
-                playerId: decodedExpiredToken.userRefCode,
+                playerCode: decodedExpiredToken.userRefCode,
                 token: expiredToken
             },
         });

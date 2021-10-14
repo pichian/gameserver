@@ -37,7 +37,6 @@ module.exports = (sequelize, Sequelize) => {
         {
             tableName: 'tbl_agent_logs',
             timestamps: false,
-
         }
     );
 };
