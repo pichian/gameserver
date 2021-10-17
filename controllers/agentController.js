@@ -58,6 +58,8 @@ module.exports.agentPaymentRequest = function agentPaymentRequest(req, res, next
   });
 };
 
+
+/********** */
 module.exports.listAgentPaymentRequest = function listAgentPaymentRequest(req, res, next) {
   middleWare.authToken(req).then(function () {
     agentService.listAgentPaymentRequest(req)

@@ -637,14 +637,29 @@ exports.listPlayerPaymentRequestAll = function (req) {
       const playerPaymentReqTable = mysqlConnector.playerPaymentReq
       const promotionTable = mysqlConnector.promotion
       const playerTable = mysqlConnector.player
+      const employeeTable = mysqlConnector.employee
 
       playerPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
       playerPaymentReqTable.belongsTo(playerTable, { foreignKey: 'playerRefCode' });
 
+      //check user role for where qry
+      let whereQry = {}
+      if (req.user.type.toLowerCase() == 'agent') {
+        whereQry.agentRefCode = req.user.userRefCode
+      } else if (req.user.type.toLowerCase() == 'employee') {
+        //find employee agent ref code
+        const employeeData = await employeeTable.findOne({
+          where: { employeeRefCode: req.user.userRefCode },
+          attributes: ['agentRefCode'],
+          raw: true
+        })
+        whereQry.agentRefCode = employeeData.agentRefCode
+      } else {
+        whereQry.agentRefCode = req.user.userRefCode
+      }
+
       const paymentRequestList = await playerPaymentReqTable.findAll({
-        // where: {
-        //   agentRefCode: req.user.userRefCode
-        // },
+        where: whereQry,
         attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         order: [['createDateTime', 'DESC']],
         include: [
