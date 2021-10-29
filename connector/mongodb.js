@@ -7,6 +7,7 @@ module.exports.mongo = function (callback) {
             callback(false);
         } else {
             module.exports.api = dbs.db("lotto");
+            module.exports.lottogame = dbs.db("lottogame")
             callback(true);
         }
     });

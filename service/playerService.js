@@ -1200,3 +1200,44 @@ exports.listPlayer = function (req) {
 
   });
 }
+
+/**
+ * Player lotto history in player page.
+ *
+ **/
+exports.playerLottoHistory = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const playerLottoCollec = mongoConnector.lottogame.collection('tbt_player_lotto')
+      const playerLottoHistory = await playerLottoCollec.aggregate([
+        {
+          $match: { playerRefCode: req.user.userRefCode }
+        },
+        {
+          $lookup: {
+            from: "tbt_lotto_round",
+            localField: "betRoundId",
+            foreignField: "_id",
+            as: "lottoRoundData",
+          },
+        },
+        { $sort: { createDateTime: -1 } },
+        {
+          $project: {
+            category: 1, betNumber: 1, betCredit: 1, betStatus: 1, roundName: "$lottoRoundData.roundName"
+          }
+        },
+        { $unwind: "$roundName" },
+        { $limit: 5 },
+      ]).toArray()
+
+      resolve(respConvert.successWithData(playerLottoHistory, req.newTokenReturn))
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err)
+      reject(new Error(err.message));
+    })
+
+  });
+}
