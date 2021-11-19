@@ -209,7 +209,7 @@ exports.ownerAgentRegister = function (req) {
             where: { agentRefCode: resCretedAgent.agentRefCode }
           })
 
-        resolve(respConvert.success());
+        resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
         console.log('[error on catch] : ' + err)
