@@ -1,8 +1,8 @@
 const { Sequelize } = require('sequelize');
-const config = process.env
+const envConstant = require('../constant/env');
 
-const sequelizeConnector = new Sequelize(config.SQL_DB_NAME, config.SQL_DB_USERNAME, config.SQL_DB_PASSWORD, {
-    host: config.SQL_DB_HOST,
+const sequelizeConnector = new Sequelize(envConstant.env.SQL_DB_NAME, envConstant.env.SQL_DB_USERNAME, envConstant.env.SQL_DB_PASSWORD, {
+    host: envConstant.env.SQL_DB_HOST,
     dialect: 'mysql',
     timezone: '+07:00',
     logging: false

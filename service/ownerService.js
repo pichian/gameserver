@@ -7,7 +7,7 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
-const util = require("../utils/log")
+const envConstant = require("../constant/env")
 const strUtil = require("../utils/String")
 const commUtil = require("../utils/common")
 
@@ -67,7 +67,7 @@ exports.loginOwner = function (body) {
                   type: resOwner.rtype == 'owner' ? 'Owner' : 'Manager',
                   userRefCode: resOwner.userRefCode
                 },
-                process.env.JWT_TOKEN_SECRET_KEY,
+                envConstant.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
               );
 

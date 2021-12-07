@@ -5,12 +5,12 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const envConstant = require("../constant/env")
 const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb");
 const utilLog = require("../utils/log")
 const strUtil = require("../utils/String")
 const commUtil = require("../utils/common");
-const employee = require('../model/employee');
 
 /***************** Service by Player **************/
 
@@ -72,7 +72,7 @@ exports.loginPlayer = function (body) {
               agentRefCode: resPlayer.agentRefCode,
               type: 'Player'
             },
-            process.env.JWT_TOKEN_SECRET_KEY,
+            envConstant.env.JWT_TOKEN_SECRET_KEY,
             { expiresIn: '30m' }
           );
 
@@ -1225,7 +1225,7 @@ exports.playerLottoHistory = function (req) {
         { $sort: { createDateTime: -1 } },
         {
           $project: {
-            category: 1, betNumber: 1, betCredit: 1, betStatus: 1, roundName: "$lottoRoundData.roundName"
+            category: 1, betNumber: 1, betCredit: 1, betNet: 1, betStatus: 1, roundName: "$lottoRoundData.roundName"
           }
         },
         { $unwind: "$roundName" },

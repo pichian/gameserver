@@ -2,6 +2,7 @@
 const jwt = require("jsonwebtoken");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const envConstant = require('../constant/env');
 const mysqlConnector = require("../connector/mysqlConnector")
 
 exports.authToken = function (req) {
@@ -17,7 +18,7 @@ exports.authToken = function (req) {
             }
 
             //if it not expired.
-            const decoded = jwt.verify(token, process.env.JWT_TOKEN_SECRET_KEY)
+            const decoded = jwt.verify(token, envConstant.env.JWT_TOKEN_SECRET_KEY)
 
             //check if it not valid on session
             const isNotValidToken = await checkTokenValidHandler(decoded, token)
@@ -33,7 +34,7 @@ exports.authToken = function (req) {
                     userRefCode: decoded.userRefCode,
                     agentRefCode: decoded.agentRefCode
                 },
-                process.env.JWT_TOKEN_SECRET_KEY,
+                envConstant.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
             );
 

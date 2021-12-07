@@ -7,6 +7,7 @@ const mysqlConnector = require("../connector/mysqlConnector")
 const mongoConnector = require("../connector/mongodb")
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
+const envConstant = require("../constant/env")
 const util = require("../utils/log")
 
 /***************** Service by Agent **************/
@@ -79,7 +80,7 @@ exports.loginAgent = function (body) {
                   type: 'Agent',
                   userRefCode: resAgent.agentRefCode
                 },
-                process.env.JWT_TOKEN_SECRET_KEY,
+                envConstant.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
               );
 
@@ -133,7 +134,7 @@ exports.loginAgent = function (body) {
                   type: 'Employee',
                   userRefCode: resEmp.employeeRefCode
                 },
-                process.env.JWT_TOKEN_SECRET_KEY,
+                envConstant.env.JWT_TOKEN_SECRET_KEY,
                 { expiresIn: '30m' }
               );
 
