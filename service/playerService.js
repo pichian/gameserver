@@ -1229,7 +1229,7 @@ exports.playerLottoHistory = function (req) {
           }
         },
         { $unwind: "$roundName" },
-        { $limit: 5 },
+        // { $limit: 5 },
       ]).toArray()
 
       resolve(respConvert.successWithData(playerLottoHistory, req.newTokenReturn))
