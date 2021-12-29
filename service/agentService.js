@@ -374,9 +374,10 @@ exports.listAgentPaymentRequest = function (req) {
     (async () => {
       const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
       const promotionTable = mysqlConnector.promotion;
+      const playerPaymentRequestTable = mysqlConnector.playerPaymentReq
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
 
-      const paymentRequestList = await agentPaymentReqTable.findAll({
+      const playerPaymentRequestList = await agentPaymentReqTable.findAll({
         where: {
           agentRefCode: req.user.userRefCode
         },
@@ -392,7 +393,32 @@ exports.listAgentPaymentRequest = function (req) {
         nest: true
       });
 
-      resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
+      const responseData = {};
+      if (playerPaymentRequestList.length !== 0) {
+        responseData.playerPaymentRequestList = playerPaymentRequestList;
+      } else {
+        responseData.playerPaymentRequestList = [];
+      }
+
+      const sumDepositAmount = await playerPaymentRequestTable.sum('payment_amount', {
+        where: {
+          approvedBy: req.user.userRefCode,
+          paymentType: 'DP',
+          paymentStatus: 'A',
+        }
+      });
+      const sumWithdrawAmount = await playerPaymentRequestTable.sum('payment_amount', {
+        where: {
+          approvedBy: req.user.userRefCode,
+          paymentType: 'WD',
+          paymentStatus: 'A',
+        }
+      });
+
+      responseData.sumDeposit = sumDepositAmount;
+      responseData.sumWithdraw = sumWithdrawAmount;
+
+      resolve(respConvert.successWithData(responseData, req.newTokenReturn));
     })().catch(function (err) {
       console.log('[error on catch] : ' + err);
       reject(respConvert.systemError(err.message));
@@ -564,8 +590,9 @@ exports.paymentRequestListOfAgent = function (req) {
     (async () => {
 
       const { agentRefCode } = req.body;
-      console.log('test', req.body);
+
       const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+      const playerPaymentRequestTable = mysqlConnector.playerPaymentReq;
       const promotionTable = mysqlConnector.promotion;
 
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
@@ -586,8 +613,32 @@ exports.paymentRequestListOfAgent = function (req) {
         nest: true
       });
 
-      resolve(respConvert.successWithData(paymentRequestListOfAgent, req.newTokenReturn));
+      const responseData = {};
+      if (paymentRequestListOfAgent.length !== 0) {
+        responseData.playerPaymentRequestList = paymentRequestListOfAgent;
+      } else {
+        responseData.playerPaymentRequestList = [];
+      }
 
+      const sumDepositAmount = await playerPaymentRequestTable.sum('payment_amount', {
+        where: {
+          approvedBy: agentRefCode,
+          paymentType: 'DP',
+          paymentStatus: 'A',
+        }
+      });
+      const sumWithdrawAmount = await playerPaymentRequestTable.sum('payment_amount', {
+        where: {
+          approvedBy: agentRefCode,
+          paymentType: 'WD',
+          paymentStatus: 'A',
+        }
+      });
+
+      responseData.sumDeposit = sumDepositAmount;
+      responseData.sumWithdraw = sumWithdrawAmount;
+
+      resolve(respConvert.successWithData(responseData, req.newTokenReturn));
     })().catch(function (err) {
       console.log('[error on catch] : ' + err);
       reject(respConvert.systemError(err.message));
