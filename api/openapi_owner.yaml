@@ -74,6 +74,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/apiResponse"
       x-swagger-router-controller: ownerController
+  /owner/ownerDetail:
+    post:
+      tags:
+        - owner
+      summary: Finds Owner detail include wallet amount, sum player wallet.
+      description: Finds Owner detail.
+      operationId: findOwnerDetail
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ownerDetail"
+                x-content-type: application/json
+        "400":
+          description: Invalid tag value
+          content: {}
+      x-swagger-router-controller: ownerController
   # /agent/paymentRequest:
   #   post:
   #     tags:
@@ -96,28 +117,28 @@ paths:
   #         description: Invalid input
   #         content: {}
   #     x-swagger-router-controller: agentController
-  # /agent/paymentRequestList:
-  #   post:
-  #     tags:
-  #       - agent
-  #     summary: List agent payment request list by agent id.
-  #     operationId: listAgentPaymentRequest
-  #     security:
-  #       - bearerAuth: []
-  #     responses:
-  #       "200":
-  #         description: successful operation
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/paymentRequestListModel"
-  #       "404":
-  #         description: Empty Response
-  #         content:
-  #           application/json:
-  #             schema:
-  #               $ref: "#/components/schemas/emptyResponse"
-  #     x-swagger-router-controller: agentController
+  /owner/agentPaymentRequestListDataAndSum:
+    post:
+      tags:
+        - owner
+      summary: List agent payment request list and sum.
+      operationId: agentPaymentRequestListDataAndSum
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AgentPaymentRequestListModel"
+        "404":
+          description: Empty Response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/emptyResponse"
+      x-swagger-router-controller: ownerController
   # /agent/paymentDetail:
   #   post:
   #     tags:
@@ -1265,16 +1286,14 @@ components:
           type: integer
           description: Manager type
           format: int32
-    agentDetail:
+    ownerDetail:
       type: object
       properties:
         amountCoin:
           type: number
-        totalPlayer:
+        totalAgent:
           type: number
-        totalPlayerCredit:
-          type: number
-        totalPromotionnCredit:
+        totalAgentCredit:
           type: number
     agentWallet:
       type: object
@@ -1465,6 +1484,34 @@ components:
           promotion: "Promotion1"
           amount: 100
           status: "0"
+    AgentPaymentRequestListModel:
+      example:
+        data:
+          {
+            sumDeposit: 10000,
+            sumWithdraw: 10000,
+            agentPaymentRequestList:
+              [
+                {
+                  id: "0",
+                  type: "Deposit",
+                  wayToPay: "Cash",
+                  agentName: "AgentXXX",
+                  amount: 1000,
+                  status: "0",
+                },
+                {
+                  id: "1",
+                  type: "Withdraw",
+                  wayToPay: "Cash",
+                  agentName: "AgentXXX",
+                  amount: 100,
+                  status: "0",
+                },
+              ],
+          }
+        code: "LTR-200"
+        message: "Success"
     playerListModel:
       type: object
       properties:

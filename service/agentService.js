@@ -3,12 +3,12 @@ const { Op } = require("sequelize");
 const { ObjectId } = require('mongodb');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const mysqlConnector = require("../connector/mysqlConnector")
-const mongoConnector = require("../connector/mongodb")
+const mysqlConnector = require("../connector/mysqlConnector");
+const mongoConnector = require("../connector/mongodb");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
-const envConstant = require("../constant/env")
-const util = require("../utils/log")
+const envConstant = require("../constant/env");
+const util = require("../utils/log");
 
 /***************** Service by Agent **************/
 
@@ -17,16 +17,16 @@ const util = require("../utils/log")
  **/
 exports.loginAgent = function (body) {
   return new Promise(function (resolve, reject) {
-    const { username, password } = body
+    const { username, password } = body;
 
     if (username && password && body !== 'undefined') {
 
       (async () => {
 
         const agentTable = mysqlConnector.agent;
-        const employeeTable = mysqlConnector.employee
+        const employeeTable = mysqlConnector.employee;
         const sessionAgentTable = mysqlConnector.sessionAgent;
-        const sessionEmployeeTable = mysqlConnector.sessionEmployee
+        const sessionEmployeeTable = mysqlConnector.sessionEmployee;
 
         const resAgent = await agentTable.findOne({
           where: {
@@ -46,7 +46,7 @@ exports.loginAgent = function (body) {
         });
 
         if (resAgent === null && resEmp === null) {
-          return reject(respConvert.businessError(msgConstant.core.login_failed))
+          return reject(respConvert.businessError(msgConstant.core.login_failed));
         }
 
         // if username and password of Agent is true
@@ -68,7 +68,7 @@ exports.loginAgent = function (body) {
                 where: {
                   agentCode: findSessionAgent.agentCode
                 }
-              })
+              });
             }
 
             let token;
@@ -94,12 +94,12 @@ exports.loginAgent = function (body) {
 
             resolve(respConvert.successWithToken(token));
           } else {
-            return reject(respConvert.businessError(msgConstant.core.login_failed))
+            return reject(respConvert.businessError(msgConstant.core.login_failed));
           }
 
         }
 
-        console.log('resEmp', resEmp)
+        console.log('resEmp', resEmp);
         // if username and password of Employee is true
         if (resEmp !== null) {
           if (await bcrypt.compare(password, resEmp.password)) {
@@ -119,7 +119,7 @@ exports.loginAgent = function (body) {
                 where: {
                   employeeCode: findSessionEmployee.employeeCode
                 }
-              })
+              });
             }
 
             let token;
@@ -148,21 +148,21 @@ exports.loginAgent = function (body) {
 
             resolve(respConvert.successWithToken(token));
           } else {
-            return reject(respConvert.businessError(msgConstant.core.login_failed))
+            return reject(respConvert.businessError(msgConstant.core.login_failed));
           }
         }
 
       })().catch(function (err) {
-        console.log('[error on catchhhh] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catchhhh] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 /**
  * Logged out agent from system and session.
@@ -180,7 +180,7 @@ exports.logoutAgent = function (req) {
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
         if (decoded.type == 'Agent') {
-          const sessionAgentTable = mysqlConnector.sessionAgent
+          const sessionAgentTable = mysqlConnector.sessionAgent;
           const updateAgentSessionLogout = await sessionAgentTable.update({ status: 'N' }, {
             where: {
               agentCode: decoded.userRefCode,
@@ -188,7 +188,7 @@ exports.logoutAgent = function (req) {
             }
           });
         } else {
-          const sessionEmployeeTable = mysqlConnector.sessionEmployee
+          const sessionEmployeeTable = mysqlConnector.sessionEmployee;
           const updateEmployeeSessionLogout = await sessionEmployeeTable.update({ status: 'N' }, {
             where: {
               employeeCode: decoded.userRefCode,
@@ -200,15 +200,15 @@ exports.logoutAgent = function (req) {
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
     } else {
       reject(respConvert.businessError(msgConstant.core.invalid_token));
     }
 
   });
-}
+};
 
 
 /**
@@ -221,8 +221,8 @@ exports.findAgentDetail = function (req) {
 
     (async () => {
 
-      const agentTable = mysqlConnector.agent
-      const playerTable = mysqlConnector.player
+      const agentTable = mysqlConnector.agent;
+      const playerTable = mysqlConnector.player;
 
       const agentInfo = await agentTable.findOne({
         where: {
@@ -232,11 +232,11 @@ exports.findAgentDetail = function (req) {
         raw: true
       });
 
-      const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
 
       const agentWalletAmount = await agentWalletCollec.findOne({
         _id: ObjectId(agentInfo.walletId)
-      }, { projection: { _id: 0, amount_coin: 1 } })
+      }, { projection: { _id: 0, amount_coin: 1 } });
 
       //find total player by agent
       const totalPlayerOfThisAgent = await playerTable.count({
@@ -244,7 +244,7 @@ exports.findAgentDetail = function (req) {
           agentRefCode: agentInfo.agentRefCode
         },
         raw: true
-      })
+      });
 
 
       //find total player credit by agent
@@ -254,9 +254,9 @@ exports.findAgentDetail = function (req) {
         },
         attributes: ['walletId'],
         raw: true
-      })
+      });
 
-      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet');
       const totalPlayerWalletSum = await playerWalletCollec.aggregate([
         {
           $match: {
@@ -266,7 +266,7 @@ exports.findAgentDetail = function (req) {
         {
           $group: { _id: 0, sum: { $sum: "$amount_coin" } },
         },
-      ]).toArray()
+      ]).toArray();
 
       //find total promotion credit
 
@@ -284,12 +284,12 @@ exports.findAgentDetail = function (req) {
 
 
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
-      reject(respConvert.systemError(err.message))
-    })
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
 
   });
-}
+};
 
 
 
@@ -299,7 +299,7 @@ exports.findAgentDetail = function (req) {
 exports.agentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, amount, promotionId } = req.body
+    const { paymentType, wayToPay, amount, promotionId } = req.body;
 
     if (paymentType && wayToPay && amount && (promotionId || promotionId === 0 || promotionId === 'default' || promotionId == null)) {
 
@@ -319,17 +319,17 @@ exports.agentPaymentRequest = function (req) {
           createDateTime: new Date(),
           updateBy: req.user.userRefCode,
           updateDateTime: new Date()
-        })
+        });
 
         //(type, ref, desc, userId, createBy) 
-        await util.agentLog('pay', paymentReqCreated.id, null, null, req.user.userRefCode)
+        await util.agentLog('pay', paymentReqCreated.id, null, null, req.user.userRefCode);
 
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
@@ -337,7 +337,7 @@ exports.agentPaymentRequest = function (req) {
 
   });
 
-}
+};
 
 
 /**
@@ -347,7 +347,7 @@ exports.getPaymentDetailById = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { paymentId } = req.body
+      const { paymentId } = req.body;
 
       const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
 
@@ -357,14 +357,14 @@ exports.getPaymentDetailById = function (req) {
         },
         attributes: ['id', 'createDateTime', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
         raw: true
-      })
+      });
 
-      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
+      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn));
     })().catch(function (err) {
-      reject(respConvert.systemError(err.message))
-    })
+      reject(respConvert.systemError(err.message));
+    });
   });
-}
+};
 
 /**
  * List payment request by agent Id.
@@ -372,8 +372,8 @@ exports.getPaymentDetailById = function (req) {
 exports.listAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
-      const agentPaymentReqTable = mysqlConnector.agentPaymentReq
-      const promotionTable = mysqlConnector.promotion
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+      const promotionTable = mysqlConnector.promotion;
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
 
       const paymentRequestList = await agentPaymentReqTable.findAll({
@@ -390,15 +390,15 @@ exports.listAgentPaymentRequest = function (req) {
         order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
-      })
+      });
 
       resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
-      reject(respConvert.systemError(err.message))
-    })
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
   });
-}
+};
 
 
 
@@ -418,9 +418,9 @@ exports.getAgentInfo = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { agentRefCode } = req.body
-      const agentTable = mysqlConnector.agent
-      const playerTable = mysqlConnector.player
+      const { agentRefCode } = req.body;
+      const agentTable = mysqlConnector.agent;
+      const playerTable = mysqlConnector.player;
 
       const agentInfo = await agentTable.findOne({
         where: {
@@ -436,7 +436,7 @@ exports.getAgentInfo = function (req) {
           agentRefCode: agentInfo.agentRefCode
         },
         raw: true
-      })
+      });
 
 
       //find total player credit by agent
@@ -446,9 +446,9 @@ exports.getAgentInfo = function (req) {
         },
         attributes: ['walletId'],
         raw: true
-      })
+      });
 
-      const playerWalletCollec = mongoConnector.api.collection('player_wallet')
+      const playerWalletCollec = mongoConnector.api.collection('player_wallet');
       const totalPlayerWalletSum = await playerWalletCollec.aggregate([
         {
           $match: {
@@ -459,7 +459,7 @@ exports.getAgentInfo = function (req) {
         {
           $group: { _id: 0, sum: { $sum: "$amount_coin" } },
         },
-      ]).toArray()
+      ]).toArray();
 
       resolve(respConvert.successWithData({
         agentName: agentInfo.agentName,
@@ -470,12 +470,12 @@ exports.getAgentInfo = function (req) {
       }, req.newTokenReturn));
 
     })().catch(function (err) {
-      console.log('[error on catch]: ' + err)
-      reject(respConvert.systemError(err.message))
-    })
+      console.log('[error on catch]: ' + err);
+      reject(respConvert.systemError(err.message));
+    });
 
   });
-}
+};
 
 
 /**
@@ -484,7 +484,7 @@ exports.getAgentInfo = function (req) {
 exports.findAgentWalletById = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { agentRefCode } = req.body
+    const { agentRefCode } = req.body;
 
     const agentTable = mysqlConnector.agent;
 
@@ -495,21 +495,21 @@ exports.findAgentWalletById = function (req) {
         },
         attributes: ['walletId'],
         raw: true
-      })
+      });
 
-      const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
       const agentWalletAmount = await agentWalletCollec.findOne({
         _id: ObjectId(agentWalletId.walletId)
-      }, { projection: { _id: 0, amount_coin: 1 } })
+      }, { projection: { _id: 0, amount_coin: 1 } });
 
-      resolve(respConvert.successWithData(agentWalletAmount, req.newTokenReturn))
+      resolve(respConvert.successWithData(agentWalletAmount, req.newTokenReturn));
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
+      console.log('[error on catch] : ' + err);
       reject(new Error(err.message));
-    })
+    });
 
   });
-}
+};
 
 
 /**
@@ -518,15 +518,15 @@ exports.findAgentWalletById = function (req) {
 exports.agentPaymentRequestByOwner = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { paymentType, wayToPay, amount, agentRefCode, promotionId } = req.body
+    const { paymentType, wayToPay, amount, agentRefCode, promotionId } = req.body;
 
     if (paymentType && wayToPay && amount) {
 
       (async () => {
 
-        const agentPaymentReqTable = mysqlConnector.agentPaymentReq
+        const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
 
-        console.log(req.user)
+        console.log(req.user);
 
         const requestCreate = await agentPaymentReqTable.create(
           {
@@ -540,33 +540,33 @@ exports.agentPaymentRequestByOwner = function (req) {
             createDateTime: new Date(),
             createRoleType: req.user.type,
           }
-        )
+        );
 
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 /**
- * List player payment request of each Player.
+ * List Agent payment request.
  **/
 exports.paymentRequestListOfAgent = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { agentRefCode } = req.body
-
-      const agentPaymentReqTable = mysqlConnector.agentPaymentReq
-      const promotionTable = mysqlConnector.promotion
+      const { agentRefCode } = req.body;
+      console.log('test', req.body);
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+      const promotionTable = mysqlConnector.promotion;
 
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
 
@@ -584,17 +584,77 @@ exports.paymentRequestListOfAgent = function (req) {
         order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
-      })
+      });
 
       resolve(respConvert.successWithData(paymentRequestListOfAgent, req.newTokenReturn));
 
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
-      reject(respConvert.systemError(err.message))
-    })
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
 
   });
-}
+};
+
+/**
+ * List of Agent Payment Request And Sum Deposit& Withdraw.
+ **/
+exports.agentPaymentRequestListDataAndSum = function (req) {
+  return new Promise(function (resolve, reject) {
+    (async () => {
+
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+      const agentTable = mysqlConnector.agent;
+
+      agentPaymentReqTable.belongsTo(agentTable, { foreignKey: 'agentRefCode' });
+
+      const paymentRequestList = await agentPaymentReqTable.findAll({
+        attributes: ['id', 'paymentType', 'wayToPay', 'amount', 'paymentStatus'],
+        include: [
+          {
+            model: agentTable,
+            attributes: ['agentRefCode', 'agentName'],
+          }
+        ],
+        order: [['createDateTime', 'DESC']],
+        raw: true,
+        nest: true
+      });
+
+      const responseData = {};
+      if (paymentRequestList.length !== 0) {
+        responseData.agentPaymentRequestList = paymentRequestList;
+      } else {
+        responseData.agentPaymentRequestList = [];
+      }
+
+      const sumDepositAmount = await agentPaymentReqTable.sum('payment_amount', {
+        where: {
+          approvedBy: req.user.userRefCode,
+          paymentType: 'DP',
+          paymentStatus: 'A',
+        }
+      });
+      const sumWithdrawAmount = await agentPaymentReqTable.sum('payment_amount', {
+        where: {
+          approvedBy: req.user.userRefCode,
+          paymentType: 'WD',
+          paymentStatus: 'A',
+        }
+      });
+
+      responseData.sumDeposit = sumDepositAmount;
+      responseData.sumWithdraw = sumWithdrawAmount;
+
+      resolve(respConvert.successWithData(responseData, req.newTokenReturn));
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
+
+  });
+};
+
 
 /**
  * Get payment detail from page agent-detail payment request list table.
@@ -603,9 +663,9 @@ exports.getAgentPaymentDetailById = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const { paymentId } = req.body
+      const { paymentId } = req.body;
       const agentPaymentReq = mysqlConnector.agentPaymentReq;
-      const agentTable = mysqlConnector.agent
+      const agentTable = mysqlConnector.agent;
 
       agentPaymentReq.belongsTo(agentTable, { foreignKey: 'agentRefCode' });
 
@@ -622,14 +682,14 @@ exports.getAgentPaymentDetailById = function (req) {
         ],
         raw: true,
         nest: true
-      })
+      });
 
-      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn))
+      resolve(respConvert.successWithData(paymentDetail, req.newTokenReturn));
     })().catch(function (err) {
-      reject(respConvert.systemError(err.message))
-    })
+      reject(respConvert.systemError(err.message));
+    });
   });
-}
+};
 
 
 /**
@@ -638,14 +698,14 @@ exports.getAgentPaymentDetailById = function (req) {
 exports.approveAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { id, paymentType, wayToPay, amount } = req.body
+    const { id, paymentType, wayToPay, amount } = req.body;
 
     if (id && paymentType && wayToPay && amount) {
 
       (async () => {
 
-        const agentPaymentReq = mysqlConnector.agentPaymentReq
-        const agentTable = mysqlConnector.agent
+        const agentPaymentReq = mysqlConnector.agentPaymentReq;
+        const agentTable = mysqlConnector.agent;
 
         //Find record for agent ref code 
         const findUpdateRecordData = await agentPaymentReq.findOne({
@@ -654,7 +714,7 @@ exports.approveAgentPaymentRequest = function (req) {
           },
           attributes: ['agentRefCode'],
           raw: true
-        })
+        });
 
         //get Agent wallet id for update wallet
         const agentData = await agentTable.findOne({
@@ -663,24 +723,24 @@ exports.approveAgentPaymentRequest = function (req) {
           },
           attributes: ['walletId', 'username'],
           raw: true
-        })
+        });
 
         //check agent wallet amount
-        const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+        const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
 
-        let updateAgentWalletQry = {}
+        let updateAgentWalletQry = {};
         if (paymentType == 'WD') {
 
-          updateAgentWalletQry.amount_coin = -Math.abs(amount)
+          updateAgentWalletQry.amount_coin = -Math.abs(amount);
 
           const resAgentWalletAmount = await agentWalletCollec.findOne({
             _id: ObjectId(agentData.walletId)
-          }, { projection: { _id: 0, amount_coin: 1 } })
+          }, { projection: { _id: 0, amount_coin: 1 } });
 
           //reject if agent wallet not enough for withdraw
-          if (resAgentWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.agent.credit_not_enough))
+          if (resAgentWalletAmount.amount_coin < amount) return reject(respConvert.businessError(msgConstant.agent.credit_not_enough));
         } else {
-          updateAgentWalletQry.amount_coin = amount
+          updateAgentWalletQry.amount_coin = amount;
         }
 
         //Update agent wallet
@@ -689,7 +749,7 @@ exports.approveAgentPaymentRequest = function (req) {
           _id: ObjectId(agentData.walletId)
         },
           { $inc: updateAgentWalletQry }
-        )
+        );
 
         //update status of payment request
         await agentPaymentReq.update(
@@ -702,21 +762,21 @@ exports.approveAgentPaymentRequest = function (req) {
           {
             where: { id: id }
           }
-        )
+        );
 
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 
 /**
@@ -725,13 +785,13 @@ exports.approveAgentPaymentRequest = function (req) {
 exports.disapproveAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { id, paymentType, wayToPay, amount } = req.body
+    const { id, paymentType, wayToPay, amount } = req.body;
 
     if (id && paymentType && wayToPay && amount) {
 
       (async () => {
 
-        const agentPaymentReq = mysqlConnector.agentPaymentReq
+        const agentPaymentReq = mysqlConnector.agentPaymentReq;
 
         //update status of payment request
         await agentPaymentReq.update(
@@ -741,21 +801,21 @@ exports.disapproveAgentPaymentRequest = function (req) {
           {
             where: { id: id }
           }
-        )
+        );
 
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 /**
  * Cancel agent payment request by Owner .
@@ -763,13 +823,13 @@ exports.disapproveAgentPaymentRequest = function (req) {
 exports.cancelAgentPaymentRequest = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { id, paymentType, wayToPay, amount } = req.body
+    const { id, paymentType, wayToPay, amount } = req.body;
 
     if (id && paymentType && wayToPay && amount) {
 
       (async () => {
 
-        const agentPaymentReq = mysqlConnector.agentPaymentReq
+        const agentPaymentReq = mysqlConnector.agentPaymentReq;
 
         //update status of payment request
         await agentPaymentReq.update(
@@ -779,19 +839,19 @@ exports.cancelAgentPaymentRequest = function (req) {
           {
             where: { id: id }
           }
-        )
+        );
 
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 /************************ Agent Operation By Owner*************************/

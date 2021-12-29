@@ -3,22 +3,22 @@ const { Op, Sequelize } = require("sequelize");
 const { ObjectId } = require('mongodb');
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const mysqlConnector = require("../connector/mysqlConnector")
-const mongoConnector = require("../connector/mongodb")
+const mysqlConnector = require("../connector/mysqlConnector");
+const mongoConnector = require("../connector/mongodb");
 const respConvert = require("../utils/responseConverter");
 const msgConstant = require("../constant/messageMapping");
-const envConstant = require("../constant/env")
-const strUtil = require("../utils/String")
-const commUtil = require("../utils/common")
+const envConstant = require("../constant/env");
+const strUtil = require("../utils/String");
+const commUtil = require("../utils/common");
 
 /**
  * Logged in owner into the system
  **/
 exports.loginOwner = function (body) {
   return new Promise(function (resolve, reject) {
-    const { username, password } = body
+    const { username, password } = body;
 
-    console.log(username, password)
+    console.log(username, password);
     if (username && password && body !== 'undefined') {
       (async () => {
 
@@ -55,10 +55,10 @@ exports.loginOwner = function (body) {
                 where: {
                   ownerCode: findSessionOwner.ownerCode
                 }
-              })
+              });
             }
 
-            let token
+            let token;
             if (resOwner) {
               token = jwt.sign(
                 {
@@ -71,7 +71,7 @@ exports.loginOwner = function (body) {
                 { expiresIn: '30m' }
               );
 
-              console.log('this call' + JSON.stringify(resOwner))
+              console.log('this call' + JSON.stringify(resOwner));
 
               const addTokenToSession = await sessionOwner.create({
                 ownerCode: resOwner.userRefCode,
@@ -83,22 +83,22 @@ exports.loginOwner = function (body) {
 
             resolve(respConvert.successWithToken(token));
           } else {
-            return reject(respConvert.businessError(msgConstant.core.login_failed))
+            return reject(respConvert.businessError(msgConstant.core.login_failed));
           }
         } else {
-          return reject(respConvert.businessError(msgConstant.core.login_failed))
+          return reject(respConvert.businessError(msgConstant.core.login_failed));
         }
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 /**
  * Logged out agent from system and session.
@@ -115,7 +115,7 @@ exports.logoutOwner = function (req) {
 
         if (decoded == null) return reject(respConvert.businessError(msgConstant.core.invalid_token));
 
-        const sessionOwner = mysqlConnector.sessionOwner
+        const sessionOwner = mysqlConnector.sessionOwner;
         const updateAgentSessionLogout = await sessionOwner.update({ status: 'N' }, {
           where: {
             ownerCode: decoded.userRefCode,
@@ -126,16 +126,92 @@ exports.logoutOwner = function (req) {
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
     } else {
       reject(respConvert.businessError(msgConstant.core.invalid_token));
     }
 
   });
-}
+};
 
+/**
+ * Finds Owner detail include wallet amount, sum player wallet.
+ **/
+exports.findOwnerDetail = function (req) {
+  return new Promise(function (resolve, reject) {
+
+    const userData = req.user;
+
+    (async () => {
+
+      const ownerTable = mysqlConnector.owner;
+      const agentTable = mysqlConnector.agent;
+
+      const ownerInfo = await ownerTable.findOne({
+        where: {
+          userRefCode: userData.userRefCode
+        },
+        attributes: ['displayName', 'userRefCode'],
+        raw: true
+      });
+
+      // const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+
+      // const agentWalletAmount = await agentWalletCollec.findOne({
+      //   _id: ObjectId(agentInfo.walletId)
+      // }, { projection: { _id: 0, amount_coin: 1 } })
+
+      const totalAgentOfThisOwner = await agentTable.count({
+        where: {
+          ownerRefCode: ownerInfo.userRefCode
+        },
+        raw: true
+      });
+
+      console.log('Total Agent', totalAgentOfThisOwner);
+
+      const listOfAgentWalletId = await agentTable.findAll({
+        where: {
+          ownerRefCode: ownerInfo.userRefCode
+        },
+        attributes: ['walletId'],
+        raw: true
+      });
+
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
+      const totalAgentWalletSum = await agentWalletCollec.aggregate([
+        {
+          $match: {
+            _id: { $in: listOfAgentWalletId.map((id) => ObjectId(id.walletId)) }
+          }
+        },
+        {
+          $group: { _id: 0, sum: { $sum: "$amount_coin" } },
+        },
+      ]).toArray();
+      console.log('Sum Agent Wallet', totalAgentWalletSum);
+      // //find total promotion credit
+
+      //!!!Warning. Some data of this resolve still mock data!!!!
+      resolve(respConvert.successWithData({
+        ownerRefCode: ownerInfo.userRefCode,
+        // amountCoin: agentWalletAmount.amount_coin,
+        totalAgent: totalAgentOfThisOwner,
+        totalAgentCredit: totalAgentWalletSum.length == 0 ? 0 : totalAgentWalletSum[0].sum,
+      }, req.newTokenReturn)
+      );
+
+      // resolve(respConvert.success(req.newTokenReturn));
+
+    })().catch(function (err) {
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
+
+  });
+};
 
 /**
  * owner register Agent (log system unfinished)
@@ -144,13 +220,13 @@ exports.logoutOwner = function (req) {
 exports.ownerAgentRegister = function (req) {
   return new Promise(function (resolve, reject) {
 
-    const { agentName, email, phoneNumber, username, password, description, status } = req.body
+    const { agentName, email, phoneNumber, username, password, description, status } = req.body;
 
     if (agentName && email && phoneNumber && username && password && description || description == "" && status) {
 
       (async () => {
-        const agentTable = mysqlConnector.agent
-        const sequenceNow = await commUtil.getRefCodeSequence()
+        const agentTable = mysqlConnector.agent;
+        const sequenceNow = await commUtil.getRefCodeSequence();
 
         const checkDuplucatedUsername = await agentTable.findOne({
           where: {
@@ -167,7 +243,7 @@ exports.ownerAgentRegister = function (req) {
 
         //if not duplicate this will be 'null' value
         if (checkDuplucatedUsername) {
-          return reject(respConvert.businessError(msgConstant.agent.duplicate_user))
+          return reject(respConvert.businessError(msgConstant.agent.duplicate_user));
         }
 
         //Encrypt user password
@@ -191,14 +267,14 @@ exports.ownerAgentRegister = function (req) {
         });
 
         //update sequence
-        await commUtil.updateRefCodeSequence()
+        await commUtil.updateRefCodeSequence();
 
         // create agent wallet on mongo
-        const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+        const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
         const resCreatedWallet = await agentWalletCollec.insertOne({
           agent_code: resCretedAgent.agentRefCode,
           amount_coin: 0,
-        })
+        });
 
         //update agent wallet id
         const updateAgentWallet = await agentTable.update(
@@ -207,21 +283,21 @@ exports.ownerAgentRegister = function (req) {
           },
           {
             where: { agentRefCode: resCretedAgent.agentRefCode }
-          })
+          });
 
         resolve(respConvert.success(req.newTokenReturn));
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};
 
 /**
  * Listagent by owner id.
@@ -239,11 +315,11 @@ exports.listAgentByOwnerId = function (req) {
         },
         attributes: ['agentRefCode', 'agentName', 'phoneNumber', 'email', 'username', 'ranking', 'status', 'walletId'],
         raw: true
-      })
+      });
 
-      const listOfAgentWalletId = agentList.map((id) => ObjectId(id.walletId))
+      const listOfAgentWalletId = agentList.map((id) => ObjectId(id.walletId));
 
-      const agentWalletCollec = mongoConnector.api.collection('agent_wallet')
+      const agentWalletCollec = mongoConnector.api.collection('agent_wallet');
       const resultOfAgentWalletAmount = await agentWalletCollec.aggregate([
         {
           $match: {
@@ -251,7 +327,7 @@ exports.listAgentByOwnerId = function (req) {
 
           }
         },
-      ]).toArray()
+      ]).toArray();
 
       const returnDataMatchedCredit = agentList.map((agent) => {
         return resultOfAgentWalletAmount.reduce((acc, curr) => {
@@ -272,18 +348,18 @@ exports.listAgentByOwnerId = function (req) {
             ranking: agent.ranking,
             status: agent.status,
             walletId: agent.walletId
-          })
-      })
+          });
+      });
 
       resolve(respConvert.successWithData(returnDataMatchedCredit, req.newTokenReturn));
 
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
+      console.log('[error on catch] : ' + err);
       reject(new Error(err.message));
-    })
+    });
 
   });
-}
+};
 
 
 /**
@@ -294,9 +370,9 @@ exports.listAgentPaymentRequestAll = function (req) {
   return new Promise(function (resolve, reject) {
     (async () => {
 
-      const agentPaymentReqTable = mysqlConnector.agentPaymentReq
-      const promotionTable = mysqlConnector.promotion
-      const agentTable = mysqlConnector.agent
+      const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
+      const promotionTable = mysqlConnector.promotion;
+      const agentTable = mysqlConnector.agent;
 
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
       agentPaymentReqTable.belongsTo(agentTable, { foreignKey: 'agentRefCode' });
@@ -316,19 +392,17 @@ exports.listAgentPaymentRequestAll = function (req) {
         order: [['createDateTime', 'DESC']],
         raw: true,
         nest: true
-      })
-
-      console.log(paymentRequestList)
+      });
 
       resolve(respConvert.successWithData(paymentRequestList, req.newTokenReturn));
 
     })().catch(function (err) {
-      console.log('[error on catch] : ' + err)
-      reject(respConvert.systemError(err.message))
-    })
+      console.log('[error on catch] : ' + err);
+      reject(respConvert.systemError(err.message));
+    });
 
   });
-}
+};
 
 
 
@@ -338,12 +412,12 @@ exports.listAgentPaymentRequestAll = function (req) {
 exports.ownerRegister = function (body) {
   return new Promise(function (resolve, reject) {
 
-    const { ownerName, email, phoneNumber, username, password, description, status } = body
+    const { ownerName, email, phoneNumber, username, password, description, status } = body;
 
     if (ownerName && email && phoneNumber && username && password && description || description == "" && status) {
 
       (async () => {
-        const ownerTable = mysqlConnector.owner
+        const ownerTable = mysqlConnector.owner;
 
         const checkDuplucatedUsername = await ownerTable.findOne({
           where: {
@@ -360,7 +434,7 @@ exports.ownerRegister = function (body) {
 
         //if not duplicate this will be 'null' value
         if (checkDuplucatedUsername) {
-          return reject(respConvert.businessError(msgConstant.owner.duplicate_user))
+          return reject(respConvert.businessError(msgConstant.owner.duplicate_user));
         }
 
         //Encrypt user password
@@ -383,13 +457,13 @@ exports.ownerRegister = function (body) {
         resolve(respConvert.success());
 
       })().catch(function (err) {
-        console.log('[error on catch] : ' + err)
-        reject(respConvert.systemError(err.message))
-      })
+        console.log('[error on catch] : ' + err);
+        reject(respConvert.systemError(err.message));
+      });
 
     } else {
       reject(respConvert.validateError(msgConstant.core.validate_error));
     }
 
   });
-}
+};

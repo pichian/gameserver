@@ -30,6 +30,21 @@ module.exports.logoutOwner = function logoutOwner(req, res, next) {
     });
 };
 
+module.exports.findOwnerDetail = function findOwnerDetail(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    ownerService.findOwnerDetail(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+
 module.exports.ownerAgentRegister = function ownerAgentRegister(req, res, next, body) {
   middleWare.authToken(req).then(function () {
     ownerService.ownerAgentRegister(req)
@@ -130,6 +145,20 @@ module.exports.agentPaymentRequestByOwner = function agentPaymentRequestByOwner(
 module.exports.paymentRequestListOfAgent = function paymentRequestListOfAgent(req, res, next) {
   middleWare.authToken(req).then(function () {
     agentService.paymentRequestListOfAgent(req)
+      .then(function (response) {
+        utils.writeSuccess(res, response);
+      })
+      .catch(function (response) {
+        utils.writeError(res, response);
+      });
+  }).catch(function (response) {
+    utils.writeError(res, response);
+  });
+};
+
+module.exports.agentPaymentRequestListDataAndSum = function agentPaymentRequestListDataAndSum(req, res, next) {
+  middleWare.authToken(req).then(function () {
+    agentService.agentPaymentRequestListDataAndSum(req)
       .then(function (response) {
         utils.writeSuccess(res, response);
       })
