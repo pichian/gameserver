@@ -10,25 +10,25 @@ module.exports.core = {
 }
 
 module.exports.agent = {
-	duplicate_user: { responseCode: "LTR-2101", responseMessage: "Agent Name or Username or Agent Ref Code is already in use." },
-	not_found_user: { responseCode: "LTR-2102", responseMessage: "ไม่พบข้อมูล Agent" },
-	credit_not_enough: { responseCode: "LTR-2103", responseMessage: "ไม่สามาทำรายการได้ เนื่องจากเครดิตไม่เพียงพอ" }
+	duplicate_user: { responseCode: "LTR-2101", responseMessage: "Agent Name or Username or Agent Ref Code is already in use" },
+	not_found_user: { responseCode: "LTR-2102", responseMessage: "Agent not found" },
+	credit_not_enough: { responseCode: "LTR-2103", responseMessage: "Agent credit not enough for withdraw" }
 };
 
 module.exports.owner = {
-	duplicate_user: { responseCode: "LTR-2201", responseMessage: "Owner Name or Username is already in use." },
+	duplicate_user: { responseCode: "LTR-2201", responseMessage: "Owner Name or Username is already in use" },
 	msg2: { responseCode: "LTR-2202", responseMessage: "example message2" },
 	msg3: { responseCode: "LTR-2203", responseMessage: "example message3" }
 };
 
 module.exports.player = {
-	duplicate_player: { responseCode: "LTR-2301", responseMessage: "Player Name หรือ Username มีอยู่แล้วในระบบ" },
+	duplicate_player: { responseCode: "LTR-2301", responseMessage: "Player Name or Username already in use" },
 	credit_not_enough: { responseCode: "LTR-2302", responseMessage: "Player credit not enough for withdraw" },
 	msg3: { responseCode: "LTR-2303", responseMessage: "example message3" }
 };
 
 module.exports.employee = {
-	duplicate_employee: { responseCode: "LTR-3101", responseMessage: "Email or Username is already in use." },
+	duplicate_employee: { responseCode: "LTR-3101", responseMessage: "Email or Username is already in use" },
 	msg2: { responseCode: "LTR-3102", responseMessage: "example message2" },
 	msg3: { responseCode: "LTR-3103", responseMessage: "example message3" }
 };

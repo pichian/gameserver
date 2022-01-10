@@ -374,10 +374,11 @@ exports.listAgentPaymentRequest = function (req) {
     (async () => {
       const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
       const promotionTable = mysqlConnector.promotion;
-      const playerPaymentRequestTable = mysqlConnector.playerPaymentReq
+      const playerPaymentRequestTable = mysqlConnector.playerPaymentReq;
+
       agentPaymentReqTable.belongsTo(promotionTable, { foreignKey: 'promotionRefId' });
 
-      const playerPaymentRequestList = await agentPaymentReqTable.findAll({
+      const agentPaymentRequestList = await agentPaymentReqTable.findAll({
         where: {
           agentRefCode: req.user.userRefCode
         },
@@ -394,10 +395,10 @@ exports.listAgentPaymentRequest = function (req) {
       });
 
       const responseData = {};
-      if (playerPaymentRequestList.length !== 0) {
-        responseData.playerPaymentRequestList = playerPaymentRequestList;
+      if (agentPaymentRequestList.length !== 0) {
+        responseData.agentPaymentRequestList = agentPaymentRequestList;
       } else {
-        responseData.playerPaymentRequestList = [];
+        responseData.agentPaymentRequestList = [];
       }
 
       const sumDepositAmount = await playerPaymentRequestTable.sum('payment_amount', {
@@ -551,8 +552,6 @@ exports.agentPaymentRequestByOwner = function (req) {
       (async () => {
 
         const agentPaymentReqTable = mysqlConnector.agentPaymentReq;
-
-        console.log(req.user);
 
         const requestCreate = await agentPaymentReqTable.create(
           {
